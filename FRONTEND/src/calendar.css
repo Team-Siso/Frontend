@@ -4,7 +4,7 @@
 }
 
 .react-calendar__navigation__label > span {
-  color: var(--festie-gray-800, #3a3a3a);
+  color: var(--festie-gray-800, #c3eb5f);
   font-family: SUIT Variable;
   font-size: 13px;
   font-weight: 500;
@@ -24,6 +24,31 @@
 .react-calendar__tile--active {
   background: var(--festie-primary-orange, #ff7a00);
   color: white;
+}
+
+.react-calendar__navigation button:nth-child(1),
+.react-calendar__navigation button:nth-child(5) {
+  display: none; /* CSS를 통해 이 버튼들을 숨깁니다 */
+}
+
+.react-calendar__navigation {
+  display: flex;
+  height: 44px;
+  margin-bottom: 1em;
+}
+
+.react-calendar__navigation button {
+  min-width: 44px;
+  background: none;
+}
+
+.react-calendar__navigation button:disabled {
+  background-color: #0ca1a3;
+}
+
+.react-calendar__navigation button:enabled:hover,
+.react-calendar__navigation button:enabled:focus {
+  background-color: #e6e6e6;
 }
 
 /* 
