@@ -10,9 +10,11 @@
   font-weight: 500;
   line-height: 140%;
 }
+
 .react-calendar__month-view__days__day--weekend {
   color: var(--festie-gray-800, #3a3a3a);
 }
+
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
   background: var(--festie-primary-orange, #ff7a00);

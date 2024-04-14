@@ -1,5 +1,5 @@
 import ReactDOM from "react-dom/client";
-import Sample from "./calendar.tsx";
+import Sample from "./components/calendar";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(<Sample />);
