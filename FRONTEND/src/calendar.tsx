@@ -9,6 +9,9 @@ type ValuePiece = Date | null;
 type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 function Sample() {
+  const formatMonthYear = (locale, date) => {
+    return date.toLocaleString("en-US", { month: "long" });
+  };
   const [value, onChange] = useState<Value>(new Date());
   const [nowDate, setNowDate] = useState("날짜");
   const [isOpen, setIsOpen] = useState(false);
@@ -34,6 +37,7 @@ function Sample() {
             onChange={handleDateChange}
             value={value}
             formatDay={(locale, date) => moment(date).format("DD")}
+            formatMonthYear={formatMonthYear}
           ></Calendar>
         </main>
       </div>
