@@ -1,9 +1,9 @@
-import Sample from "./components/calendar";
+import CustomCalender from "./components/CustomCalender";
 
 function App() {
   return (
     <>
-      <Sample />
+      <CustomCalender />
     </>
   );
 }
