@@ -34,7 +34,7 @@ function Sample() {
         <main>
           {/* <Calendar onChange={onChange} value={value} /> */}
           <Calendar
-            locale="en-US"
+            locale="en-US" //월화수목금토일 영어로
             onChange={handleDateChange}
             value={value}
             formatDay={(locale, date) => moment(date).format("DD")}
