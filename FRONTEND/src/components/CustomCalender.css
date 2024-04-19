@@ -1,12 +1,29 @@
 .react-calendar {
   border-radius: 10px;
   border: 1px solid var(--festie-gray-400, #c8c8c8);
+  font-family: "Inter-ExtraLight", sans-serif; /* 정의한 글씨체를 사용합니다. */
+}
+
+@font-face {
+  font-family: "Inter-ExtraLight"; /* 글씨체 이름을 설정합니다. */
+  src: url("/src/assets/Inter-ExtraLight.ttf") format("truetype"); /* 파일 경로와 포맷을 지정합니다. */
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Inter-ExtraBold"; /* 글씨체 이름을 설정합니다. */
+  src: url("/src/assets/Inter-ExtraBold.ttf") format("truetype"); /* 파일 경로와 포맷을 지정합니다. */
+  font-weight: normal;
+  font-style: normal;
 }
 
 .react-calendar__navigation__label > span {
-  color: var(--festie-gray-800, #c3eb5f);
-  font-family: SUIT Variable;
-  font-size: 13px;
+  height: 2rem;
+  margin: 1rem;
+  color: var(--festie-gray-800, #000000);
+  font-family: Inter-ExtraBold;
+  font-size: 30px;
   font-weight: 500;
   line-height: 140%;
 }
