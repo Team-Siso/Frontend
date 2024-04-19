@@ -45,6 +45,7 @@ function CustomCalender() {
             formatDay={(locale, date) => moment(date).format("DD")}
             formatMonthYear={formatMonthYear}
             tileClassName={tileClassName}
+            showNeighboringMonth={false} //  이전, 이후 달의 날짜는 보이지 않도록 설정
           ></Calendar>
         </main>
       </div>
