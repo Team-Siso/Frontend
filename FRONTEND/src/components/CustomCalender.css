@@ -54,21 +54,21 @@
   font-size: 10px; /* 원하는 폰트 크기로 조정 */
 }
 .react-calendar__month-view__days__day--weekend.saturday {
-  color: #d86262; /* 토요일 색상 */
+  color: #1568c0; /* 토요일 색상 */
 }
 
 .react-calendar__month-view__days__day--weekend.sunday {
-  color: #5e5eb3; /* 일요일 색상 */
+  color: #cb280ff0; /* 일요일 색상 */
 }
 
 /* 토요일 (일반적으로 7번째 요소) */
 .react-calendar__month-view__weekdays .react-calendar__month-view__weekdays__weekday:nth-child(7) {
-  color: #d86262; /* 토요일 색상 */
+  color: #1568c0; /* 토요일 색상 */
 }
 
 /* 일요일 (일반적으로 1번째 요소) */
 .react-calendar__month-view__weekdays .react-calendar__month-view__weekdays__weekday:nth-child(1) {
-  color: #5e5eb3; /* 파란색 */
+  color: #cb280ff0; /* 일요일 색상 */
 }
 
 .react-calendar__tile {
