@@ -36,9 +36,6 @@ function CustomCalender() {
   };
   return (
     <div>
-      <header>
-        <h1>토글</h1>
-      </header>
       <div>
         <main>
           <Calendar
