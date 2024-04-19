@@ -17,10 +17,18 @@
   font-weight: normal;
   font-style: normal;
 }
+
 /* 요일 밑줄 제거 */
 .react-calendar__month-view__weekdays abbr {
   text-decoration: none;
   font-weight: 800;
+}
+
+/* 네이게이션 마우스 호버 효과 제거 */
+.react-calendar__navigation button:hover {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .react-calendar__navigation__label > span {
