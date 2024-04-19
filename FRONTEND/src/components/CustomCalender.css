@@ -52,7 +52,7 @@
 
 .react-calendar__navigation button:nth-child(4) {
   height: 2rem;
-  margin: 1rem;
+  margin: 0.5rem;
   margin-right: 3rem;
   background-image: url("/src/assets/MonthVectorRight.svg");
   background-size: contain; /* 이미지를 버튼의 크기에 맞추어 조절 */
@@ -65,7 +65,7 @@
 }
 .react-calendar__navigation button:nth-child(2) {
   height: 2rem;
-  margin: 1rem;
+  margin: 0.5rem;
   margin-left: 3rem;
   background-image: url("/src/assets/MonthVectorLeft.svg");
   background-size: contain; /* 이미지를 버튼의 크기에 맞추어 조절 */

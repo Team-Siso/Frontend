@@ -25,7 +25,7 @@ function CustomCalender() {
     setIsOpen(false);
     setNowDate(moment(selectedDate).format("YYYY년 MM월 DD일"));
   };
-  
+
   return (
     <div>
       <header>
@@ -33,7 +33,6 @@ function CustomCalender() {
       </header>
       <div>
         <main>
-          {/* <Calendar onChange={onChange} value={value} /> */}
           <Calendar
             locale="en-US" //월화수목금토일 영어로
             onChange={handleDateChange}
