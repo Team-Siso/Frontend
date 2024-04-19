@@ -1,6 +1,10 @@
 .react-calendar {
+  width: 80%; /* 너비를 더 크게 조절하거나 특정 픽셀 값으로 설정 */
+  height: auto; /* 높이를 자동으로 조절하거나 필요에 따라 지정 */
+  margin: auto;
+  max-width: 600px;
   border-radius: 10px;
-  border: 1px solid var(--festie-gray-400, #c8c8c8);
+  /* border: 1px solid var(--festie-gray-400, #c8c8c8); */
   font-family: "Inter-ExtraLight", sans-serif; /* 정의한 글씨체를 사용합니다. */
 }
 
