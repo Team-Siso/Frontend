@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import moment from "moment";
+import moment from "moment"; //오늘 날짜
 import "./CustomCalender.css";
 import { isSaturday, isSunday } from "date-fns";
 
@@ -34,6 +34,13 @@ function CustomCalender() {
       if (isSunday(date)) return "sunday";
     }
   };
+
+  // 월 클릭 이벤트 핸들러
+  const handleMonthClick = (event) => {
+    // 이벤트 전파를 막음
+    event.stopPropagation();
+  };
+
   return (
     <div>
       <div>
@@ -46,6 +53,7 @@ function CustomCalender() {
             formatMonthYear={formatMonthYear}
             tileClassName={tileClassName}
             showNeighboringMonth={false} //  이전, 이후 달의 날짜는 보이지 않도록 설정
+            onClickMonth={handleMonthClick}
           ></Calendar>
         </main>
       </div>
