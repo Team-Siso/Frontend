@@ -54,6 +54,7 @@ function CustomCalender() {
             tileClassName={tileClassName}
             showNeighboringMonth={false} //  이전, 이후 달의 날짜는 보이지 않도록 설정
             onClickMonth={handleMonthClick}
+            tileContent={({ date, view }) => <div className="date-tile">{date.getDate()}</div>}
           ></Calendar>
         </main>
       </div>
