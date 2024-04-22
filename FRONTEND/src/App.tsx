@@ -1,6 +1,11 @@
+import CustomCalender from "./components/CustomCalender";
+
 function App() {
-  return (<>
-  </>);
+  return (
+    <>
+      <CustomCalender />
+    </>
+  );
 }
 
 export default App;

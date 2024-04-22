@@ -1,0 +1,187 @@
+.react-calendar {
+  width: 70%; /* 너비를 더 크게 조절하거나 특정 픽셀 값으로 설정 */
+  height: auto; /* 높이를 자동으로 조절하거나 필요에 따라 지정 */
+  margin: auto;
+  max-width: 37.5rem;
+  border: none; /* 테두리 제거 */
+  font-family: "Inter-ExtraLight", sans-serif; /* 정의한 글씨체를 사용합니다. */
+}
+
+/* 요일 본 스타일 */
+.react-calendar__month-view__weekdays__weekday {
+  font-size: 1rem; /* 모든 화면에서 기본적으로 1rem */
+}
+
+/* 태블릿 및 데스크톱 화면에서의 스타일 */
+@media (min-width: 768px) {
+  .react-calendar__month-view__weekdays__weekday {
+    font-size: 1.25rem; /* 화면 폭이 768px 이상일 때 폰트 사이즈 증가 */
+  }
+}
+
+/* 큰 데스크톱 화면에서의 스타일 */
+@media (min-width: 1024px) {
+  .react-calendar__month-view__weekdays__weekday {
+    font-size: 1.5rem; /* 화면 폭이 1024px 이상일 때 더 큰 폰트 사이즈 */
+  }
+}
+
+@font-face {
+  font-family: "Inter-ExtraLight"; /* 글씨체 이름을 설정합니다. */
+  src: url("/src/assets/Inter-ExtraLight.ttf") format("truetype"); /* 파일 경로와 포맷을 지정합니다. */
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Inter-ExtraBold"; /* 글씨체 이름을 설정합니다. */
+  src: url("/src/assets/Inter-ExtraBold.ttf") format("truetype"); /* 파일 경로와 포맷을 지정합니다. */
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* 요일 밑줄 제거 */
+.react-calendar__month-view__weekdays abbr {
+  text-decoration: none;
+  font-weight: 800;
+}
+
+/* 날짜 간의 간격, 날짜 폰트 크기 조정 */
+.react-calendar__tile {
+  margin: 1rem; /* 원하는 값으로 조절 */
+  font-size: 0.6rem; /* 원하는 크기로 설정 */
+  padding: 0.8rem; /* 타일 내부 패딩 추가로 더 넓은 느낌 제공 */
+}
+
+.react-calendar__navigation button:hover,
+.react-calendar__navigation button:active {
+  background-color: transparent !important; /* 호버와 활성 상태에서 배경색 투명 처리 */
+  color: inherit !important; /* 텍스트 색상을 상속받음 */
+  border: none !important; /* 테두리 제거 */
+  box-shadow: none !important; /* 그림자 제거 */
+}
+
+.react-calendar__navigation__label > span {
+  height: 2rem;
+  margin: 1rem;
+  color: var(--festie-gray-800, #000000);
+  font-family: Inter-ExtraBold;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 140%;
+}
+.react-calendar__month-view__weekdays .react-calendar__month-view__weekdays__weekday {
+  font-size: 0.626rem; /* 원하는 폰트 크기로 조정 */
+}
+.react-calendar__month-view__days__day--weekend.saturday {
+  color: #1568c0; /* 토요일 색상 */
+}
+
+.react-calendar__month-view__days__day--weekend.sunday {
+  color: #cb280ff0; /* 일요일 색상 */
+}
+
+/* 토요일 (일반적으로 7번째 요소) */
+.react-calendar__month-view__weekdays .react-calendar__month-view__weekdays__weekday:nth-child(7) {
+  color: #1568c0; /* 토요일 색상 */
+}
+
+/* 일요일 (일반적으로 1번째 요소) */
+.react-calendar__month-view__weekdays .react-calendar__month-view__weekdays__weekday:nth-child(1) {
+  color: #cb280ff0; /* 일요일 색상 */
+}
+
+.react-calendar__tile abbr {
+  display: none;
+}
+
+/* 날짜 버튼 디자인 */
+.date-tile {
+  width: 60%; /* 전체 너비의 80% */
+  height: 120%; /* 전체 높이의 80% */
+  background-color: #cccccc; /* 배경 색상 */
+  margin: 10% auto; /* 상하 마진 10%, 좌우 자동 */
+  border-radius: 3px; /* 둥근 테두리 모양 */
+  line-height: 100%; /* 라인 높이, 중앙 정렬을 위해 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 모든 단어의 첫 글자를 대문자로 변경 */
+.react-calendar__month-view__weekdays__weekday abbr {
+  text-transform: capitalize;
+}
+
+.react-calendar__navigation {
+  margin-bottom: 1px !important; /* 강제로 하단 마진 적용 */
+}
+
+.react-calendar__month-view__days {
+  margin-top: 1px !important; /* 강제로 상단 마진 적용 */
+}
+.react-calendar__tile:enabled:hover,
+.react-calendar__tile:enabled:focus {
+  background: none;
+  cursor: default;
+  box-shadow: none;
+}
+/* 오늘 날짜 버튼 디자인 */
+.react-calendar__tile--now .date-tile {
+  background-color: #5b5b5b; /* 배경색을 투명하게 설정 */
+  color: #000000; /* 원하는 텍스트 색상 코드로 변경 */
+}
+/* 선택된 날짜 버튼 디자인 */
+.react-calendar__tile--active {
+  background: none;
+  color: rgb(255, 255, 255) !important;
+}
+
+/* 오늘 날짜에 생기는 노란색 배경(기본설정) 제거 */
+.react-calendar__tile--now {
+  background-color: transparent !important; /* 배경색을 투명하게 설정 */
+}
+
+/* 오늘 날짜를 선택했을 때 버튼 디자인 */
+.react-calendar__tile--now.react-calendar__tile--active .date-tile {
+  color: #ffffff; /* 흰색 텍스트 */
+}
+
+/* 연도 방향키 제거 */
+.react-calendar__navigation button:nth-child(1),
+.react-calendar__navigation button:nth-child(5) {
+  display: none; /* CSS를 통해 이 버튼들을 숨깁니다 */
+}
+
+/* 월 방향 키 */
+.react-calendar__navigation button:nth-child(4) {
+  height: 1rem;
+  margin: auto;
+  margin-right: 5rem;
+  background-image: url("/src/assets/MonthVectorRight.svg");
+  background-size: contain; /* 이미지를 버튼의 크기에 맞추어 조절 */
+  background-position: center; /* 이미지를 버튼 중앙에 위치 */
+  background-repeat: no-repeat;
+  color: transparent; /* 버튼의 텍스트를 투명하게 설정 */
+  text-indent: 100%; /* 텍스트를 화면 밖으로 밀어냅니다 */
+  white-space: nowrap; /* 텍스트가 줄바꿈되지 않도록 합니다 */
+  overflow: hidden; /* 밀려난 텍스트를 숨깁니다 */
+}
+.react-calendar__navigation button:nth-child(2) {
+  height: 1rem;
+  margin: auto;
+  margin-left: 5rem;
+  background-image: url("/src/assets/MonthVectorLeft.svg");
+  background-size: contain; /* 이미지를 버튼의 크기에 맞추어 조절 */
+  background-position: center; /* 이미지를 버튼 중앙에 위치 */
+  background-repeat: no-repeat;
+  color: transparent; /* 버튼의 텍스트를 투명하게 설정 */
+  text-indent: 100%; /* 텍스트를 화면 밖으로 밀어냅니다 */
+  white-space: nowrap; /* 텍스트가 줄바꿈되지 않도록 합니다 */
+  overflow: hidden; /* 밀려난 텍스트를 숨깁니다 */
+}
+
+/* 월을 클릭했을 시 연도 화면으로 넘어가는 기능 비활성화 */
+.react-calendar__navigation__label {
+  pointer-events: none; /* 클릭 이벤트 비활성화 */
+}
