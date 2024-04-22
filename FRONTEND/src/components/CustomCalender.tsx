@@ -41,10 +41,27 @@ function CustomCalender() {
     // 이벤트 전파를 막음
     event.stopPropagation();
   };
+  const handleToggleChange = (value: boolean, setting: string) => {
+    console.log(`${setting} is now ${value ? "enabled" : "disabled"}.`);
+  };
 
   return (
     <div>
       <div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginTop: "10px",
+            marginRight: "10px",
+          }}
+        >
+          <Toggle
+            id="monthly-weekly-toggle"
+            label=""
+            onToggle={(value) => handleToggleChange(value, "monthly-weekly-Change")}
+          />{" "}
+        </div>
         <main>
           <Calendar
             locale="en-US" //월화수목금토일 영어로
@@ -57,11 +74,6 @@ function CustomCalender() {
             onClickMonth={handleMonthClick}
             tileContent={({ date, view }) => <div className="date-tile">{date.getDate()}</div>}
           ></Calendar>
-          <div className="calendar-navigation">
-            <button>←</button>
-            <button>→</button>
-            <Toggle /> {/* 여기에 토글 컴포넌트 추가 */}
-          </div>
         </main>
       </div>
     </div>
