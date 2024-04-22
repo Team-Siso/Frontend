@@ -4,6 +4,7 @@ import "react-calendar/dist/Calendar.css";
 import moment from "moment"; //오늘 날짜
 import "./CustomCalender.css";
 import { isSaturday, isSunday } from "date-fns";
+import Toggle from "./Toggle";
 
 type ValuePiece = Date | null;
 
@@ -56,6 +57,11 @@ function CustomCalender() {
             onClickMonth={handleMonthClick}
             tileContent={({ date, view }) => <div className="date-tile">{date.getDate()}</div>}
           ></Calendar>
+          <div className="calendar-navigation">
+            <button>←</button>
+            <button>→</button>
+            <Toggle /> {/* 여기에 토글 컴포넌트 추가 */}
+          </div>
         </main>
       </div>
     </div>
