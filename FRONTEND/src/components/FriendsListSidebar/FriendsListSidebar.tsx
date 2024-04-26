@@ -8,7 +8,7 @@ import LogoComponent from "./LogoComponent";
 import NextPageComponent from "./NextPageComponent";
 
 const FriendsListSidebar = () => (
-  <div className="friends-sidebar">
+  <div className="bg-EDEEEE">
     <LogoComponent />
     <TodayDateComponent />
     <FriendComponent name="홍길동" profilePic="profile.jpg" status="온라인" />
