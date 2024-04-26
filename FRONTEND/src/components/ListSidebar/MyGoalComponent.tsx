@@ -3,3 +3,16 @@
 // Mygoal 제목
 // + 버튼
 // Mygoal 목록들
+import React from "react";
+
+const MyGoalComponent = () => (
+  <div className="my-goal-component">
+    <h4>내 목표</h4>
+    <ul>
+      <li>프로젝트 완성하기</li>
+      <li>새로운 기술 습득</li>
+    </ul>
+  </div>
+);
+
+export default MyGoalComponent;

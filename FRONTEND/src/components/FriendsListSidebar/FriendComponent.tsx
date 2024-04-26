@@ -3,14 +3,12 @@
 
 import React from "react";
 
-function FriendComponent({ name, profilePic, status }) {
-  return (
-    <div className="friend-component">
-      <img src={profilePic} alt="profile" />
-      <h3>{name}</h3>
-      <p>{status}</p>
-    </div>
-  );
-}
+const FriendComponent = ({ name, profilePic, status }) => (
+  <div className="friend-component">
+    <img src={profilePic} alt="profile" />
+    <h3>{name}</h3>
+    <p>{status}</p>
+  </div>
+);
 
 export default FriendComponent;

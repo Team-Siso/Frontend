@@ -1,17 +1,14 @@
-// App.tsx
 import React from "react";
-import CustomCalendar from "./components/CustomCalendar";
-import FriendsListSidebar from "./components/FriendsListSidebar";
-import ListSidebar from "./components/ListSidebar";
+import CustomCalender from "./components/CustomCalender";
+import FriendsListSidebar from "./components/FriendsListSidebar/FriendsListSidebar";
+import ListSidebar from "./components/ListSidebar/ListSidebar";
 
-function App() {
-  return (
-    <div style={{ display: "flex", flexDirection: "row" }}>
-      <FriendsListSidebar />
-      <ListSidebar />
-      <CustomCalendar />
-    </div>
-  );
-}
+const App = () => (
+  <div style={{ display: "flex", flexDirection: "row" }}>
+    <FriendsListSidebar />
+    <ListSidebar />
+    <CustomCalender />
+  </div>
+);
 
 export default App;
