@@ -4,7 +4,7 @@ import "react-calendar/dist/Calendar.css";
 import moment from "moment"; //오늘 날짜
 import "./CustomCalender.css";
 import { isSaturday, isSunday } from "date-fns";
-import Toggle from "./Toggle";
+import Toggle from "../Toggle";
 
 type ValuePiece = Date | null;
 

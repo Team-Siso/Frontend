@@ -1,0 +1,2 @@
+// ListSidebar 컴포넌트는 위에서부터
+// 날짜, todolist, my goal list, myprofile 을 렌더링하는 부모 컴포넌트입니다.
