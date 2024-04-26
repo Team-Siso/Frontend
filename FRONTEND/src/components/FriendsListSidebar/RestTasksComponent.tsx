@@ -9,7 +9,7 @@ interface RestTasksComponentProps {
 const RestTasksComponent: React.FC<RestTasksComponentProps> = ({ tasksCount }) => {
   return (
     <div
-      className="relative bg-no-repeat bg-center bg-contain"
+      className="relative bg-no-repeat bg-center bg-contain mb-4"
       style={{ backgroundImage: `url(${RestTasksBg})` }}
     >
       <div>

@@ -4,8 +4,10 @@ import React from "react";
 import LogoImage from "../../assets/LogoImage.svg";
 
 const LogoComponent = () => (
-  <div>
-    <img src={LogoImage} alt="Logo" />
+  <div className="flex justify-center mt-4 mb-4">
+    {" "}
+    {/* 로고 이미지를 중앙 정렬하고 위에 마진을 1rem 추가 */}
+    <img src={LogoImage} alt="Logo" className="block" />
   </div>
 );
 
