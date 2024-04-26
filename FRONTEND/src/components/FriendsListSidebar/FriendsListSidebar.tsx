@@ -3,14 +3,14 @@
 
 import React from "react";
 import FriendComponent from "./FriendComponent";
-import TodayDateComponent from "./TodayDateComponent";
+import RestTasksComponent from "./RestTasksComponent";
 import LogoComponent from "./LogoComponent";
 import NextPageComponent from "./NextPageComponent";
 
 const FriendsListSidebar = () => (
   <div className="bg-EDEEEE">
     <LogoComponent />
-    <TodayDateComponent />
+    <RestTasksComponent />
     <FriendComponent name="홍길동" profilePic="profile.jpg" status="온라인" />
     <NextPageComponent />
   </div>
