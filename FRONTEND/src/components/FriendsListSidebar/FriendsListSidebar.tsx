@@ -9,10 +9,18 @@ import NextPageComponent from "./NextPageComponent";
 
 const FriendsListSidebar = () => (
   <div className="bg-EDEEEE">
-    <LogoComponent />
-    <RestTasksComponent />
-    <FriendComponent name="홍길동" profilePic="profile.jpg" status="온라인" />
-    <NextPageComponent />
+    <div>
+      <LogoComponent />
+    </div>
+    <div>
+      <RestTasksComponent tasksCount={7} />
+    </div>
+    <div>
+      <FriendComponent name="홍길동" profilePic="profile.jpg" status="온라인" />
+    </div>
+    <div>
+      <NextPageComponent />
+    </div>
   </div>
 );
 
