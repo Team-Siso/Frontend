@@ -6,6 +6,7 @@ import FriendComponent from "./FriendComponent";
 import RestTasksComponent from "./RestTasksComponent";
 import LogoComponent from "./LogoComponent";
 import NextPageComponent from "./NextPageComponent";
+import FriendsListComponent from "./FriendsListComponent";
 
 const FriendsListSidebar = () => (
   <div className="bg-EDEEEE">
@@ -16,7 +17,7 @@ const FriendsListSidebar = () => (
       <RestTasksComponent tasksCount={7} />
     </div>
     <div>
-      <FriendComponent name="홍길동" profilePic="profile.jpg" status="온라인" />
+      <FriendsListComponent numFriends={5} />
     </div>
     <div>
       <NextPageComponent />
