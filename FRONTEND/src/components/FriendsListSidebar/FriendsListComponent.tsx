@@ -3,17 +3,31 @@
 import React from "react";
 import FriendComponent from "./FriendComponent";
 
+// 가정을 위해 친구들의 목록을 임시 데이터로 만들었습니다.
+const friendsData = [
+  { name: "초이니", isOnline: true },
+  { name: "새싹이", isOnline: false },
+  { name: "감자", isOnline: true },
+  { name: "땅콩이", isOnline: false },
+  { name: "김좌", isOnline: true },
+  // ... 나머지 친구들
+];
+
 interface FriendsListProps {
   numFriends: number;
 }
 
-const FriendsList: React.FC<FriendsListProps> = ({ numFriends }) => {
-  // 숫자만큼 FriendComponent를 생성하기 위한 배열을 만듭니다.
-  const friends = Array.from({ length: numFriends }, (_, index) => (
-    <FriendComponent key={index} name="홍길동" profilePic="profile.jpg" status="온라인" />
-  ));
+const FriendsList = () => {
+  // 진행 중인 친구들을 먼저 나열합니다.
+  const sortedFriends = friendsData.sort((a, b) => Number(b.isOnline) - Number(a.isOnline));
 
-  return <div>{friends}</div>;
+  return (
+    <div>
+      {sortedFriends.map((friend, index) => (
+        <FriendComponent key={index} name={friend.name} isOnline={friend.isOnline} />
+      ))}
+    </div>
+  );
 };
 
 export default FriendsList;
