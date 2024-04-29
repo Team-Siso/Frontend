@@ -9,7 +9,7 @@ import CalendarPage from "../components/Calendar/CalendarPage";
 const MainPage = () => {
   return (
     <div className="flex w-full h-screen overflow-hidden">
-      <div className="bg-pink-500 flex-none" style={{ width: "5%" }}>
+      <div className="bg-EDEEEE flex-none" style={{ width: "5%" }}>
         <FriendsListSidebar />
       </div>
       <div className="bg-yellow-400 flex-none" style={{ width: "25%" }}>

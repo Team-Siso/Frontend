@@ -9,18 +9,18 @@ import NextPageComponent from "./NextPageComponent";
 import FriendsListComponent from "./FriendsListComponent";
 
 const FriendsListSidebar = () => (
-  <div className="bg-EDEEEE">
+  <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
     <div>
       <LogoComponent />
     </div>
     <div>
       <RestTasksComponent tasksCount={7} />
     </div>
-    <div>
-      <FriendsListComponent numFriends={5} />
-    </div>
-    <div>
-      <NextPageComponent />
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div>
+        <FriendsListComponent numFriends={5} />
+        <NextPageComponent />
+      </div>
     </div>
   </div>
 );
