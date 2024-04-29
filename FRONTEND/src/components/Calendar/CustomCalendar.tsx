@@ -2,15 +2,15 @@ import { useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import moment from "moment"; //오늘 날짜
-import "./CustomCalender.css";
+import "./CustomCalendar.css";
 import { isSaturday, isSunday } from "date-fns";
-import Toggle from "./Toggle";
+import Toggle from "../Toggle";
 
 type ValuePiece = Date | null;
 
 type Value = ValuePiece | [ValuePiece, ValuePiece];
 
-function CustomCalender() {
+function CustomCalendar() {
   const formatMonthYear = (locale, date) => {
     return date.toLocaleString("en-US", { month: "long" });
   };
@@ -80,4 +80,4 @@ function CustomCalender() {
   );
 }
 
-export default CustomCalender;
+export default CustomCalendar;

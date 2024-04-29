@@ -1,11 +1,8 @@
-import CustomCalender from "./components/CustomCalender";
+import React from "react";
+import MainPage from "./pages/MainPage"; // MainPage 컴포넌트를 불러옴
 
-function App() {
-  return (
-    <>
-      <CustomCalender />
-    </>
-  );
-}
+const App = () => {
+  return <MainPage />; // MainPage 컴포넌트를 렌더링
+};
 
 export default App;
