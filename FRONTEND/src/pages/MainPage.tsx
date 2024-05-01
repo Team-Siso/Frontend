@@ -12,10 +12,10 @@ const MainPage = () => {
       <div className="bg-EDEEEE flex-none" style={{ width: "60px" }}>
         <FriendsListSidebar />
       </div>
-      <div className="bg-yellow-400 flex-none" style={{ width: "330px" }}>
+      <div className=" flex-none border border-EDEEEE rounded" style={{ width: "330px" }}>
         <ListSidebar />
       </div>
-      <div className="bg-gray-300 flex-auto">
+      <div className=" flex-auto">
         <CalendarPage />
       </div>
     </div>

@@ -6,7 +6,8 @@ import MyGoalComponent from "./MyGoalComponent";
 import MyProfileComponent from "./MyProfileComponent";
 
 const ListSidebar = () => (
-  <div className="list-sidebar bg-gray-200">
+  <div className="list-sidebar ">
+    <div>29</div>
     <TodoListComponent />
     <MyGoalComponent />
     <MyProfileComponent />

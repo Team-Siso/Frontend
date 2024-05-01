@@ -1,0 +1,11 @@
+.calendar-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* 화면 전체 높이를 사용 */
+}
+
+.custom-calendar {
+  width: 90%; /* 화면 너비의 90%를 차지하도록 설정 */
+  margin: auto; /* 중앙 정렬 */
+}
