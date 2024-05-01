@@ -46,36 +46,32 @@ function CustomCalendar() {
   };
 
   return (
-    <div>
-      <div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            marginTop: "10px",
-            marginRight: "10px",
-          }}
-        >
-          <Toggle
-            id="monthly-weekly-toggle"
-            label=""
-            onToggle={(value) => handleToggleChange(value, "monthly-weekly-Change")}
-          />{" "}
-        </div>
-        <main>
-          <Calendar
-            locale="en-US" //월화수목금토일 영어로
-            onChange={handleDateChange}
-            value={value}
-            formatDay={(locale, date) => moment(date).format("DD")}
-            formatMonthYear={formatMonthYear}
-            tileClassName={tileClassName}
-            showNeighboringMonth={false} //  이전, 이후 달의 날짜는 보이지 않도록 설정
-            onClickMonth={handleMonthClick}
-            tileContent={({ date, view }) => <div className="date-tile">{date.getDate()}</div>}
-          ></Calendar>
-        </main>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "flex-end",
+        marginTop: "10px",
+        marginRight: "10px",
+      }}>
+        <Toggle
+          id="monthly-weekly-toggle"
+          label=""
+          onToggle={(value) => handleToggleChange(value, "monthly-weekly-Change")}
+        />
       </div>
+      <main style={{ flex: 1 }}>
+        <Calendar
+          locale="en-US"
+          onChange={handleDateChange}
+          value={value}
+          formatDay={(locale, date) => moment(date).format("DD")}
+          formatMonthYear={formatMonthYear}
+          tileClassName={tileClassName}
+          showNeighboringMonth={false}
+          onClickMonth={handleMonthClick}
+          tileContent={({ date, view }) => <div className="date-tile">{date.getDate()}</div>}
+        />
+      </main>
     </div>
   );
 }

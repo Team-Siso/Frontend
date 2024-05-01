@@ -3,7 +3,11 @@ import React from "react";
 import CustomCalendar from "./CustomCalendar"; // MainPage 컴포넌트를 불러옴
 
 const CalendarPage = () => {
-  return <CustomCalendar />; // MainPage 컴포넌트를 렌더링
+  return (
+    <div style={{ width: '100%', height: '100vh' }}>
+      <CustomCalendar />
+    </div>
+  );
 };
 
 export default CalendarPage;
