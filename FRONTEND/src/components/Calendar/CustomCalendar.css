@@ -141,9 +141,9 @@
 
 /* 월 방향 키 */
 .react-calendar__navigation button:nth-child(4) {
-  height: 1rem;
+  height: 2.5rem;
   margin: auto;
-  margin-right: 5rem;
+  margin-right: 15rem;
   background-image: url("/src/assets/MonthVectorRight.svg");
   background-size: contain; /* 이미지를 버튼의 크기에 맞추어 조절 */
   background-position: center; /* 이미지를 버튼 중앙에 위치 */
@@ -154,9 +154,9 @@
   overflow: hidden; /* 밀려난 텍스트를 숨깁니다 */
 }
 .react-calendar__navigation button:nth-child(2) {
-  height: 1rem;
+  height: 2.5rem;
   margin: auto;
-  margin-left: 5rem;
+  margin-left: 15rem;
   background-image: url("/src/assets/MonthVectorLeft.svg");
   background-size: contain; /* 이미지를 버튼의 크기에 맞추어 조절 */
   background-position: center; /* 이미지를 버튼 중앙에 위치 */
