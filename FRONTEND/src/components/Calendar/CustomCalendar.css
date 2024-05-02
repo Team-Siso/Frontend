@@ -99,12 +99,13 @@
 }
 
 .react-calendar__navigation {
-  margin-bottom: 3rem !important; /* 강제로 하단 마진 적용 */
+  margin-bottom: 1.5rem !important; /* 강제로 하단 마진 적용 */
   height: 4rem;
 }
 
+/* 요일과 날짜 사이의 간격 줄임 */
 .react-calendar__month-view__days {
-  margin-top: 1px !important; /* 강제로 상단 마진 적용 */
+  margin-top: -30px !important; /* 강제로 상단 마진 적용 */
 }
 .react-calendar__tile:enabled:hover,
 .react-calendar__tile:enabled:focus {
