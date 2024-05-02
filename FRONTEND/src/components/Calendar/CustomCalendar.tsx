@@ -51,7 +51,7 @@ function CustomCalendar() {
         display: "flex",
         justifyContent: "flex-end",
         marginTop: "10px",
-        marginRight: "10px",
+        marginRight: "30px",
       }}>
         <Toggle
           id="monthly-weekly-toggle"
