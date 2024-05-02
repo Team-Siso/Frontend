@@ -5,8 +5,7 @@
   height: 100vh; /* 화면 전체 높이를 사용 */
   padding-top: 5vh; /* 상단으로부터 10%의 여백을 두어 조금만 아래로 내림 */
 }
-
 .custom-calendar {
-  width: 90%; /* 화면 너비의 90%를 차지하도록 설정 */
-  margin: auto; /* 중앙 정렬 */
+  margin: auto;
+  width: 80%;
 }
