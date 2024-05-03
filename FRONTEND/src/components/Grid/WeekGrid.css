@@ -21,7 +21,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 50px; /* 각 시간 셀의 높이 */
+  height: 40px; /* 각 시간 셀의 높이 */
   box-sizing: border-box;
   border-bottom: 1px dashed #ccc; /* 가로 점선 추가 */
   padding: 10px 0;
@@ -47,7 +47,7 @@
 .day-column .time-cell {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr; /* 요일 칼럼 내 시간 셀을 세 부분으로 나눔 */
-  height: 50px;
+  height: 40px;
   padding: 0;
   border-bottom: 1px dashed #ccc; /* 가로 점선 추가 */
 }
@@ -62,6 +62,7 @@
 }
 
 .time-cell-part.selected {
-  background-color: #007bff; /* 선택된 부분의 배경색 변경 */
   color: white;
+  border-bottom: none; /* 선택된 부분의 아랫부분 점선 제거 */
 }
+

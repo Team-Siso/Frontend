@@ -16,6 +16,8 @@ const WeekGrid: React.FC = () => {
     return `${hour.toString().padStart(2, '0')}:${minute}`;
   });
 
+  const colors = ['#ffadad', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff']; // 색상 배열
+
   const [selectedCells, setSelectedCells] = useState<{ [key: string]: boolean }>({});
   const [dragging, setDragging] = useState(false);
   const [dragStart, setDragStart] = useState<DragStart | null>(null);
@@ -26,10 +28,10 @@ const WeekGrid: React.FC = () => {
     setDragging(true);
     setDragStart({ dayIndex, timeIndex, partIndex, newState });
     setSelectedCells(prevState => ({ ...prevState, [key]: newState }));
-};
+  };
 
-const handleMouseEnter = (dayIndex: number, timeIndex: number, partIndex: number) => {
-  if (dragging && dragStart) {
+  const handleMouseEnter = (dayIndex: number, timeIndex: number, partIndex: number) => {
+    if (dragging && dragStart) {
       const startDayIndex = dragStart.dayIndex;
       if (startDayIndex !== dayIndex) return; // Ensure dragging within the same column
 
@@ -40,54 +42,51 @@ const handleMouseEnter = (dayIndex: number, timeIndex: number, partIndex: number
       const isLeftToRight = timeIndex > dragStart.timeIndex;
 
       for (let index = rangeStart; index <= rangeEnd; index++) {
-          let startPartIndex = 0;
-          let endPartIndex = 2;
+        let startPartIndex = 0;
+        let endPartIndex = 2;
 
-          if (index === timeIndex) {
-              // If we are on the line where the mouse currently is
-              if (isLeftToRight) {
-                  startPartIndex = 0;
-                  endPartIndex = partIndex;
-              } else {
-                  startPartIndex = partIndex;
-                  endPartIndex = 2;
-              }
+        if (index === timeIndex) {
+          // If we are on the line where the mouse currently is
+          if (isLeftToRight) {
+            startPartIndex = 0;
+            endPartIndex = partIndex;
+          } else {
+            startPartIndex = partIndex;
+            endPartIndex = 2;
           }
+        }
 
-          if (index === dragStart.timeIndex) {
-              // If we are on the line where the drag started
-              if (isLeftToRight) {
-                  startPartIndex = dragStart.partIndex;
-                  endPartIndex = index === timeIndex ? partIndex : 2;  // Adjust end index if on the same line as current mouse position
-              } else {
-                  startPartIndex = index === timeIndex ? partIndex : 0;
-                  endPartIndex = dragStart.partIndex;
-              }
+        if (index === dragStart.timeIndex) {
+          // If we are on the line where the drag started
+          if (isLeftToRight) {
+            startPartIndex = dragStart.partIndex;
+            endPartIndex = index === timeIndex ? partIndex : 2;  // Adjust end index if on the same line as current mouse position
+          } else {
+            startPartIndex = index === timeIndex ? partIndex : 0;
+            endPartIndex = dragStart.partIndex;
           }
+        }
 
-          if (!isLeftToRight && index > dragStart.timeIndex && index < timeIndex) {
-              // For all lines between the drag start and the current line when dragging right to left
-              startPartIndex = 0;
-              endPartIndex = 2;
-          }
+        if (!isLeftToRight && index > dragStart.timeIndex && index < timeIndex) {
+          // For all lines between the drag start and the current line when dragging right to left
+          startPartIndex = 0;
+          endPartIndex = 2;
+        }
 
-          for (let part = startPartIndex; part <= endPartIndex; part++) {
-              const key = `${dayIndex}-${index}-${part}`;
-              newSelectedCells[key] = dragStart.newState; // Apply the state decided at the start of the drag
-          }
+        for (let part = startPartIndex; part <= endPartIndex; part++) {
+          const key = `${dayIndex}-${index}-${part}`;
+          newSelectedCells[key] = dragStart.newState; // Apply the state decided at the start of the drag
+        }
       }
 
       setSelectedCells(newSelectedCells);
-  }
-};
+    }
+  };
 
-
-const handleMouseUp = () => {
+  const handleMouseUp = () => {
     setDragging(false);
     setDragStart(null);
-};
-
-
+  };
 
   return (
     <div className="week-grid-container" onMouseUp={handleMouseUp}>
@@ -101,20 +100,28 @@ const handleMouseUp = () => {
           <div key={day} className="day-column">
             {times.map((_, timeIndex) => (
               <div key={timeIndex} className="time-cell">
-                {[0, 1, 2].map(partIndex => (
-                  <div key={partIndex}
-                       className={`time-cell-part ${selectedCells[`${dayIndex}-${timeIndex}-${partIndex}`] ? 'selected' : ''}`}
-                       onMouseDown={() => handleMouseDown(dayIndex, timeIndex, partIndex)}
-                       onMouseEnter={() => handleMouseEnter(dayIndex, timeIndex, partIndex)}
-                  ></div>
-                ))}
+                {[0, 1, 2].map(partIndex => {
+                  const key = `${dayIndex}-${timeIndex}-${partIndex}`;
+                  const isSelected = selectedCells[key];
+                  const colors = ['#ffadad', '#ffd6a5', '#fdffb6', '#caffbf', '#9bf6ff', '#a0c4ff', '#bdb2ff']; // 색상 배열
+                  const color = colors[dayIndex % colors.length]; // 요일별 색상 선택
+                  return (
+                    <div
+                      key={partIndex}
+                      className={`time-cell-part ${isSelected ? 'selected' : ''}`}
+                      onMouseDown={() => handleMouseDown(dayIndex, timeIndex, partIndex)}
+                      onMouseEnter={() => handleMouseEnter(dayIndex, timeIndex, partIndex)}
+                      style={{ backgroundColor: isSelected ? color : 'transparent' }}
+                    ></div>
+                  );
+                })}
               </div>
             ))}
           </div>
         ))}
       </div>
     </div>
-  );
+  );  
 }
 
 export default WeekGrid;
