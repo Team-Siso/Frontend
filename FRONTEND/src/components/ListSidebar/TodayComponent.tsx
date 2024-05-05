@@ -3,22 +3,15 @@
 import React from "react";
 import moment from "moment";
 
-const TodayComponent = () => {
+const TodayComponent = ({ className }) => {
   const today = moment(); // 오늘 날짜 객체 생성
   const dayNumber = today.format("D"); // 날짜 (숫자만)
   const dayName = today.format("ddd"); // 요일 (월, 화, 수...)
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center", // 세로 방향 중앙 정렬
-        fontFamily: "Arial, sans-serif",
-        fontSize: "24px",
-      }}
-    >
-      <div style={{ fontSize: "48px", fontWeight: "bold" }}>{dayNumber}</div>
-      <div style={{ marginLeft: "10px" }}>{dayName}</div>
+    <div className={`flex items-baseline pl-3 pt-3 font-sans bg-pink-200 text-lg ${className}`}>
+      <div className="text-4xl text-585151 font-bold">{dayNumber}</div>
+      <div className="ml-1 text-xs text-818181">{dayName}</div>
     </div>
   );
 };

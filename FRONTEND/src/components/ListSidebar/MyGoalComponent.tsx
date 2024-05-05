@@ -3,16 +3,29 @@
 // Mygoal 제목
 // + 버튼
 // Mygoal 목록들
-import React from "react";
+import React, { useState } from "react";
 
-const MyGoalComponent = () => (
-  <div className="my-goal-component">
-    <h4>내 목표</h4>
-    <ul>
-      <li>프로젝트 완성하기</li>
-      <li>새로운 기술 습득</li>
-    </ul>
-  </div>
-);
+// MyGoalComponent 구현
+const MyGoalComponent = ({ className }) => {
+  // 목표 추가 기능 (더미 기능)
+  const addGoal = () => {
+    const newGoal = {
+      id: goals.length + 1,
+      title: `New Goal ${goals.length + 1}`,
+      progress: 0,
+      isImportant: false,
+    };
+    setGoals([...goals, newGoal]);
+  };
+
+  return (
+    <div className={className}>
+      <div style={{ fontSize: "24px", fontWeight: "bold" }}>My Goal</div>
+      <div style={{ display: "flex", alignItems: "center", cursor: "pointer" }} onClick={addGoal}>
+        <img src="/path/to/plus-icon.svg" alt="Add Goal" />
+      </div>
+    </div>
+  );
+};
 
 export default MyGoalComponent;

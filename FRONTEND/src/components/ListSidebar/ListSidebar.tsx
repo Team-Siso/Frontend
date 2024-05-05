@@ -7,11 +7,15 @@ import MyGoalComponent from "./MyGoalComponent";
 import MyProfileComponent from "./MyProfileComponent";
 
 const ListSidebar = () => (
-  <div className="list-sidebar ">
-    <TodayComponent />
-    <TodoListComponent />
-    <MyGoalComponent />
-    <MyProfileComponent />
+  <div className="flex flex-col h-screen">
+    <TodayComponent className="flex-none" />{" "}
+    {/* 고정된 높이가 필요하다면 className에 h-[값] 추가 */}
+    <div className="flex-grow flex flex-col justify-between">
+      <TodoListComponent />
+      <MyGoalComponent />
+    </div>
+    <MyProfileComponent className="flex-none" />{" "}
+    {/* 고정된 높이가 필요하다면 className에 h-[값] 추가 */}
   </div>
 );
 
