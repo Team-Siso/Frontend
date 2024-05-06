@@ -1,0 +1,76 @@
+.week-grid {
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr); /* 시간 표시를 위한 하나의 열을 120px로 설정하고 요일별 7개 열 */
+  grid-template-rows: repeat(48, 1fr); /* 30분 간격으로 하루는 48개의 시간대 */
+  text-align: center;
+  position: relative;
+  overflow-y: auto; /* 세로 스크롤 활성화 */
+  max-height: 630px; /* 적당한 최대 높이 설정 */
+}
+
+.time-labels {
+  border-right: 2px solid #ccc; /* 시간 라벨과 요일 칼럼 사이의 분리선 */
+  position: sticky; /* 스크롤 시 시간 라벨 고정 */
+  left: 0;
+  background: white;
+  top: 0; /* 상단 고정 */
+  z-index: 2; /* 다른 요소 위에 보이도록 z-index 설정 */
+}
+
+.time-labels .time-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px; /* 각 시간 셀의 높이 */
+  box-sizing: border-box;
+  border-bottom: 1px dashed #ccc; /* 가로 점선 추가 */
+  padding: 10px 0;
+  color: #888888; /* 연한 회색으로 변경 */
+}
+
+.day-column {
+  border-right: 1px solid #ccc; /* 요일별 구분선 */
+  position: relative;
+}
+
+.day-column::after {
+  content: "";
+  position: absolute;
+  left: 33%;
+  right: 33%;
+  top: 0;
+  bottom: 0;
+  border-left: 1px dashed #eee; /* 왼쪽 중간 점선 */
+  border-right: 1px dashed #eee; /* 오른쪽 중간 점선 */
+}
+
+.day-column .time-cell {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr; /* 요일 칼럼 내 시간 셀을 세 부분으로 나눔 */
+  height: 40px;
+  padding: 0;
+  border-bottom: 1px dashed #ccc; /* 가로 점선 추가 */
+}
+
+.time-cell-part {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%; /* 부모의 전체 높이 */
+  margin: 0;
+  border: none;
+}
+
+.time-cell-part.selected {
+  color: white;
+  border-bottom: none; /* 선택된 부분의 아랫부분 점선 제거 */
+}
+
+/* 격자 선을 숨기는 스타일 */
+.hidden-grid-lines .time-cell {
+  border-bottom: none; /* 가로선 제거 */
+}
+
+.hidden-grid-lines .day-column::after {
+  display: none; /* 세로 중간 점선 제거 */
+}

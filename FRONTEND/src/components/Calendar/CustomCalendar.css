@@ -172,3 +172,17 @@
 .react-calendar__navigation__label {
   pointer-events: none; /* 클릭 이벤트 비활성화 */
 }
+
+.react-calendar__viewContainer {
+  width: 60rem; 
+  height: 60rem;
+}
+
+.week-view .react-calendar__month-view__days__day {
+  display: none;
+}
+
+.week-view .react-calendar__tile--active {
+  background-color: transparent;
+  color: #000;
+}

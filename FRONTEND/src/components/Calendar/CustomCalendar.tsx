@@ -76,6 +76,19 @@ function CustomCalendar() {
           ></Calendar>
         </main>
       </div>
+      <main style={{ flex: 1 }}>
+        <Calendar
+          locale="en-US"
+          onChange={handleDateChange}
+          value={value}
+          formatDay={(locale, date) => moment(date).format("DD")}
+          formatMonthYear={formatMonthYear}
+          tileClassName={tileClassName}
+          showNeighboringMonth={false}
+          onClickMonth={handleMonthClick}
+          tileContent={({ date, view }) => <div className="date-tile">{date.getDate()}</div>}
+        />
+      </main>
     </div>
   );
 }
