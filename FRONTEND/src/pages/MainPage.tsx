@@ -9,13 +9,13 @@ import CalendarPage from "../components/Calendar/CalendarPage";
 const MainPage = () => {
   return (
     <div className="flex w-full h-screen overflow-hidden">
-      <div className="bg-EDEEEE flex-none" style={{ width: "5%" }}>
+      <div className="bg-EDEEEE flex-none" style={{ width: "60px" }}>
         <FriendsListSidebar />
       </div>
-      <div className="bg-yellow-400 flex-none" style={{ width: "25%" }}>
+      <div className=" flex-none border border-EDEEEE rounded" style={{ width: "330px" }}>
         <ListSidebar />
       </div>
-      <div className="bg-gray-300 flex-auto">
+      <div className=" flex-auto">
         <CalendarPage />
       </div>
     </div>

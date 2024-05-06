@@ -1,5 +1,5 @@
 // 친구 목록 사이드바에 있는 다음 친구를 볼 수 있도록 하는 버튼 입니다.
-import React from "react";
+// import React from "react";
 import NextPageImage from "../../assets/NextPageImage.svg";
 
 const NextPageComponent = () => (

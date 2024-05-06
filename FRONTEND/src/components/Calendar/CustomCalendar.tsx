@@ -53,7 +53,7 @@ function CustomCalendar() {
             display: "flex",
             justifyContent: "flex-end",
             marginTop: "10px",
-            marginRight: "10px",
+            marginRight: "10rem",
           }}
         >
           <Toggle

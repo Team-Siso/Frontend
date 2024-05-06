@@ -3,16 +3,24 @@
 // Mygoal 제목
 // + 버튼
 // Mygoal 목록들
-import React from "react";
+import React, { useState } from "react";
+import PlusButton from "../../assets/PlusButton.svg";
 
-const MyGoalComponent = () => (
-  <div className="my-goal-component">
-    <h4>내 목표</h4>
-    <ul>
-      <li>프로젝트 완성하기</li>
-      <li>새로운 기술 습득</li>
-    </ul>
-  </div>
-);
+// MyGoalComponent 구현
+const MyGoalComponent = ({ className }) => {
+  return (
+    <div className={`${className} pl-4 pr-4`}>
+      <div className="border-t  border-gray-300">
+        <div className="flex justify-between items-center p-2.5">
+          {" "}
+          <div className="text-lg text-gray585151 font-bold pl-1">My Goal</div>{" "}
+          <div className="flex items-center pr-2">
+            <img src={PlusButton} alt="Add My Goal" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default MyGoalComponent;
