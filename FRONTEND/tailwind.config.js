@@ -8,8 +8,9 @@ module.exports = {
     extend: {
       colors: {
         EDEEEE: "#EDEEEE",
-        585151: "#585151",
-        818181: "#818181",
+        gray585151: "#585151",
+        gray818181: "#818181",
+        grayEBEBEB: "#EBEBEB",
       },
       height: {
         50: "50px", // 예를 들어, 7.5rem은 실제로는 120px에 해당할 수 있습니다.
