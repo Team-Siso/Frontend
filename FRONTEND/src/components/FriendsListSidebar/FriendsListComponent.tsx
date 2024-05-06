@@ -1,6 +1,6 @@
 // 이 컴포넌트는 친구 컴포넌트(FriendComponent)를 친구의 수 만큼 렌더링 해주는 코드의 컴포넌트이다.
 
-import React from "react";
+// import React from "react";
 import FriendComponent from "./FriendComponent";
 
 // 가정을 위해 친구들의 목록을 임시 데이터로 만들었습니다.
