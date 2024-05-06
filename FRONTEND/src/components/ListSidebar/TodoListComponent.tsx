@@ -13,25 +13,28 @@ const TodoListComponent = ({ className }) => {
   const [showInput, setShowInput] = useState(false);
   const [todos, setTodos] = useState([]); // 할 일 목록을 저장할 상태
   const [inputValue, setInputValue] = useState(""); // 입력 상자의 현재 값을 저장할 상태
+  const [editId, setEditId] = useState(null);
+  const [editText, setEditText] = useState("");
+  const [showEditOptions, setShowEditOptions] = useState(null); // 호버 중인 항목의 ID를 저장하는 상태
 
   const handleIconClick = () => {
-    setShowInput(true); // 입력 상자를 표시
+    setShowInput(true);
   };
 
   const handleInputChange = (event) => {
-    setInputValue(event.target.value); // 입력창의 값이 변경될 때마다 상태 업데이트
+    setInputValue(event.target.value);
   };
 
   const handleAddTodo = () => {
     if (inputValue.trim()) {
       const newTodo = {
-        id: todos.length + 1, // 간단한 ID 생성
+        id: todos.length + 1,
         title: inputValue,
-        completed: false, // 완료 상태 초기값
+        completed: false,
       };
-      setTodos([...todos, newTodo]); // 새 할 일을 목록에 추가
-      setInputValue(""); // 입력창 초기화
-      setShowInput(false); // 입력창 숨기기
+      setTodos([...todos, newTodo]);
+      setInputValue("");
+      setShowInput(false);
     }
   };
 
@@ -43,6 +46,31 @@ const TodoListComponent = ({ className }) => {
       return todo;
     });
     setTodos(updatedTodos);
+  };
+
+  const handleDelete = (id) => {
+    setTodos(todos.filter((todo) => todo.id !== id));
+  };
+
+  const startEdit = (id, title) => {
+    setEditId(id);
+    setEditText(title);
+    setShowEditOptions(null); // 편집 시작 시, 편집 옵션 숨김
+  };
+
+  const handleEditChange = (event) => {
+    setEditText(event.target.value);
+  };
+
+  const handleEditSave = (id) => {
+    const updatedTodos = todos.map((todo) => {
+      if (todo.id === id) {
+        return { ...todo, title: editText };
+      }
+      return todo;
+    });
+    setTodos(updatedTodos);
+    setEditId(null);
   };
 
   return (
@@ -70,11 +98,13 @@ const TodoListComponent = ({ className }) => {
         </div>
       )}
       {/* 할 일 목록을 나열 */}
-      <ul className="mx-4">
+      <ul className="divide-y divide-gray-300 mx-4">
         {todos.map((todo, index) => (
           <li
             key={todo.id}
-            className={`flex items-center py-3 pl-2 pr-2 ${index < todos.length - 1 ? "border-b border-gray-300" : ""}`}
+            className="flex items-center py-3 pl-2 pr-2 relative"
+            onMouseOver={() => setShowEditOptions(todo.id)}
+            onMouseLeave={() => setShowEditOptions(null)}
           >
             <img
               src={todo.completed ? CheckedBoxIcon : UncheckBoxIcon}
@@ -82,7 +112,35 @@ const TodoListComponent = ({ className }) => {
               className="cursor-pointer"
               onClick={() => toggleTodoCompletion(todo.id)}
             />
-            <span className={todo.completed ? "ml-2" : "ml-2"}>{todo.title}</span>
+
+            <span className={todo.completed ? "ml-2 line-through" : "ml-2"}>
+              {todo.id === editId ? (
+                <input
+                  type="text"
+                  value={editText}
+                  onChange={handleEditChange}
+                  onBlur={() => handleEditSave(todo.id)}
+                />
+              ) : (
+                todo.title
+              )}
+            </span>
+            {showEditOptions === todo.id && (
+              <div className="absolute right-0 top-0 rounded-lg">
+                <button
+                  className="px-2 py-1 border-b-2 border-r-2 mr-2 border-gray-300 rounded-lg text-sm"
+                  onClick={() => startEdit(todo.id, todo.title)}
+                >
+                  수정
+                </button>
+                <button
+                  className="px-2 py-1 border-b-2 border-gray-300 rounded-lg text-sm"
+                  onClick={() => handleDelete(todo.id)}
+                >
+                  삭제
+                </button>
+              </div>
+            )}
           </li>
         ))}
       </ul>
