@@ -19,7 +19,7 @@ const MyGoalComponent = ({ className }) => {
   };
 
   return (
-    <div className={className}>
+    <div className={`${className} bg-blue-200`}>
       <div style={{ fontSize: "24px", fontWeight: "bold" }}>My Goal</div>
       <div style={{ display: "flex", alignItems: "center", cursor: "pointer" }} onClick={addGoal}>
         <img src="/path/to/plus-icon.svg" alt="Add Goal" />

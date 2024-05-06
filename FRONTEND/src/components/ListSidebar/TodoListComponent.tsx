@@ -16,18 +16,12 @@ interface Todo {
 
 const TodoListComponent: React.FC<{ className?: string }> = ({ className }) => {
   return (
-    <div className={className}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "10px",
-        }}
-      >
-        <div style={{ fontSize: "24px", fontWeight: "bold" }}>Todos</div>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <img src={addTodoIcon} alt="Add Todo" style={{ marginRight: "10px" }} />
+    <div className={`${className} bg-blue-100`}>
+      <div className="flex justify-between items-center p-2.5">
+        {" "}
+        <div className="text-2xl font-bold">Todos</div>{" "}
+        <div className="flex items-center">
+          <img src={addTodoIcon} alt="Add Todo" className="mr-2.5" />{" "}
           <img src={addTimeTodoIcon} alt="Add Time to Todo" />
         </div>
       </div>

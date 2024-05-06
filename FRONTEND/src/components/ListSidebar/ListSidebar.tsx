@@ -8,14 +8,12 @@ import MyProfileComponent from "./MyProfileComponent";
 
 const ListSidebar = () => (
   <div className="flex flex-col h-screen">
-    <TodayComponent className="flex-none" />{" "}
-    {/* 고정된 높이가 필요하다면 className에 h-[값] 추가 */}
-    <div className="flex-grow flex flex-col justify-between">
+    <TodayComponent className="flex-none h-60" />{" "}
+    <div className="flex-grow flex flex-col">
       <TodoListComponent />
       <MyGoalComponent />
     </div>
-    <MyProfileComponent className="flex-none" />{" "}
-    {/* 고정된 높이가 필요하다면 className에 h-[값] 추가 */}
+    <MyProfileComponent className="flex-none h-150" />
   </div>
 );
 
