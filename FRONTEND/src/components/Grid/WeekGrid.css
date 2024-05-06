@@ -5,7 +5,7 @@
   text-align: center;
   position: relative;
   overflow-y: auto; /* 세로 스크롤 활성화 */
-  max-height: 800px; /* 적당한 최대 높이 설정 */
+  max-height: 630px; /* 적당한 최대 높이 설정 */
 }
 
 .time-labels {
@@ -66,3 +66,11 @@
   border-bottom: none; /* 선택된 부분의 아랫부분 점선 제거 */
 }
 
+/* 격자 선을 숨기는 스타일 */
+.hidden-grid-lines .time-cell {
+  border-bottom: none; /* 가로선 제거 */
+}
+
+.hidden-grid-lines .day-column::after {
+  display: none; /* 세로 중간 점선 제거 */
+}
