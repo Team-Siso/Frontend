@@ -9,14 +9,13 @@ import PlusButton from "../../assets/PlusButton.svg";
 // MyGoalComponent 구현
 const MyGoalComponent = ({ className }) => {
   return (
-    <div className={`${className} pl-4 pr-4`}>
-      <div className="border-t  border-gray-300">
-        <div className="flex justify-between items-center p-2.5">
-          {" "}
-          <div className="text-lg text-gray585151 font-bold pl-1">My Goal</div>{" "}
-          <div className="flex items-center pr-2">
-            <img src={PlusButton} alt="Add My Goal" />
-          </div>
+    <div className={`${className}`}>
+      <hr className="mx-4 my-2 border-gray-300" />
+      <div className="flex justify-between items-center p-2.5">
+        {" "}
+        <div className="text-lg text-gray585151 font-bold pl-1">My Goal</div>{" "}
+        <div className="flex items-center pr-2">
+          <img src={PlusButton} alt="Add My Goal" />
         </div>
       </div>
     </div>
