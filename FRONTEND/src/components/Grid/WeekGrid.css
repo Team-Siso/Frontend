@@ -78,8 +78,9 @@
 .day {
   width: '10%';
   text-align: 'center';
-  margin-left: '10px';
+  margin-left: '8px';
   color: var(--default-color, black); /* 기본 텍스트 색상 */
+  padding-right: 5px;
 }
 
 .day-Sun {
@@ -89,4 +90,3 @@
 .day-Sat {
   color: #1568c0; /* 토요일 색상 */
 }
-

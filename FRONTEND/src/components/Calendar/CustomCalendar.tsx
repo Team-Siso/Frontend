@@ -1,76 +1,38 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import moment from "moment";
-import "./CustomCalendar.css";
 import { isSaturday, isSunday } from "date-fns";
-import Toggle from "../Toggle";
+import "./CustomCalendar.css";
 
-type ValuePiece = Date | null;
-type Value = ValuePiece | [ValuePiece, ValuePiece];
+type Value = Date | [Date, Date];
 
-// Props 타입 정의
-interface CustomCalendarProps {
-  onToggleChange: (isWeekGrid: boolean) => void; // onToggleChange prop의 타입을 boolean 함수로 정의
-}
+function CustomCalendar() {
+  const [value, setValue] = useState<Value>(new Date());
 
-function CustomCalendar({ onToggleChange }: CustomCalendarProps) {
-  const formatMonthYear = (locale, date) => {
-    return date.toLocaleString("en-US", { month: "long" });
-  };
-  const [value, onChange] = useState<Value>(new Date());
-  const [nowDate, setNowDate] = useState("날짜");
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleToggleCalendar = () => {
-    setIsOpen(!isOpen);
+  const handleDateChange = (selectedDate: Date) => {
+    setValue(selectedDate);
   };
 
-  const handleDateChange = (selectedDate) => {
-    onChange(selectedDate);
-    setIsOpen(false);
-    setNowDate(moment(selectedDate).format("YYYY년 MM월 DD일"));
-  };
-
-//토요일, 일요일 색상 구분을 위한 함수
-  const tileClassName = ({ date, view }) => {
+  const tileClassName = ({ date, view }: { date: Date; view: string }) => {
     if (view === "month") {
       if (isSaturday(date)) return "saturday";
       if (isSunday(date)) return "sunday";
     }
-  };
-
-// 월 클릭 이벤트 핸들러
-  const handleMonthClick = (event) => {
-// 이벤트 전파를 막음
-    event.stopPropagation();
-  };
-
-  const handleToggleChange = (value: boolean) => {
-    console.log(`monthly-weekly-Change is now ${value ? "enabled" : "disabled"}.`);
-    onToggleChange(value);
+    return "";
   };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "10px", marginRight:'10px' }}>
-        <Toggle
-          id="monthly-weekly-toggle"
-          label=""
-          onToggle={handleToggleChange}
-        />
-      </div>
-      <main style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+      <main style={{ flex: 1, display: "flex", justifyContent: "center" }}>
         <Calendar
           locale="en-US"
           onChange={handleDateChange}
           value={value}
           formatDay={(locale, date) => moment(date).format("DD")}
-          formatMonthYear={formatMonthYear}
           tileClassName={tileClassName}
           showNeighboringMonth={false}
-          onClickMonth={handleMonthClick}
-          tileContent={({ date, view }) => <div className="date-tile">{date.getDate()}</div>}
+          tileContent={({ date }) => <div className="date-tile">{date.getDate()}</div>}
         />
       </main>
     </div>

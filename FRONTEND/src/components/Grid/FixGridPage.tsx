@@ -17,7 +17,7 @@ const FixGridPage = ({ onPageChange }) => {
                 ))}
             </div>
             <WeekGrid />
-            <ConfirmButton text="Confirm" onClick={() => onPageChange('calendar')} />
+            <ConfirmButton text="확인" onClick={() => onPageChange('calendar')} />
         </div>
     );
 };
