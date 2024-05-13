@@ -31,14 +31,13 @@ const Toggle: React.FC<ToggleProps> = ({ id, label, onToggle }) => {
           checked={isChecked}
           onChange={handleOnChange}
         />
-        <div className={`${sizeClasses.backgroundSize} rounded-full transition-colors duration-300 ${
-          isChecked ? 'bg-sky-300' : 'bg-gray-300'
-        }`}></div>
+        <div className={`${sizeClasses.backgroundSize} rounded-full transition-colors duration-300 ${isChecked ? 'bg-sky-300' : 'bg-gray-300'}`}>
         <div
-          className={`${sizeClasses.dotSize} absolute left-0.5 top-0.5 bg-white rounded-full transition-transform duration-300 ${
-            isChecked ? sizeClasses.translateSize : ''
-          }`}
-        ></div>
+  className={`${sizeClasses.dotSize} absolute left-0.5 top-0.5 bg-white rounded-full transition-transform duration-300 ${
+    isChecked ? 'translate-x-4' : 'translate-x-0'
+  }`}
+></div>
+</div>
       </div>
     </label>
   );

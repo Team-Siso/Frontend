@@ -5,7 +5,7 @@
   text-align: center;
   position: relative;
   overflow-y: auto; /* 세로 스크롤 활성화 */
-  max-height: 630px; /* 적당한 최대 높이 설정 */
+  max-height: 650px; /* 적당한 최대 높이 설정 */
 }
 
 .time-labels {
@@ -73,4 +73,20 @@
 
 .hidden-grid-lines .day-column::after {
   display: none; /* 세로 중간 점선 제거 */
+}
+
+.day {
+  width: '10%';
+  text-align: 'center';
+  margin-left: '8px';
+  color: var(--default-color, black); /* 기본 텍스트 색상 */
+  padding-right: 5px;
+}
+
+.day-Sun {
+  color: #cb280ff0; /* 일요일 색상 */
+}
+
+.day-Sat {
+  color: #1568c0; /* 토요일 색상 */
 }

@@ -1,14 +1,39 @@
-// CustomCalendar 컴포넌트를 렌더링하는 페이지
-import React from "react";
-import CustomCalendar from "./CustomCalendar"; // MainPage 컴포넌트를 불러옴
-import "./CalendarPage.css";
+import React, { useState } from 'react';
+import CustomCalendar from './CustomCalendar';
+import WeekGridPage from '../Grid/WeekGridPage';
+import ConfirmButton from '../ConfirmButton';
+import Toggle from '../Toggle';
 
-const CalendarPage = () => {
+const CalendarPage = ({ onPageChange }) => {
+  const [view, setView] = useState('calendar');
+
+  const handleToggleChange = (isWeekGrid) => {
+    setView(isWeekGrid ? 'weekGrid' : 'calendar');
+  };
+
+  const handleConfirmClick = () => {
+    console.log('FixGrid button clicked');
+    if (typeof onPageChange === 'function') {
+      onPageChange('fixGrid');
+    } else {
+      console.error('onPageChange is not a function');
+    }
+  };
+
   return (
-    <div className="calendar-container">
-      <CustomCalendar className="custom-calendar" />
+    <div style={{ position: 'relative', height: '100vh' }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", padding: "10px" }}>
+        <Toggle
+          id="view-toggle"
+          onToggle={handleToggleChange}
+        />
+      </div>
+      {view === 'weekGrid' ? <WeekGridPage /> : <CustomCalendar />}
+      {view === 'calendar' &&
+        <ConfirmButton onClick={handleConfirmClick} text="고정 루틴 관리하기" />
+      }
     </div>
-  ); // MainPage 컴포넌트를 렌더링
+  );
 };
 
 export default CalendarPage;
