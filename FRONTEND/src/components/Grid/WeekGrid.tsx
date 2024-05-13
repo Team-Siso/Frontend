@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './WeekGrid.css';
-import ConfirmButton from '../ConfirmButton';  // ConfirmButton의 경로를 확인하세요.
+import ConfirmButton from '../ConfirmButton';
 
 interface DragStart {
   dayIndex: number;
@@ -11,9 +11,13 @@ interface DragStart {
 
 const WeekGrid: React.FC = () => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const times = Array.from({ length: 48 }, (_, i) => `${Math.floor(i / 2) + 5}:${i % 2 === 0 ? '00' : '30'}`);
+  // 시간 배열 생성 로직 수정
+  const times = Array.from({ length: 48 }, (_, i) => {
+    const hour = (Math.floor(i / 2) + 5) % 24; // 5시부터 시작하고 24시간 주기로 반복
+    const minute = i % 2 === 0 ? '00' : '30';
+    return `${hour.toString().padStart(2, '0')}:${minute}`;
+  });
 
-  // 색상 배열 직접 정의
   const colors = ['#D8EAF6', '#D9F6D8', '#FDEDE5', '#DAEBE5', '#d5dfef', '#fcd8ee', '#ead6fb'];
 
   const [selectedCells, setSelectedCells] = useState<{ [key: string]: boolean }>({});
@@ -90,7 +94,6 @@ const WeekGrid: React.FC = () => {
           </div>
         ))}
       </div>
-      <ConfirmButton onClick={handleConfirm} />
     </div>
   );
 };

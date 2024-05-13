@@ -5,7 +5,7 @@
   text-align: center;
   position: relative;
   overflow-y: auto; /* 세로 스크롤 활성화 */
-  max-height: 760px; /* 적당한 최대 높이 설정 */
+  max-height: 650px; /* 적당한 최대 높이 설정 */
 }
 
 .time-labels {
