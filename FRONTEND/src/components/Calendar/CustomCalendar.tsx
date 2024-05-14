@@ -7,11 +7,16 @@ import "./CustomCalendar.css";
 
 type Value = Date | [Date, Date];
 
-function CustomCalendar() {
+interface CustomCalendarProps {
+  onDateChange: (date: Date) => void;
+}
+
+const CustomCalendar: React.FC<CustomCalendarProps> = ({ onDateChange }) => {
   const [value, setValue] = useState<Value>(new Date());
 
   const handleDateChange = (selectedDate: Date) => {
     setValue(selectedDate);
+    onDateChange(selectedDate);
   };
 
   const tileClassName = ({ date, view }: { date: Date; view: string }) => {
@@ -37,6 +42,6 @@ function CustomCalendar() {
       </main>
     </div>
   );
-}
+};
 
 export default CustomCalendar;

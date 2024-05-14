@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
-import WeekDates from '../Calendar/WeekDates';  
+import WeekDates from '../Calendar/WeekDates';
 import WeekGrid from './WeekGrid';
 import './WeekGrid.css';
 import ConfirmButton from '../ConfirmButton';
 
-const WeekGridPage = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+interface WeekGridPageProps {
+  selectedDate: Date;
+}
+
+const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
+  const [showGrid, setShowGrid] = useState(true);
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const handleConfirmClick = () => {
     console.log('Confirm button clicked');
+    setShowGrid(false);  // 그리드 숨기기
   };
 
   return (
@@ -22,7 +27,7 @@ const WeekGridPage = () => {
           </div>
         ))}
       </div>
-      <WeekGrid />
+      <WeekGrid showGrid={showGrid} />
       <div style={{ position: 'absolute', bottom: '-20px', right: '20px' }}>
         <ConfirmButton
           onClick={handleConfirmClick}
