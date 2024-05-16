@@ -18,7 +18,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center" onClick={handleBackgroundClick}>
+    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" onClick={handleBackgroundClick}>
       <div className="bg-white p-8 rounded w-96 text-center" onClick={(e) => e.stopPropagation()}>
         {children}
       </div>

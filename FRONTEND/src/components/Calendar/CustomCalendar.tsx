@@ -38,6 +38,12 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({ onDateChange }) => {
           tileClassName={tileClassName}
           showNeighboringMonth={false}
           tileContent={({ date }) => <div className="date-tile">{date.getDate()}</div>}
+          navigationLabel={({ date }) => (
+            <div className="react-calendar__navigation__label">
+              <span className="year-label">{moment(date).format("YYYY")}</span>
+              <span className="month-label">{moment(date).format("MMMM")}</span>
+            </div>
+          )}
         />
       </main>
     </div>
