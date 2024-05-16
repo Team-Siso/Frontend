@@ -1,7 +1,7 @@
 import React from 'react';
 import Modal from './Modal';
 import Toggle from '../Toggle';
-import ProfileSection from '../ProfileSection';
+import ProfileSection from './SettingsModalProfileSection';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -38,7 +38,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         type="submit"
         className="mt-3 w-1/2 bg-gray-300 hover:bg-gray-400 text-white font-bold py-2 px-4 rounded-full"
       >
-        확인
+        로그아웃
       </button>
       </div>
     </Modal>

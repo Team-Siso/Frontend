@@ -1,5 +1,5 @@
 import React from 'react';
-import { startOfWeek, eachDayOfInterval, endOfWeek, format } from 'date-fns';
+import { startOfWeek, eachDayOfInterval, endOfWeek, format, isSameDay } from 'date-fns';
 
 interface WeekDatesProps {
   selectedDate: Date;
@@ -9,6 +9,7 @@ const WeekDates: React.FC<WeekDatesProps> = ({ selectedDate }) => {
   const startDate = startOfWeek(selectedDate, { weekStartsOn: 0 });
   const endDate = endOfWeek(selectedDate, { weekStartsOn: 0 });
   const weekDays = eachDayOfInterval({ start: startDate, end: endDate });
+  const today = new Date();
 
   return (
     <div style={{
@@ -23,13 +24,13 @@ const WeekDates: React.FC<WeekDatesProps> = ({ selectedDate }) => {
           width: '50px',  // 조정 가능
           height: '50px',  // 조정 가능
           lineHeight: '50px',  // 중앙 정렬을 위해
-          backgroundColor: index === new Date().getDay() ? '#5b5b5b' : '#ccc',  // 오늘 날짜는 다른 색상
+          backgroundColor: isSameDay(day, today) ? '#5b5b5b' : '#ccc',  // 오늘 날짜는 다른 색상
           color: '#fff',
           borderRadius: '20%',  // 원형 디자인
           margin: '0 50px',  // 날짜 간 간격 조정
           textAlign: 'center',  // 텍스트 중앙 정렬
         }}>
-          {format(day, 'dd')}
+          {format(day, 'd')} 
         </div>
       ))}
     </div>

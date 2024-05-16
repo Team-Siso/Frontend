@@ -7,11 +7,16 @@ import "./CustomCalendar.css";
 
 type Value = Date | [Date, Date];
 
-function CustomCalendar() {
+interface CustomCalendarProps {
+  onDateChange: (date: Date) => void;
+}
+
+const CustomCalendar: React.FC<CustomCalendarProps> = ({ onDateChange }) => {
   const [value, setValue] = useState<Value>(new Date());
 
   const handleDateChange = (selectedDate: Date) => {
     setValue(selectedDate);
+    onDateChange(selectedDate);
   };
 
   const tileClassName = ({ date, view }: { date: Date; view: string }) => {
@@ -33,10 +38,16 @@ function CustomCalendar() {
           tileClassName={tileClassName}
           showNeighboringMonth={false}
           tileContent={({ date }) => <div className="date-tile">{date.getDate()}</div>}
+          navigationLabel={({ date }) => (
+            <div className="react-calendar__navigation__label">
+              <span className="year-label">{moment(date).format("YYYY")}</span>
+              <span className="month-label">{moment(date).format("MMMM")}</span>
+            </div>
+          )}
         />
       </main>
     </div>
   );
-}
+};
 
 export default CustomCalendar;
