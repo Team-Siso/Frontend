@@ -1,95 +1,73 @@
-import React, { useState, useEffect, useRef } from "react";
-import "./ProgressBarComponent.css";
+import React, { useState } from "react";
 
-import Circle from "./Circle";
-import Percent from "./Percent";
+import ProgressBar_0 from "../../assets/ProgressBar_0.svg";
+import ProgressBar_20 from "../../assets/ProgressBar_20.svg";
+import ProgressBar_40 from "../../assets/ProgressBar_40.svg";
+import ProgressBar_60 from "../../assets/ProgressBar_60.svg";
+import ProgressBar_80 from "../../assets/ProgressBar_80.svg";
+import ProgressBar_100 from "../../assets/ProgressBar_100.svg";
+import ProgressBar_Empty from "../../assets/ProgressBar_Empty.svg";
+import HeartImage_0 from "../../assets/HeartImage_0.svg";
+import HeartImage_20 from "../../assets/HeartImage_20.svg";
+import HeartImage_40 from "../../assets/HeartImage_40.svg";
+import HeartImage_60 from "../../assets/HeartImage_60.svg";
+import HeartImage_80 from "../../assets/HeartImage_80.svg";
+import HeartImage_100 from "../../assets/HeartImage_100.svg";
+
 const ProgressBarComponent = () => {
-  const circle = useRef(null);
-  const box = useRef(null);
-  const [con, setCon] = useState(null);
-  const [cir, setCir] = useState(null);
-  let h1 = useRef(null);
-  const [num, setNum] = useState(null);
+  const [progress, setProgress] = useState(ProgressBar_Empty);
 
-  useEffect(() => {
-    const conWidth = box.current.getBoundingClientRect().width;
-    setCon(conWidth);
-    const circleWidth = circle.current.getBoundingClientRect().width;
-    setCir(circleWidth);
-  }, []);
-
-  let isDragging = null;
-  let originX = null;
-  let originLeft = null;
-  let result;
-
-  const drag = (e) => {
-    isDragging = true;
-    originX = e.clientX;
-    originLeft = circle.current.offsetWidth;
-  };
-  const move = (e) => {
-    if (isDragging) {
-      const diffX = e.clientX - originX;
-      const endX = con - cir;
-      //circle.current.style.left = `${Math.min(Math.max(0, originLeft + diffX),endX)}px`;
-      circle.current.style.width = `${Math.min(Math.max(0, originLeft + diffX), endX)}px`;
+  const handleHeartClick = (percent) => {
+    switch (percent) {
+      case 0:
+        setProgress(ProgressBar_0);
+        break;
+      case 20:
+        setProgress(ProgressBar_20);
+        break;
+      case 40:
+        setProgress(ProgressBar_40);
+        break;
+      case 60:
+        setProgress(ProgressBar_60);
+        break;
+      case 80:
+        setProgress(ProgressBar_80);
+        break;
+      case 100:
+        setProgress(ProgressBar_100);
+        break;
+      default:
+        setProgress(ProgressBar_Empty);
     }
-  };
-  const stop = (e) => {
-    isDragging = false;
+    console.log(`${percent}% 선택됨`);
   };
 
-  const getPercent = (e) => {
-    const totalWidth = box.current.offsetWidth;
-    const circlePosition = circle.current.offsetWidth; // 이는 드래그에 따라 너비가 증가한다고 가정한 것입니다
-    const percentage = (circlePosition / totalWidth) * 100;
-    setNum(percentage.toFixed(0)); // 정수 퍼센트 값 보장
-    h1.current.innerText = percentage.toFixed(0) + "%";
-  };
-
-  const init = (e) => {
-    let endX = con - cir;
-    circle.current.style.width = `${Math.min(
-      Math.max(0, e.clientX - e.currentTarget.offsetLeft),
-      endX
-    )}px`;
+  const heartImages = {
+    0: HeartImage_0,
+    20: HeartImage_20,
+    40: HeartImage_40,
+    60: HeartImage_60,
+    80: HeartImage_80,
+    100: HeartImage_100,
   };
 
   return (
-    <div className="container">
-      {/* <div className="percent">
-        <h1 ref={h1}>0%</h1>
-      </div> */}
-      <div>
-        <span
-          className="bar"
-          onMouseMove={(e) => {
-            move(e);
-            getPercent(e);
-          }}
-          ref={box}
-          onMouseUp={(e) => {
-            stop(e);
-            init(e);
-          }}
-          onMouseLeave={(e) => {
-            stop(e);
-          }}
+    <div className="relative w-full h-12">
+      <img src={progress} alt="Progress Bar" className="absolute top-0 left-0 w-full h-full" />
+      {[0, 20, 40, 60, 80, 100].map((percent, index) => (
+        <button
+          key={index}
+          className="absolute"
+          style={{ left: `calc(${percent}% - ${percent * 0.31}px + 7px)`, top: "11px" }} // 하트 이미지가 중앙에 오도록 조정
+          onClick={() => handleHeartClick(percent)}
         >
-          <Circle num={num} />
-          <span
-            className="progress"
-            onMouseDown={(e) => {
-              drag(e);
-            }}
-            ref={circle}
-          ></span>
-
-          <Percent />
-        </span>
-      </div>
+          <img src={heartImages[percent]} alt={`${percent}% Heart`} className="w-3.5 h-3.5" />{" "}
+          {/* 크기 조정 */}
+        </button>
+      ))}
     </div>
   );
 };
+
 export default ProgressBarComponent;

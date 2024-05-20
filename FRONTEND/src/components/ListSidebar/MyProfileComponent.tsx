@@ -3,7 +3,7 @@
 import FriendsProfileEx from "../../assets/FriendsProfileEx.svg";
 
 const MyProfileComponent = ({ className }) => (
-  <div className={`flex items-center pl-7 pr-7 pt-3 font-sans  text-lg ${className}`}>
+  <div className={`flex items-center pl-sd7 pr-7 pt-3 font-sans  text-lg ${className}`}>
     <img src={FriendsProfileEx} alt="프로필" className="rounded-full mr-4 w-20 h-20" />
     <div>
       <div className="font-bold text-xl text-black">초이언니</div>
