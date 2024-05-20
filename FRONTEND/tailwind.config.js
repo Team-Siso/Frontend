@@ -10,7 +10,10 @@ module.exports = {
         EDEEEE: "#EDEEEE",
         gray585151: "#585151",
         gray818181: "#818181",
+        gray9E9E9E: "#9E9E9E",
         grayEBEBEB: "#EBEBEB",
+        blue7580DB: "#7580DB",
+        blueD0DDF2: "#D0DDF2",
       },
       height: {
         50: "50px", // 예를 들어, 7.5rem은 실제로는 120px에 해당할 수 있습니다.
