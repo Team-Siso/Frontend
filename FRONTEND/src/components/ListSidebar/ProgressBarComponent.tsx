@@ -59,7 +59,7 @@ const ProgressBarComponent = () => {
         <button
           key={index}
           className="absolute"
-          style={{ left: `calc(${percent}% - ${percent * 0.3}px)`, top: "10px" }} // 하트 이미지가 중앙에 오도록 조정
+          style={{ left: `calc(${percent}% - ${percent * 0.31}px + 7px)`, top: "11px" }} // 하트 이미지가 중앙에 오도록 조정
           onClick={() => handleHeartClick(percent)}
         >
           <img src={heartImages[percent]} alt={`${percent}% Heart`} className="w-3.5 h-3.5" />{" "}
