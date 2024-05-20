@@ -7,46 +7,56 @@ interface FriendSearchModalProps {
 }
 
 interface Friend {
+  userId: number;
   profilePicture: string;
   nickname: string;
   email: string;
+  introduce: string;
 }
-
-const friends: Friend[] = [
-  {
-    profilePicture: 'https://via.placeholder.com/50', // 대체 이미지 URL 사용
-    nickname: 'JohnDoe',
-    email: 'johndoe@gmail.com',
-  },
-  {
-    profilePicture: 'https://via.placeholder.com/50',
-    nickname: 'JaneSmith',
-    email: 'janesmith@gmail.com',
-  },
-  {
-    profilePicture: 'https://via.placeholder.com/50',
-    nickname: 'BobJohnson',
-    email: 'bobjohnson@gmail.com',
-  },
-  {
-    profilePicture: 'https://via.placeholder.com/50',
-    nickname: 'AliceDavis',
-    email: 'alicedavis@gmail.com',
-  },
-];
 
 const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [friends, setFriends] = useState<Friend[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearch = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
-  };
 
-  const filteredFriends = friends.filter(
-    friend =>
-      friend.nickname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      friend.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    if (event.target.value.trim() === '') {
+      setFriends([]);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/members/search?query=${encodeURIComponent(event.target.value)}`);
+      
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("API Response Data:", data);  // 데이터 로그
+
+      if (!Array.isArray(data)) {
+        throw new Error('Unexpected response data format');
+      }
+
+      const formattedData = data.map((friend: any) => ({
+        userId: friend.userId,
+        profilePicture: friend.memberPhoto,
+        nickname: friend.name,
+        email: friend.email, // Assuming the response includes an email field
+        introduce: friend.introduce,
+      }));
+      setFriends(formattedData);
+    } catch (error) {
+      console.error('Error fetching friends:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -63,17 +73,22 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
           <circle cx="11" cy="11" r="6"></circle>
         </svg>
       </div>
-      <ul className="divide-y divide-gray-300 text-gray-900">
-        {filteredFriends.map((friend, index) => (
-          <li key={index} className="py-2 flex items-center mt-1 mb-1">
-            <img src={friend.profilePicture} alt="Profile" className="w-12 h-12 rounded-full mr-4 ml-8" />
-            <div className="flex flex-col">
-              <span className="font-bold">{friend.nickname}</span>
-              <span className="text-gray-600 ml-2">{friend.email}</span>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {loading ? (
+        <div className="text-center">Loading...</div>
+      ) : (
+        <ul className="divide-y divide-gray-300 text-gray-900">
+          {friends.map((friend) => (
+            <li key={friend.userId} className="py-2 flex items-center mt-1 mb-1">
+              <img src={friend.profilePicture} alt="Profile" className="w-12 h-12 rounded-full mr-4 ml-8" />
+              <div className="flex flex-col">
+                <span className="font-bold">{friend.nickname}</span>
+                <span className="text-gray-600 ml-2">{friend.email}</span>
+                <span className="text-gray-500 ml-2">{friend.introduce}</span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </Modal>
   );
 };
