@@ -7,54 +7,37 @@ interface FriendSearchModalProps {
 }
 
 interface Friend {
-  userId: number;
   profilePicture: string;
   nickname: string;
   email: string;
-  introduce: string;
 }
 
 const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [friends, setFriends] = useState<Friend[]>([]);
-  const [loading, setLoading] = useState(false);
 
   const handleSearch = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
+    const query = event.target.value;
+    setSearchTerm(query);
 
-    if (event.target.value.trim() === '') {
+    if (!query.trim()) {
       setFriends([]);
       return;
     }
 
-    setLoading(true);
-
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/members/search?query=${encodeURIComponent(event.target.value)}`);
-      
+      const response = await fetch(`http://localhost:8080/api/v1/members/search?nickNameOrEmail=${encodeURIComponent(query)}`);
       if (!response.ok) {
         throw new Error(`Error: ${response.status}`);
       }
-
       const data = await response.json();
-      console.log("API Response Data:", data);  // 데이터 로그
-
-      if (!Array.isArray(data)) {
-        throw new Error('Unexpected response data format');
-      }
-
-      const formattedData = data.map((friend: any) => ({
-        userId: friend.userId,
+      setFriends(data.map((friend: any) => ({
         profilePicture: friend.memberPhoto,
         nickname: friend.name,
-        email: friend.email, // Assuming the response includes an email field
-        introduce: friend.introduce,
-      }));
-      setFriends(formattedData);
+        email: friend.email
+      })));
     } catch (error) {
       console.error('Error fetching friends:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -73,22 +56,17 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
           <circle cx="11" cy="11" r="6"></circle>
         </svg>
       </div>
-      {loading ? (
-        <div className="text-center">Loading...</div>
-      ) : (
-        <ul className="divide-y divide-gray-300 text-gray-900">
-          {friends.map((friend) => (
-            <li key={friend.userId} className="py-2 flex items-center mt-1 mb-1">
-              <img src={friend.profilePicture} alt="Profile" className="w-12 h-12 rounded-full mr-4 ml-8" />
-              <div className="flex flex-col">
-                <span className="font-bold">{friend.nickname}</span>
-                <span className="text-gray-600 ml-2">{friend.email}</span>
-                <span className="text-gray-500 ml-2">{friend.introduce}</span>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className="divide-y divide-gray-300 text-gray-900">
+        {friends.map((friend, index) => (
+          <li key={index} className="py-2 flex items-center mt-1 mb-1">
+            <img src={friend.profilePicture} alt="Profile" className="w-12 h-12 rounded-full mr-4 ml-8" />
+            <div className="flex flex-col">
+              <span className="font-bold">{friend.nickname}</span>
+              <span className="text-gray-600 ml-2">{friend.email}</span>
+            </div>
+          </li>
+        ))}
+      </ul>
     </Modal>
   );
 };

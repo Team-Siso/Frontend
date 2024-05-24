@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import Input from '../Input';
 
@@ -8,8 +9,37 @@ interface LoginModalProps {
 }
 
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
-  const [email, setEmail] = useState(''); 
-  const [password, setPassword] = useState(''); 
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigate = useNavigate();
+
+  const handleLogin = async () => {
+    const params = new URLSearchParams({
+      email,
+      password,
+    });
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/members/login?${params.toString()}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('로그인 실패');
+      }
+
+      const data = await response.json();
+      console.log('로그인 성공:', data);
+      onClose(); // 로그인 성공 후 모달 닫기
+      navigate('/main'); // 로그인 성공 후 메인 페이지로 이동
+    } catch (error) {
+      console.error('Error:', error);
+      alert('로그인 실패');
+    }
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -44,6 +74,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       <button
         type="submit"
         className="w-1/2 bg-gray-300 hover:bg-gray-400 text-white font-bold py-2 px-4 rounded-full"
+        onClick={handleLogin}
       >
         확인
       </button>
