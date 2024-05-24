@@ -4,22 +4,56 @@ import Modal from './Modal';
 interface EditProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
+  memberId: number;
 }
 
-const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) => {
+const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, memberId }) => {
   const [nickname, setNickname] = useState('닉네임');
   const [email, setEmail] = useState('email@example.com');
   const [bio, setBio] = useState('자기소개를 입력하세요!');
-  const [profilePic, setProfilePic] = useState('https://via.placeholder.com/100'); // 기본 프로필 이미지
+  const [profilePic, setProfilePic] = useState<File | null>(null);
 
-  const handleSave = () => {
-    // 저장 로직 추가
-    onClose();
+  const handleSave = async () => {
+    try {
+      // 닉네임 수정 요청
+      await fetch(`http://localhost:8080/api/v1/members/${memberId}/nickname`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nickname }),
+      });
+
+      // 소개글 수정 요청
+      await fetch(`http://localhost:8080/api/v1/members/${memberId}/introduce`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ introduce: bio }),
+      });
+
+      // 프로필 사진 수정 요청
+      if (profilePic) {
+        const formData = new FormData();
+        formData.append('file', profilePic);
+
+        await fetch(`http://localhost:8080/api/v1/members/${memberId}/profile`, {
+          method: 'PUT',
+          body: formData,
+        });
+      }
+
+      onClose(); // 저장 후 모달 닫기
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('프로필 수정 중 오류가 발생했습니다.');
+    }
   };
 
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setProfilePic(URL.createObjectURL(e.target.files[0]));
+      setProfilePic(e.target.files[0]);
     }
   };
 
@@ -33,7 +67,19 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) 
         <h2 className="text-xl font-bold mb-4 text-center">프로필 수정</h2>
         <div className="mb-4 flex justify-center items-center relative">
           <div className="relative cursor-pointer" onClick={openFileInput}>
-            <img src={profilePic} alt="Profile" className="rounded-full w-30 h-30" />
+            {profilePic ? (
+              <img
+                src={URL.createObjectURL(profilePic)}
+                alt="Profile"
+                className="rounded-full w-30 h-30"
+              />
+            ) : (
+              <img
+                src="https://via.placeholder.com/100"
+                alt="Profile"
+                className="rounded-full w-30 h-30"
+              />
+            )}
             <input
               type="file"
               accept="image/*"
@@ -59,6 +105,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="border rounded w-full py-2 px-3 text-gray-700"
+            disabled
           />
         </div>
         <div className="mb-4">

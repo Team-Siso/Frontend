@@ -1,9 +1,17 @@
-import React from "react";
-import MainPage from "./pages/MainPage"; // MainPage 컴포넌트를 불러옴
-import StartPage from "./pages/StartPage"; // MainPage 컴포넌트를 불러옴
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import StartPage from './pages/StartPage';
+import MainPage from './pages/MainPage';
 
 const App = () => {
-  return <MainPage />; // MainPage 컴포넌트를 렌더링
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<StartPage />} />
+        <Route path="/main" element={<MainPage />} />
+      </Routes>
+    </Router>
+  );
 };
 
 export default App;
