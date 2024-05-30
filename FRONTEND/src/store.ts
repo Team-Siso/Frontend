@@ -28,10 +28,12 @@ interface Routine {
 
 interface Schedule {
   id: number;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
+  content: string;
+  checkStatus: number;
+  thisDay: string;
+  startTime: string;
+  endTime: string;
+  completed?: boolean;
 }
 
 interface Member {
@@ -60,12 +62,14 @@ interface SignUpState {
 }
 
 interface AppState {
+  memberId: number | null;
   schedules: Schedule[];
   goals: Goal[];
   routines: Routine[];
   followings: Follow[];
   followers: Follower[];
   members: Member[];
+  setMemberId: (memberId: number) => void;
   setSchedules: (schedules: Schedule[]) => void;
   setGoals: (goals: Goal[]) => void;
   setRoutines: (routines: Routine[]) => void;
@@ -78,6 +82,7 @@ interface AppState {
   fetchFollowings: (memberId: number) => Promise<void>;
   fetchFollowers: (memberId: number) => Promise<void>;
   fetchMembers: (query: string) => Promise<void>;
+  addTodo: (memberId: number, newTodo: Omit<Schedule, "id">) => Promise<void>;
 }
 
 interface ModalState {
@@ -94,6 +99,7 @@ export const useStore = create<SignUpState & AppState & ModalState>((set, get) =
   nickname: "",
   bio: "",
   profilePic: "",
+  memberId: null,
   schedules: [],
   goals: [],
   routines: [],
@@ -110,6 +116,7 @@ export const useStore = create<SignUpState & AppState & ModalState>((set, get) =
   setNickname: (nickname) => set({ nickname }),
   setBio: (bio) => set({ bio }),
   setProfilePic: (profilePic) => set({ profilePic }),
+  setMemberId: (memberId) => set({ memberId }),
   setSchedules: (schedules) => set({ schedules }),
   setGoals: (goals) => set({ goals }),
   setRoutines: (routines) => set({ routines }),
@@ -180,6 +187,10 @@ export const useStore = create<SignUpState & AppState & ModalState>((set, get) =
 
       const data = await response.json();
       console.log("로그인 성공:", data);
+
+      // 로그인 성공 시 memberId를 설정
+      set({ memberId: data.id });
+      console.log("memberId after login:", data.id);
     } catch (error) {
       console.error("Error:", error);
       alert("로그인 실패");
@@ -189,6 +200,16 @@ export const useStore = create<SignUpState & AppState & ModalState>((set, get) =
   fetchSchedules: async (memberId: number) => {
     try {
       const response = await fetch(`/api/v1/calendar/${memberId}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch schedules: ${response.statusText}`);
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new TypeError("Expected JSON response");
+      }
+
       const data = await response.json();
       set({ schedules: data });
     } catch (error) {
@@ -243,6 +264,30 @@ export const useStore = create<SignUpState & AppState & ModalState>((set, get) =
       set({ members: data });
     } catch (error) {
       console.error("Failed to fetch members:", error);
+    }
+  },
+
+  addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">) => {
+    try {
+      const response = await fetch(`/api/v1/member/${memberId}/schedule`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newTodo),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add todo");
+      }
+
+      const data = await response.json();
+      set((state) => ({
+        schedules: [...state.schedules, { ...data, id: data.id }],
+      }));
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to add todo");
     }
   },
 }));
