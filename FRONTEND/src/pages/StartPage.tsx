@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { useStore } from "../store"; // 명명된 내보내기를 사용합니다
 import SignUpModal from "../components/Modal/SignUpModal";
 import LoginModal from "../components/Modal/LoginModal";
 import StartPB from "../assets/StartPB.png"; // 상대 경로로 배경 이미지 불러오기
 
 const StartPage = () => {
-  const [email, setEmail] = useState('');
+  const email = useStore((state) => state.email);
+  const setEmail = useStore((state) => state.setEmail);
   const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
@@ -50,7 +52,7 @@ const StartPage = () => {
           로그인하러가기
         </button>
       </div>
-      <SignUpModal isOpen={isSignUpModalOpen} onClose={closeSignUpModal} email={email} />
+      <SignUpModal isOpen={isSignUpModalOpen} onClose={closeSignUpModal} />
       <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
     </div>
   );

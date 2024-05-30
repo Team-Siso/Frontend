@@ -1,20 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Modal from './Modal';
+import { useStore } from '../../store';
 
 interface FriendSearchModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-interface Friend {
-  profilePicture: string;
-  nickname: string;
-  email: string;
-}
-
 const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [friends, setFriends] = useState<Friend[]>([]);
+  const { searchTerm, friends, setSearchTerm, setFriends } = useStore((state) => ({
+    searchTerm: state.searchTerm,
+    friends: state.friends,
+    setSearchTerm: state.setSearchTerm,
+    setFriends: state.setFriends,
+  }));
 
   const handleSearch = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target.value;
@@ -32,9 +31,9 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
       }
       const data = await response.json();
       setFriends(data.map((friend: any) => ({
-        profilePicture: friend.memberPhoto,
+        profilePicture: friend.memberPhoto || 'default-profile-pic-url', // 기본 프로필 이미지 URL 사용
         nickname: friend.name,
-        email: friend.email
+        bio: friend.introduce, // 소개글 사용
       })));
     } catch (error) {
       console.error('Error fetching friends:', error);
@@ -62,7 +61,7 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
             <img src={friend.profilePicture} alt="Profile" className="w-12 h-12 rounded-full mr-4 ml-8" />
             <div className="flex flex-col">
               <span className="font-bold">{friend.nickname}</span>
-              <span className="text-gray-600 ml-2">{friend.email}</span>
+              <span className="text-gray-600 ml-2">{friend.bio}</span>
             </div>
           </li>
         ))}

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import Modal from './Modal';
+import { useStore } from '../../store';
 
 interface EditProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  memberId: number;
 }
 
-const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, memberId }) => {
+const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) => {
+  const memberId = useStore((state) => state.memberId); // memberId를 zustand에서 가져옵니다.
   const [nickname, setNickname] = useState('닉네임');
   const [email, setEmail] = useState('email@example.com');
   const [bio, setBio] = useState('자기소개를 입력하세요!');

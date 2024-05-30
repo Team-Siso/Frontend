@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import profileImage from '../../assets/profile.png';
 import penIcon from '../../assets/pen.png';
 import EditProfileModal from './EditProfileModal';
+import { useStore } from '../../store';
 
 const ModalProfileSection: React.FC = () => {
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const isEditModalOpen = useStore((state) => state.isEditModalOpen);
+  const setEditModalOpen = useStore((state) => state.setEditModalOpen);
 
   const openEditModal = () => {
-    setIsEditModalOpen(true);
+    setEditModalOpen(true);
   };
 
   const closeEditModal = () => {
-    setIsEditModalOpen(false);
+    setEditModalOpen(false);
   };
 
   return (

@@ -3,55 +3,47 @@ import Modal from './Modal';
 import Input from '../Input';
 import profileImage from '../../assets/profile.png';
 import cameraIcon from '../../assets/camera.png';
+import { useStore } from '../../store';
 
 interface SignUpModalStep2Props {
   isOpen: boolean;
   onClose: () => void;
-  email: string;
-  password: string;
 }
 
-const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose, email, password }) => {
-  const [nickname, setNickname] = useState('');
-  const [bio, setBio] = useState('');
-  const [profilePic, setProfilePic] = useState(profileImage);
+const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose }) => {
+  const email = useStore((state) => state.email);
+  const nickname = useStore((state) => state.nickname);
+  const setNickname = useStore((state) => state.setNickname);
+  const bio = useStore((state) => state.bio);
+  const setBio = useStore((state) => state.setBio);
+  const profilePic = useStore((state) => state.profilePic);
+  const setProfilePic = useStore((state) => state.setProfilePic);
+  const signUp = useStore((state) => state.signUp);
+  const uploadImage = useStore((state) => state.uploadImage);
+
+  const [file, setFile] = useState<File | null>(null);
 
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setProfilePic(URL.createObjectURL(e.target.files[0]));
+    const file = e.target.files?.[0];
+    if (file) {
+      setFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePic(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const handleSubmit = async () => {
-    const memberPhoto = profilePic; // 실제 업로드된 이미지 URL을 사용해야 함
-
-    const requestBody = {
-      email,
-      password,
-      introduce: bio,
-      nickName: nickname,
-      memberPhoto,
-    };
-
     try {
-      const response = await fetch('http://localhost:8080/api/v1/members/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        throw new Error('회원가입 실패');
+      const memberId = await signUp(); // 회원가입을 먼저 진행하여 memberId를 가져옴
+      if (file) {
+        await uploadImage(file, memberId); // 회원가입 후 이미지 업로드
       }
-
-      const data = await response.json();
-      console.log('회원가입 성공:', data);
       onClose();
     } catch (error) {
-      console.error('Error:', error);
-      alert('회원가입 실패');
+      console.error('Error during signup:', error);
     }
   };
 
@@ -60,7 +52,7 @@ const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose, em
       <h2 className="text-2xl font-bold mb-4">회원가입</h2>
       
       <div className="relative flex flex-col items-center mb-4">
-        <img src={profilePic} alt="Profile" className="rounded-full w-24 h-24" />
+        <img src={profilePic || profileImage} alt="Profile" className="rounded-full w-24 h-24" />
         <input 
           type="file" 
           accept="image/*" 
