@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 interface Follow {
   followingId: number;
@@ -92,202 +93,212 @@ interface ModalState {
   setSettingsOpen: (isOpen: boolean) => void;
 }
 
-export const useStore = create<SignUpState & AppState & ModalState>((set, get) => ({
-  email: "",
-  password: "",
-  confirmPassword: "",
-  nickname: "",
-  bio: "",
-  profilePic: "",
-  memberId: null,
-  schedules: [],
-  goals: [],
-  routines: [],
-  followings: [],
-  followers: [],
-  members: [],
-  isFriendSearchOpen: false,
-  setFriendSearchOpen: (isOpen) => set({ isFriendSearchOpen: isOpen }),
-  isSettingsOpen: false,
-  setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen }),
-  setEmail: (email) => set({ email }),
-  setPassword: (password) => set({ password }),
-  setConfirmPassword: (confirmPassword) => set({ confirmPassword }),
-  setNickname: (nickname) => set({ nickname }),
-  setBio: (bio) => set({ bio }),
-  setProfilePic: (profilePic) => set({ profilePic }),
-  setMemberId: (memberId) => set({ memberId }),
-  setSchedules: (schedules) => set({ schedules }),
-  setGoals: (goals) => set({ goals }),
-  setRoutines: (routines) => set({ routines }),
-  setFollowings: (followings) => set({ followings }),
-  setFollowers: (followers) => set({ followers }),
-  setMembers: (members) => set({ members }),
+export const useStore = create(
+  persist<SignUpState & AppState & ModalState>(
+    (set, get) => ({
+      email: "",
+      password: "",
+      confirmPassword: "",
+      nickname: "",
+      bio: "",
+      profilePic: "",
+      memberId: null,
+      schedules: [],
+      goals: [],
+      routines: [],
+      followings: [],
+      followers: [],
+      members: [],
+      isFriendSearchOpen: false,
+      setFriendSearchOpen: (isOpen) => set({ isFriendSearchOpen: isOpen }),
+      isSettingsOpen: false,
+      setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen }),
+      setEmail: (email) => set({ email }),
+      setPassword: (password) => set({ password }),
+      setConfirmPassword: (confirmPassword) => set({ confirmPassword }),
+      setNickname: (nickname) => set({ nickname }),
+      setBio: (bio) => set({ bio }),
+      setProfilePic: (profilePic) => set({ profilePic }),
+      setMemberId: (memberId) => set({ memberId }),
+      setSchedules: (schedules) => set({ schedules }),
+      setGoals: (goals) => set({ goals }),
+      setRoutines: (routines) => set({ routines }),
+      setFollowings: (followings) => set({ followings }),
+      setFollowers: (followers) => set({ followers }),
+      setMembers: (members) => set({ members }),
 
-  signUp: async () => {
-    const { email, password, bio, nickname, profilePic } = get();
+      signUp: async () => {
+        const { email, password, bio, nickname, profilePic } = get();
 
-    const requestBody = {
-      email,
-      password,
-      introduce: bio,
-      nickName: nickname,
-      memberPhoto: profilePic,
-    };
+        const requestBody = {
+          email,
+          password,
+          introduce: bio,
+          nickName: nickname,
+          memberPhoto: profilePic,
+        };
 
-    try {
-      const response = await fetch("http://localhost:8080/api/v1/members/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody),
-      });
+        try {
+          const response = await fetch("http://localhost:8080/api/v1/members/signup", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestBody),
+          });
 
-      if (!response.ok) {
-        throw new Error("회원가입 실패");
-      }
+          if (!response.ok) {
+            throw new Error("회원가입 실패");
+          }
 
-      const data = await response.json();
-      console.log("회원가입 성공:", data);
-      set({
-        email: "",
-        password: "",
-        confirmPassword: "",
-        nickname: "",
-        bio: "",
-        profilePic: "",
-      });
-    } catch (error) {
-      console.error("Error:", error);
-      alert("회원가입 실패");
-    }
-  },
-
-  login: async (email: string, password: string) => {
-    const params = new URLSearchParams({
-      email,
-      password,
-    });
-
-    try {
-      const response = await fetch(
-        `http://localhost:8080/api/v1/members/login?${params.toString()}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          const data = await response.json();
+          console.log("회원가입 성공:", data);
+          set({
+            email: "",
+            password: "",
+            confirmPassword: "",
+            nickname: "",
+            bio: "",
+            profilePic: "",
+          });
+        } catch (error) {
+          console.error("Error:", error);
+          alert("회원가입 실패");
         }
-      );
+      },
 
-      if (!response.ok) {
-        throw new Error("로그인 실패");
-      }
+      login: async (email: string, password: string) => {
+        const params = new URLSearchParams({
+          email,
+          password,
+        });
 
-      const data = await response.json();
-      console.log("로그인 성공:", data);
+        try {
+          const response = await fetch(
+            `http://localhost:8080/api/v1/members/login?${params.toString()}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          );
 
-      // 로그인 성공 시 memberId를 설정
-      set({ memberId: data.id });
-      console.log("memberId after login:", data.id);
-    } catch (error) {
-      console.error("Error:", error);
-      alert("로그인 실패");
+          if (!response.ok) {
+            throw new Error("로그인 실패");
+          }
+
+          const data = await response.json();
+          console.log("로그인 성공:", data);
+
+          // 로그인 성공 시 memberId를 설정
+          set({ memberId: data.id });
+          console.log("memberId after login:", data.id);
+        } catch (error) {
+          console.error("Error:", error);
+          alert("로그인 실패");
+        }
+      },
+
+      fetchSchedules: async (memberId: number): Promise<void> => {
+        try {
+          const response = await fetch(`/api/v1/calendar/${memberId}`);
+          if (!response.ok) {
+            throw new Error(`Failed to fetch schedules: ${response.statusText}`);
+          }
+
+          const contentType = response.headers.get("content-type");
+          if (!contentType || !contentType.includes("application/json")) {
+            const text = await response.text();
+            console.error("Unexpected response content:", text);
+            throw new TypeError("Expected JSON response");
+          }
+
+          const data: Schedule[] = await response.json();
+          set({ schedules: data || [] });
+        } catch (error) {
+          console.error("Failed to fetch schedules:", error);
+          set({ schedules: [] });
+        }
+      },
+
+      fetchGoals: async (memberId: number) => {
+        try {
+          const response = await fetch(`/api/v1/goal/${memberId}`);
+          const data = await response.json();
+          set({ goals: data });
+        } catch (error) {
+          console.error("Failed to fetch goals:", error);
+        }
+      },
+
+      fetchRoutines: async (memberId: number) => {
+        try {
+          const response = await fetch(`/api/v1/routines/${memberId}`);
+          const data = await response.json();
+          set({ routines: data });
+        } catch (error) {
+          console.error("Failed to fetch routines:", error);
+        }
+      },
+
+      fetchFollowings: async (memberId: number) => {
+        try {
+          const response = await fetch(`/api/v1/follow/${memberId}/following`);
+          const data = await response.json();
+          set({ followings: data.friends });
+        } catch (error) {
+          console.error("Failed to fetch followings:", error);
+        }
+      },
+
+      fetchFollowers: async (memberId: number) => {
+        try {
+          const response = await fetch(`/api/v1/follow/${memberId}/followers`);
+          const data = await response.json();
+          set({ followers: data.followers });
+        } catch (error) {
+          console.error("Failed to fetch followers:", error);
+        }
+      },
+
+      fetchMembers: async (query: string) => {
+        try {
+          const response = await fetch(`/api/v1/members/search?nickNameOrEmail=${query}`);
+          const data = await response.json();
+          set({ members: data });
+        } catch (error) {
+          console.error("Failed to fetch members:", error);
+        }
+      },
+
+      addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">) => {
+        try {
+          const response = await fetch(`/api/v1/member/${memberId}/schedule`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(newTodo),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to add todo");
+          }
+
+          const data = await response.json();
+          set((state) => ({
+            schedules: [...state.schedules, { ...data, id: data.id }],
+          }));
+        } catch (error) {
+          console.error("Error:", error);
+          alert("Failed to add todo");
+        }
+      },
+    }),
+    {
+      name: "app-storage", // 이름은 아무거나 설정 가능
+      getStorage: () => localStorage, // 기본 저장소를 localStorage로 설정
     }
-  },
-
-  fetchSchedules: async (memberId: number) => {
-    try {
-      const response = await fetch(`/api/v1/calendar/${memberId}`);
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch schedules: ${response.statusText}`);
-      }
-
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new TypeError("Expected JSON response");
-      }
-
-      const data = await response.json();
-      set({ schedules: data });
-    } catch (error) {
-      console.error("Failed to fetch schedules:", error);
-    }
-  },
-
-  fetchGoals: async (memberId: number) => {
-    try {
-      const response = await fetch(`/api/v1/goal/${memberId}`);
-      const data = await response.json();
-      set({ goals: data });
-    } catch (error) {
-      console.error("Failed to fetch goals:", error);
-    }
-  },
-
-  fetchRoutines: async (memberId: number) => {
-    try {
-      const response = await fetch(`/api/v1/routines/${memberId}`);
-      const data = await response.json();
-      set({ routines: data });
-    } catch (error) {
-      console.error("Failed to fetch routines:", error);
-    }
-  },
-
-  fetchFollowings: async (memberId: number) => {
-    try {
-      const response = await fetch(`/api/v1/follow/${memberId}/following`);
-      const data = await response.json();
-      set({ followings: data.friends });
-    } catch (error) {
-      console.error("Failed to fetch followings:", error);
-    }
-  },
-
-  fetchFollowers: async (memberId: number) => {
-    try {
-      const response = await fetch(`/api/v1/follow/${memberId}/followers`);
-      const data = await response.json();
-      set({ followers: data.followers });
-    } catch (error) {
-      console.error("Failed to fetch followers:", error);
-    }
-  },
-
-  fetchMembers: async (query: string) => {
-    try {
-      const response = await fetch(`/api/v1/members/search?nickNameOrEmail=${query}`);
-      const data = await response.json();
-      set({ members: data });
-    } catch (error) {
-      console.error("Failed to fetch members:", error);
-    }
-  },
-
-  addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">) => {
-    try {
-      const response = await fetch(`/api/v1/member/${memberId}/schedule`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newTodo),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to add todo");
-      }
-
-      const data = await response.json();
-      set((state) => ({
-        schedules: [...state.schedules, { ...data, id: data.id }],
-      }));
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Failed to add todo");
-    }
-  },
-}));
+  )
+);

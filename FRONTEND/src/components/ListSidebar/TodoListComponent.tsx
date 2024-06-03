@@ -12,16 +12,21 @@ const TodoListComponent = ({ className }) => {
   const [editText, setEditText] = useState("");
   const [showEditOptions, setShowEditOptions] = useState(null); // 호버 중인 항목의 ID를 저장하는 상태
 
-  const todos = useStore((state) => state.schedules); // store에서 todos 가져오기
+  const todos = useStore((state) => state.schedules) || []; // store에서 todos 가져오기
   const memberId = useStore((state) => state.memberId);
   const fetchSchedules = useStore((state) => state.fetchSchedules);
   const setSchedules = useStore((state) => state.setSchedules); // setSchedules를 올바르게 가져오기
-
   useEffect(() => {
     console.log("memberId:", memberId); // memberId를 로그로 출력
 
     if (memberId) {
-      fetchSchedules(memberId).then((schedules) => setSchedules(schedules));
+      fetchSchedules(memberId)
+        .then(() => {
+          // fetchSchedules는 void를 반환하므로 별도 처리 불필요
+        })
+        .catch((error) => {
+          console.error("Error fetching schedules:", error);
+        });
     }
   }, [memberId, fetchSchedules, setSchedules]);
 
@@ -35,7 +40,7 @@ const TodoListComponent = ({ className }) => {
 
   const handleAddTodo = async () => {
     if (!memberId) {
-      console.error("Error: memberId is null");
+      console.error("Error: memberI가 null 값입니다.");
       return;
     }
 
@@ -132,50 +137,54 @@ const TodoListComponent = ({ className }) => {
         </div>
       )}
       <ul className="divide-y divide-gray-300 mx-4">
-        {todos.map((todo, index) => (
-          <li
-            key={todo.id}
-            className="flex items-center py-3 pl-2 pr-2 relative"
-            onMouseOver={() => setShowEditOptions(todo.id)}
-            onMouseLeave={() => setShowEditOptions(null)}
-          >
-            <img
-              src={todo.completed ? CheckedBoxIcon : UncheckBoxIcon}
-              alt={todo.completed ? "Todo completed" : "Mark todo as completed"}
-              className="cursor-pointer"
-              onClick={() => toggleTodoCompletion(todo.id)}
-            />
+        {todos.length > 0 ? (
+          todos.map((todo, index) => (
+            <li
+              key={todo.id}
+              className="flex items-center py-3 pl-2 pr-2 relative"
+              onMouseOver={() => setShowEditOptions(todo.id)}
+              onMouseLeave={() => setShowEditOptions(null)}
+            >
+              <img
+                src={todo.completed ? CheckedBoxIcon : UncheckBoxIcon}
+                alt={todo.completed ? "Todo completed" : "Mark todo as completed"}
+                className="cursor-pointer"
+                onClick={() => toggleTodoCompletion(todo.id)}
+              />
 
-            <span className={todo.completed ? "ml-2 line-through" : "ml-2"}>
-              {todo.id === editId ? (
-                <input
-                  type="text"
-                  value={editText}
-                  onChange={handleEditChange}
-                  onBlur={() => handleEditSave(todo.id)}
-                />
-              ) : (
-                todo.content
+              <span className={todo.completed ? "ml-2 line-through" : "ml-2"}>
+                {todo.id === editId ? (
+                  <input
+                    type="text"
+                    value={editText}
+                    onChange={handleEditChange}
+                    onBlur={() => handleEditSave(todo.id)}
+                  />
+                ) : (
+                  todo.content
+                )}
+              </span>
+              {showEditOptions === todo.id && (
+                <div className="absolute right-0 top-0 rounded-lg">
+                  <button
+                    className="px-2 py-1 border-b-2 border-r-2 mr-2 border-gray-300 rounded-lg text-sm"
+                    onClick={() => startEdit(todo.id, todo.content)}
+                  >
+                    수정
+                  </button>
+                  <button
+                    className="px-2 py-1 border-b-2 border-gray-300 rounded-lg text-sm"
+                    onClick={() => handleDelete(todo.id)}
+                  >
+                    삭제
+                  </button>
+                </div>
               )}
-            </span>
-            {showEditOptions === todo.id && (
-              <div className="absolute right-0 top-0 rounded-lg">
-                <button
-                  className="px-2 py-1 border-b-2 border-r-2 mr-2 border-gray-300 rounded-lg text-sm"
-                  onClick={() => startEdit(todo.id, todo.content)}
-                >
-                  수정
-                </button>
-                <button
-                  className="px-2 py-1 border-b-2 border-gray-300 rounded-lg text-sm"
-                  onClick={() => handleDelete(todo.id)}
-                >
-                  삭제
-                </button>
-              </div>
-            )}
-          </li>
-        ))}
+            </li>
+          ))
+        ) : (
+          <li className="text-center py-3 text-gray-500">할 일이 없습니다.</li>
+        )}
       </ul>
     </div>
   );
