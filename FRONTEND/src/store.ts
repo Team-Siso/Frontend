@@ -203,22 +203,21 @@ export const useStore = create(
       fetchSchedules: async (memberId: number): Promise<void> => {
         try {
           const response = await fetch(`/api/v1/calendar/${memberId}`);
+
           if (!response.ok) {
             throw new Error(`Failed to fetch schedules: ${response.statusText}`);
           }
 
           const contentType = response.headers.get("content-type");
           if (!contentType || !contentType.includes("application/json")) {
-            const text = await response.text();
-            console.error("Unexpected response content:", text);
             throw new TypeError("Expected JSON response");
           }
 
           const data: Schedule[] = await response.json();
-          set({ schedules: data || [] });
+          set({ schedules: data || [] }); // data가 undefined일 경우 빈 배열 설정
         } catch (error) {
           console.error("Failed to fetch schedules:", error);
-          set({ schedules: [] });
+          set({ schedules: [] }); // 에러 발생 시 빈 배열 설정
         }
       },
 

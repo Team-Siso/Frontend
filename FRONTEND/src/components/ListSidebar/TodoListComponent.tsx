@@ -45,6 +45,7 @@ const TodoListComponent = ({ className }) => {
     }
 
     if (inputValue.trim()) {
+      console.log("저여기있어요ㅛ");
       const newTodo = {
         content: inputValue,
         checkStatus: 0,
