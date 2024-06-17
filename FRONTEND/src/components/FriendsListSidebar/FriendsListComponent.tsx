@@ -1,9 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useStore } from "../../store";
 import FriendComponent from "./FriendComponent";
 
 const FriendsListComponent = () => {
-  const { followings } = useStore();
+  const { followings, fetchFollowings, memberId } = useStore();
+
+  useEffect(() => {
+    if (memberId) {
+      fetchFollowings(memberId);
+    }
+  }, [memberId, fetchFollowings]);
 
   return (
     <div>
@@ -11,8 +17,8 @@ const FriendsListComponent = () => {
         <FriendComponent 
           key={index} 
           name={friend.name} 
-          isOnline={true} 
-          profilePicture={friend.profilePicture || "default-profile-pic-url"} // 기본 프로필 이미지 URL을 사용하거나 실제 데이터를 사용
+          isOnline={friend.isActive} // 서버에서 isActive 필드 사용
+          profilePicture={friend.profilePicture || "default-profile-pic-url"} 
         />
       ))}
     </div>

@@ -13,7 +13,7 @@ const ModalSwitch = () => {
     <>
       <Routes location={state?.from ? state.from : location}>
         <Route path="/" element={<StartPage />} />
-        <Route path="/main" element={<MainPage />} />
+        <Route path="/main/:memberId" element={<MainPage />} />
       </Routes>
 
       {state?.from && (

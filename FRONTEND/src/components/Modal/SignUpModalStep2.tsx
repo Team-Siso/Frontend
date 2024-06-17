@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
 import Input from '../Input';
 import profileImage from '../../assets/profile.png';
@@ -22,6 +23,7 @@ const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose }) 
   const uploadImage = useStore((state) => state.uploadImage);
 
   const [file, setFile] = useState<File | null>(null);
+  const navigate = useNavigate();
 
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -37,11 +39,13 @@ const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose }) 
 
   const handleSubmit = async () => {
     try {
-      const memberId = await signUp(); // 회원가입을 먼저 진행하여 memberId를 가져옴
+      const memberId = await signUp();
       if (file) {
-        await uploadImage(file, memberId); // 회원가입 후 이미지 업로드
+        const response = await uploadImage(file, memberId);
+        console.log('Image upload response:', response); // 이미지 업로드 후 응답을 로그로 출력
       }
       onClose();
+      navigate(`/main/${memberId}`);
     } catch (error) {
       console.error('Error during signup:', error);
     }

@@ -13,6 +13,7 @@ const MainPage = () => {
 
   useEffect(() => {
     if (memberId) {
+      console.log('Calling fetchFollowings with memberId:', memberId); // 로그 추가
       fetchFollowings(memberId);
     }
   }, [memberId, fetchFollowings]);
