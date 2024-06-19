@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import Custom from "../components/Calendar/CustomCalendar";
+import { useState, useEffect } from "react";
+import { useStore } from "../store";
 import FriendsListSidebar from "../components/FriendsListSidebar/FriendsListSidebar";
 import ListSidebar from "../components/ListSidebar/ListSidebar";
 import CalendarPage from "../components/Calendar/CalendarPage";
@@ -7,10 +7,18 @@ import FixGridPage from "../components/Grid/FixGridPage";
 import MenuComponent from "../components/Menu/MenuComponent";
 
 const MainPage = () => {
+  const { fetchFollowings, memberId } = useStore();
   const [currentPage, setCurrentPage] = useState("calendar");
 
-  const handlePageChange = (page) => {
-    console.log("Page changing to:", page); // 페이지 변경 로그
+  useEffect(() => {
+    if (memberId) {
+      console.log('Calling fetchFollowings with memberId:', memberId); // 로그 추가
+      fetchFollowings(memberId);
+    }
+  }, [memberId, fetchFollowings]);
+
+  const handlePageChange = (page: string) => {
+    console.log("Page changing to:", page);
     setCurrentPage(page);
   };
 
@@ -26,7 +34,6 @@ const MainPage = () => {
         {currentPage === "calendar" && <CalendarPage onPageChange={handlePageChange} />}
         {currentPage === "fixGrid" && <FixGridPage onPageChange={handlePageChange} />}
       </div>
-      {/* MenuComponent positioned at bottom-left corner with z-index */}
       <div className="absolute bottom-4 left-4 z-50">
         <MenuComponent />
       </div>

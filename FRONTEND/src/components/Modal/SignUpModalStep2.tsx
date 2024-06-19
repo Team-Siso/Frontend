@@ -1,9 +1,10 @@
-import React from "react";
-import Modal from "./Modal";
-import Input from "../Input";
-import profileImage from "../../assets/profile.png";
-import cameraIcon from "../../assets/camera.png";
-import { useStore } from "../../store";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Modal from './Modal';
+import Input from '../Input';
+import profileImage from '../../assets/profile.png';
+import cameraIcon from '../../assets/camera.png';
+import { useStore } from '../../store';
 
 interface SignUpModalStep2Props {
   isOpen: boolean;
@@ -19,16 +20,35 @@ const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose }) 
   const profilePic = useStore((state) => state.profilePic);
   const setProfilePic = useStore((state) => state.setProfilePic);
   const signUp = useStore((state) => state.signUp);
+  const uploadImage = useStore((state) => state.uploadImage);
+
+  const [file, setFile] = useState<File | null>(null);
+  const navigate = useNavigate();
 
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setProfilePic(URL.createObjectURL(e.target.files[0]));
+    const file = e.target.files?.[0];
+    if (file) {
+      setFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfilePic(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const handleSubmit = async () => {
-    await signUp();
-    onClose();
+    try {
+      const memberId = await signUp();
+      if (file) {
+        const response = await uploadImage(file, memberId);
+        console.log('Image upload response:', response); // 이미지 업로드 후 응답을 로그로 출력
+      }
+      onClose();
+      navigate('/main');
+    } catch (error) {
+      console.error('Error during signup:', error);
+    }
   };
 
   return (
@@ -37,12 +57,12 @@ const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose }) 
 
       <div className="relative flex flex-col items-center mb-4">
         <img src={profilePic || profileImage} alt="Profile" className="rounded-full w-24 h-24" />
-        <input
-          type="file"
-          accept="image/*"
-          className="hidden"
-          id="profile-pic-input"
-          onChange={handleProfilePicChange}
+        <input 
+          type="file" 
+          accept="image/*" 
+          className="hidden" 
+          id="profile-pic-input" 
+          onChange={handleProfilePicChange} 
         />
         <img
           src={cameraIcon}

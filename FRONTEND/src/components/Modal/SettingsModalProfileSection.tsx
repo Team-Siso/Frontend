@@ -1,13 +1,24 @@
-import React from "react";
-import profileImage from "../../assets/profile.png";
-import penIcon from "../../assets/pen.png";
-import EditProfileModal from "./EditProfileModal";
-import { useStore } from "../../store";
+import React, { useEffect } from 'react';
+import profileImage from '../../assets/profile.png';
+import penIcon from '../../assets/pen.png';
+import EditProfileModal from './EditProfileModal';
+import { useStore } from '../../store';
 
 const ModalProfileSection: React.FC = () => {
   const isEditModalOpen = useStore((state) => state.isEditModalOpen);
   const setEditModalOpen = useStore((state) => state.setEditModalOpen);
   const memberProfile = useStore((state) => state.memberProfile);
+
+  const fetchMemberProfile = useStore((state) => state.fetchMemberProfile);
+  const memberId = useStore((state) => state.memberId);
+
+  useEffect(() => {
+    if (memberId) {
+      console.log('Calling fetchMemberProfile with memberId:', memberId); // 로그 추가
+      fetchMemberProfile(memberId);
+    }
+  }, [memberId, fetchMemberProfile]);
+
 
   const openEditModal = () => {
     setEditModalOpen(true);

@@ -1,9 +1,12 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { create, StateCreator } from 'zustand';
+import { persist, PersistStorage } from 'zustand/middleware';
 
+// 인터페이스 정의
 interface Follow {
   followingId: number;
   name: string;
+  profilePicture: string;
+  isActive: boolean;
 }
 
 interface Follower {
@@ -15,7 +18,7 @@ interface Goal {
   id: number;
   title: string;
   progress: number;
-  completed: boolean; // 추가
+  completed: boolean;
 }
 
 interface Routine {
@@ -44,7 +47,13 @@ interface Member {
   profileUrl: string;
 }
 
-// 회원가입과 관련된 상태와 메서드를 정의
+
+interface Friend {
+  profilePicture: string;
+  nickname: string;
+  bio: string;
+}
+
 interface SignUpState {
   email: string;
   password: string;
@@ -52,25 +61,31 @@ interface SignUpState {
   nickname: string;
   bio: string;
   profilePic: string;
+  searchTerm: string;
+  friends: Friend[];
   setEmail: (email: string) => void;
   setPassword: (password: string) => void;
   setConfirmPassword: (confirmPassword: string) => void;
   setNickname: (nickname: string) => void;
   setBio: (bio: string) => void;
   setProfilePic: (profilePic: string) => void;
-  signUp: () => Promise<void>;
+  setSearchTerm: (searchTerm: string) => void;
+  setFriends: (friends: Friend[]) => void;
+  signUp: () => Promise<number>;
+  uploadImage: (file: File, memberId: number) => Promise<string>;
   login: (email: string, password: string) => Promise<void>;
 }
 
-// 애플리케이션의 주요 상태와 이를 조작하는 메서드를 정의
 interface AppState {
-  memberId: number | null;
   schedules: Schedule[];
   goals: Goal[];
   routines: Routine[];
   followings: Follow[];
   followers: Follower[];
   members: Member[];
+  memberProfile: Member | null;
+  setRoutines: (routines: Routine[]) => void;
+  setMemberProfile: (memberProfile: Member) => void;
   setMemberId: (memberId: number) => void;
   setSchedules: (schedules: Schedule[]) => void;
   setGoal: (title: string) => Promise<void>; // 추가된 함수
@@ -86,6 +101,10 @@ interface AppState {
   fetchFollowings: (memberId: number) => Promise<void>;
   fetchFollowers: (memberId: number) => Promise<void>;
   fetchMembers: (query: string) => Promise<void>;
+  fetchMemberProfile: (memberId: number) => Promise<void>;
+  updateNickname: (memberId: number, nickname: string) => Promise<void>;
+  updateIntroduce: (memberId: number, introduce: string) => Promise<void>;
+  updateProfilePicture: (memberId: number, file: File) => Promise<void>;
   addTodo: (memberId: number, newTodo: Omit<Schedule, "id">) => Promise<void>;
 }
 
@@ -95,282 +114,471 @@ interface ModalState {
   setFriendSearchOpen: (isOpen: boolean) => void;
   isSettingsOpen: boolean;
   setSettingsOpen: (isOpen: boolean) => void;
+
+  isEditModalOpen: boolean;
+  setEditModalOpen: (isOpen: boolean) => void;
+  memberId: number | null;
+  setMemberId: (memberId: number) => void;
 }
 
-export const useStore = create(
-  persist<SignUpState & AppState & ModalState>(
-    (set, get) => ({
-      // 상태 초기값 설정
-      email: "",
-      password: "",
-      confirmPassword: "",
-      nickname: "",
-      bio: "",
-      profilePic: "",
-      memberId: null,
-      schedules: [],
-      goals: [],
-      routines: [],
-      followings: [],
-      followers: [],
-      members: [],
-      isFriendSearchOpen: false,
-      setFriendSearchOpen: (isOpen) => set({ isFriendSearchOpen: isOpen }),
-      isSettingsOpen: false,
-      setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen }),
-      setEmail: (email) => set({ email }),
-      setPassword: (password) => set({ password }),
-      setConfirmPassword: (confirmPassword) => set({ confirmPassword }),
-      setNickname: (nickname) => set({ nickname }),
-      setBio: (bio) => set({ bio }),
-      setProfilePic: (profilePic) => set({ profilePic }),
-      setMemberId: (memberId) => set({ memberId }),
-      setSchedules: (schedules) => set({ schedules }),
-      setGoals: (goals) => set({ goals }),
-      setRoutines: (routines) => set({ routines }),
-      setFollowings: (followings) => set({ followings }),
-      setFollowers: (followers) => set({ followers }),
-      setMembers: (members) => set({ members }),
+type StoreState = SignUpState & AppState & ModalState;
 
-      // 비동기 함수들
-      signUp: async () => {
-        const { email, password, bio, nickname, profilePic } = get();
-        const requestBody = {
-          email,
-          password,
-          introduce: bio,
-          nickName: nickname,
-          memberPhoto: profilePic,
+// localStorage를 PersistStorage 타입으로 변환하는 함수
+const storage: PersistStorage<StoreState> = {
+  getItem: (name) => {
+    const value = localStorage.getItem(name);
+    return value ? JSON.parse(value) : null;
+  },
+  setItem: (name, value) => {
+    localStorage.setItem(name, JSON.stringify(value));
+  },
+  removeItem: (name) => {
+    localStorage.removeItem(name);
+  }
+};
+
+// Zustand 상태 생성기
+const stateCreator: StateCreator<StoreState> = (set, get) => ({
+  email: '',
+  password: '',
+  confirmPassword: '',
+  nickname: '',
+  bio: '',
+  profilePic: '',
+  searchTerm: '',
+  friends: [],
+  schedules: [],
+  goals: [],
+  routines: [],
+  followings: [],
+  followers: [],
+  members: [],
+  memberProfile: null,
+  isFriendSearchOpen: false,
+  setFriendSearchOpen: (isOpen) => set({ isFriendSearchOpen: isOpen }),
+  isSettingsOpen: false,
+  setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen }),
+  isEditModalOpen: false,
+  setEditModalOpen: (isOpen) => set({ isEditModalOpen: isOpen }),
+  memberId: null,
+  setMemberId: (memberId) => set({ memberId }),
+
+  setEmail: (email) => set({ email }),
+  setPassword: (password) => set({ password }),
+  setConfirmPassword: (confirmPassword) => set({ confirmPassword }),
+  setNickname: (nickname) => set({ nickname }),
+  setBio: (bio) => set({ bio }),
+  setProfilePic: (profilePic) => set({ profilePic }),
+  setSearchTerm: (searchTerm) => set({ searchTerm }),
+  setFriends: (friends) => set({ friends }),
+  setSchedules: (schedules) => set({ schedules }),
+  setGoals: (goals) => set({ goals }),
+  setRoutines: (routines) => set({ routines }),
+  setFollowings: (followings) => set({ followings }),
+  setFollowers: (followers) => set({ followers }),
+  setMembers: (members) => set({ members }),
+  setMemberProfile: (memberProfile) => set({ memberProfile }),
+
+  signUp: async () => {
+    const { email, password, bio, nickname } = get();
+
+    const formData = {
+      email,
+      password,
+      introduce: bio,
+      nickName: nickname,
+    };
+
+    try {
+      const response = await fetch('http://localhost:8080/api/v1/members/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error('회원가입 실패');
+      }
+
+      const data = await response.json();
+      console.log('회원가입 성공:', data);
+      set({
+        email: '',
+        password: '',
+        confirmPassword: '',
+        nickname: '',
+        bio: '',
+        profilePic: '',
+      });
+      localStorage.setItem('memberId', data.id.toString()); // 로컬스토리지에 멤버 아이디 저장
+      return data.id; // 회원가입 성공 시 memberId 반환
+    } catch (error) {
+      console.error('Error:', error);
+      alert('회원가입 실패');
+      throw error;
+    }
+  },
+
+  uploadImage: async (file: File, memberId: number) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}/profile`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Image upload failed:', errorText);
+        throw new Error('Image upload failed');
+      }
+
+      const text = await response.text(); // 텍스트로 응답을 받음
+      console.log('Image upload successful:', text);
+      return text; // 텍스트 응답 반환
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+  },
+
+  login: async (email: string, password: string) => {
+    const params = new URLSearchParams({
+      email,
+      password,
+    });
+
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/members/login?${params.toString()}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('로그인 실패');
+      }
+
+      const data = await response.json();
+      console.log('로그인 성공:', data);
+      set({ memberId: data.id }); // 로그인 성공 시 memberId 설정
+      localStorage.setItem('memberId', data.id.toString()); // 로컬스토리지에 멤버 아이디 저장
+    } catch (error) {
+      console.error('Error:', error);
+      alert('로그인 실패');
+    }
+  },
+
+  fetchSchedules: async (memberId: number): Promise<void> => {
+    try {
+      const response = await fetch(`/api/v1/calendar/${memberId}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch schedules: ${response.statusText}`);
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new TypeError("Expected JSON response");
+      }
+
+      const data: Schedule[] = await response.json();
+      set({ schedules: data || [] }); // data가 undefined일 경우 빈 배열 설정
+    } catch (error) {
+      console.error("Failed to fetch schedules:", error);
+      set({ schedules: [] }); // 에러 발생 시 빈 배열 설정
+    }
+  },
+  fetchGoals: async (memberId: number) => {
+    try {
+      const response = await fetch(`/api/v1/goal/${memberId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch goals');
+      }
+      const data = await response.json();
+      set({ goals: data });
+    } catch (error) {
+      console.error('Failed to fetch goals:', error);
+    }
+  },
+
+  fetchRoutines: async (memberId: number) => {
+    try {
+      const response = await fetch(`/api/v1/routines/${memberId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch routines');
+      }
+      const data = await response.json();
+      set({ routines: data });
+    } catch (error) {
+      console.error('Failed to fetch routines:', error);
+    }
+  },
+
+  fetchFollowings: async (memberId: number) => {
+    console.log(`Fetching followings for memberId: ${memberId}`); // 로그 추가
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/follow/${memberId}/following`);
+      const contentType = response.headers.get("content-type");
+  
+      if (!response.ok) {
+        throw new Error(`Failed to fetch followings: ${response.statusText}`);
+      }
+  
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        const followings = data.map((friend: any) => ({
+          followingId: friend.followingId,
+          name: friend.name,
+          profilePicture: friend.memberPhoto || "default-profile-pic-url",
+          isActive: friend.isActive // 추가
+        }));
+        set({ followings });
+        console.log('Fetched followings:', followings); // 로그 추가
+      } else {
+        const text = await response.text();
+        console.error('Expected JSON, got:', text);
+        throw new Error('Received non-JSON response');
+      }
+    } catch (error) {
+      console.error('Failed to fetch followings:', error);
+    }
+  }
+  ,
+
+  fetchFollowers: async (memberId: number) => {
+    try {
+      const response = await fetch(`/api/v1/follow/${memberId}/followers`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch followers');
+      }
+      const data = await response.json();
+      set({ followers: data.followers });
+    } catch (error) {
+      console.error('Failed to fetch followers:', error);
+    }
+  },
+
+  fetchMembers: async (query: string) => {
+    try {
+      const response = await fetch(`/api/v1/members/search?nickNameOrEmail=${query}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch members');
+      }
+      const data = await response.json();
+      set({ members: data });
+    } catch (error) {
+      console.error('Failed to fetch members:', error);
+    }
+  },
+
+  fetchMemberProfile: async (memberId: number) => {
+    console.log(`Fetching member profile for memberId: ${memberId}`); // 로그 추가
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}`);
+      const contentType = response.headers.get("content-type");
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch member profile: ${response.statusText}`);
+      }
+
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        console.log('API Response:', data); // API 응답 로그 추가
+        const memberProfile = {
+          id: memberId,
+          email: data.email || '', // email을 빈 문자열로 초기화
+          nickName: data.nickname,
+          introduce: data.introduce,
+          profileUrl: data.memberPhoto || "default-profile-pic-url"
         };
+        set({ memberProfile });
+        console.log('Fetched member profile:', memberProfile); // 로그 추가
+      } else {
+        const text = await response.text();
+        console.error('Expected JSON, got:', text);
+        throw new Error('Received non-JSON response');
+      }
+    } catch (error) {
+      console.error('Failed to fetch member profile:', error);
+    }
+  },
+  addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">) => {
+    try {
+      const response = await fetch(`/api/v1/member/${memberId}/schedule`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newTodo),
+      });
 
-        try {
-          const response = await fetch("http://localhost:8080/api/v1/members/signup", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(requestBody),
-          });
+      if (!response.ok) {
+        throw new Error("Failed to add todo");
+      }
 
-          if (!response.ok) {
-            throw new Error("회원가입 실패");
-          }
+      const data = await response.json();
+      set((state) => ({
+        schedules: [...state.schedules, { ...data, id: data.id }],
+      }));
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to add todo");
+    }
+  },
 
-          const data = await response.json();
-          console.log("회원가입 성공:", data);
-          set({
-            email: "",
-            password: "",
-            confirmPassword: "",
-            nickname: "",
-            bio: "",
-            profilePic: "",
-          });
-        } catch (error) {
-          console.error("Error:", error);
-          alert("회원가입 실패");
-        }
-      },
-
-      login: async (email: string, password: string) => {
-        const params = new URLSearchParams({
-          email,
-          password,
+  setGoal: async (title: string) => {
+    const { memberId } = get();
+    if (memberId !== null) {
+      try {
+        const response = await fetch(`http://localhost:8080/api/v1/member/${memberId}/goal`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ title, progress: 0, completed: false }),
         });
 
-        try {
-          const response = await fetch(
-            `http://localhost:8080/api/v1/members/login?${params.toString()}`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error("로그인 실패");
-          }
-
-          const data = await response.json();
-          console.log("로그인 성공:", data);
-
-          // 로그인 성공 시 memberId를 설정
-          set({ memberId: data.id });
-          console.log("memberId after login:", data.id);
-        } catch (error) {
-          console.error("Error:", error);
-          alert("로그인 실패");
+        if (!response.ok) {
+          throw new Error("Failed to set goal");
         }
-      },
 
-      fetchSchedules: async (memberId: number): Promise<void> => {
-        try {
-          const response = await fetch(`/api/v1/calendar/${memberId}`);
+        const data = await response.json();
+        set((state) => ({ goals: [...state.goals, data] }));
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Failed to set goal");
+      }
+    }
+  },
+  toggleGoalCompletion: (id: number) => {
+    set((state) => ({
+      goals: state.goals.map((goal) =>
+        goal.id === id ? { ...goal, completed: !goal.completed } : goal
+      ),
+    }));
+  },
 
-          if (!response.ok) {
-            throw new Error(`Failed to fetch schedules: ${response.statusText}`);
-          }
+  deleteGoal: (id: number) => {
+    set((state) => ({
+      goals: state.goals.filter((goal) => goal.id !== id),
+    }));
+  },
+  updateNickname: async (memberId: number, nickname: string) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}/nickname`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nickname }),
+      });
 
-          const contentType = response.headers.get("content-type");
-          if (!contentType || !contentType.includes("application/json")) {
-            throw new TypeError("Expected JSON response");
-          }
+      if (!response.ok) {
+        throw new Error('Failed to update nickname');
+      }
 
-          const data: Schedule[] = await response.json();
-          set({ schedules: data || [] }); // data가 undefined일 경우 빈 배열 설정
-        } catch (error) {
-          console.error("Failed to fetch schedules:", error);
-          set({ schedules: [] }); // 에러 발생 시 빈 배열 설정
+      const data = await response.json();
+      set((state) => ({
+        memberProfile: {
+          ...state.memberProfile,
+          nickName: data.nickname,
         }
-      },
-
-      fetchGoals: async (memberId: number) => {
-        try {
-          const response = await fetch(`/api/v1/goal/${memberId}`);
-          const data = await response.json();
-          set({ goals: data });
-        } catch (error) {
-          console.error("Failed to fetch goals:", error);
-        }
-      },
-
-      fetchRoutines: async (memberId: number) => {
-        try {
-          const response = await fetch(`/api/v1/routines/${memberId}`);
-          const data = await response.json();
-          set({ routines: data });
-        } catch (error) {
-          console.error("Failed to fetch routines:", error);
-        }
-      },
-
-      fetchFollowings: async (memberId: number) => {
-        try {
-          const response = await fetch(`/api/v1/follow/${memberId}/following`);
-          const data = await response.json();
-          set({ followings: data.friends });
-        } catch (error) {
-          console.error("Failed to fetch followings:", error);
-        }
-      },
-
-      fetchFollowers: async (memberId: number) => {
-        try {
-          const response = await fetch(`/api/v1/follow/${memberId}/followers`);
-          const data = await response.json();
-          set({ followers: data.followers });
-        } catch (error) {
-          console.error("Failed to fetch followers:", error);
-        }
-      },
-
-      fetchMembers: async (query: string) => {
-        try {
-          const response = await fetch(`/api/v1/members/search?nickNameOrEmail=${query}`);
-          const data = await response.json();
-          set({ members: data });
-        } catch (error) {
-          console.error("Failed to fetch members:", error);
-        }
-      },
-
-      addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">) => {
-        try {
-          const response = await fetch(`/api/v1/member/${memberId}/schedule`, {
-            method: "POST",
+      }));
+    } catch (error) {
+      console.error('Failed to update nickname:', error);
+    }
+  },
+  updateProgress: async (goalId: number, progress: number) => {
+    const { memberId } = get();
+    if (memberId !== null) {
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/v1/member/${memberId}/goal/${goalId}`,
+          {
+            method: "PATCH",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(newTodo),
-          });
-
-          if (!response.ok) {
-            throw new Error("Failed to add todo");
+            body: JSON.stringify({ progress }),
           }
+        );
 
-          const data = await response.json();
-          set((state) => ({
-            schedules: [...state.schedules, { ...data, id: data.id }],
-          }));
-        } catch (error) {
-          console.error("Error:", error);
-          alert("Failed to add todo");
+        if (!response.ok) {
+          throw new Error("Failed to update progress");
         }
-      },
 
-      setGoal: async (title: string) => {
-        const { memberId } = get();
-        if (memberId !== null) {
-          try {
-            const response = await fetch(`http://localhost:8080/api/v1/member/${memberId}/goal`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ title, progress: 0, completed: false }),
-            });
-
-            if (!response.ok) {
-              throw new Error("Failed to set goal");
-            }
-
-            const data = await response.json();
-            set((state) => ({ goals: [...state.goals, data] }));
-          } catch (error) {
-            console.error("Error:", error);
-            alert("Failed to set goal");
-          }
-        }
-      },
-
-      toggleGoalCompletion: (id: number) => {
         set((state) => ({
-          goals: state.goals.map((goal) =>
-            goal.id === id ? { ...goal, completed: !goal.completed } : goal
-          ),
+          goals: state.goals.map((goal) => (goal.id === goalId ? { ...goal, progress } : goal)),
         }));
-      },
-
-      deleteGoal: (id: number) => {
-        set((state) => ({
-          goals: state.goals.filter((goal) => goal.id !== id),
-        }));
-      },
-
-      updateProgress: async (goalId: number, progress: number) => {
-        const { memberId } = get();
-        if (memberId !== null) {
-          try {
-            const response = await fetch(
-              `http://localhost:8080/api/v1/member/${memberId}/goal/${goalId}`,
-              {
-                method: "PATCH",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ progress }),
-              }
-            );
-
-            if (!response.ok) {
-              throw new Error("Failed to update progress");
-            }
-
-            set((state) => ({
-              goals: state.goals.map((goal) => (goal.id === goalId ? { ...goal, progress } : goal)),
-            }));
-          } catch (error) {
-            console.error("Error:", error);
-            alert("Failed to update progress");
-          }
-        }
-      },
-    }),
-    {
-      name: "app-storage", // 이름은 아무거나 설정 가능
-      getStorage: () => localStorage, // 기본 저장소를 localStorage로 설정
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Failed to update progress");
+      }
     }
-  )
-);
+  },
+  updateIntroduce: async (memberId: number, introduce: string) => {
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}/introduce`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ introduce }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update introduce');
+      }
+
+      const data = await response.json();
+      set((state) => ({
+        memberProfile: {
+          ...state.memberProfile,
+          introduce: data.introduce,
+        }
+      }));
+    } catch (error) {
+      console.error('Failed to update introduce:', error);
+    }
+  },
+
+  updateProfilePicture: async (memberId: number, file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}/profile`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update profile picture');
+      }
+
+      const text = await response.text(); // 텍스트 응답을 받음
+      console.log('Profile picture update successful:', text);
+      set((state) => ({
+        memberProfile: {
+          ...state.memberProfile,
+          profileUrl: text, // 적절한 필드를 사용해야 함
+        }
+      }));
+    } catch (error) {
+      console.error('Failed to update profile picture:', error);
+    }
+  },
+});
+
+// Zustand store 생성
+export const useStore = create<StoreState>()(
+  persist(stateCreator, {
+    name: 'user-store', // 로컬 스토리지에 저장될 키 이름
+    storage: storage, // localStorage를 persist storage로 변환하여 사용
+  })

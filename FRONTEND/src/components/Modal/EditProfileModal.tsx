@@ -1,50 +1,42 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from './Modal';
+import { useStore } from '../../store';
 
 interface EditProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  memberId: number;
 }
 
-const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, memberId }) => {
-  const [nickname, setNickname] = useState('닉네임');
-  const [email, setEmail] = useState('email@example.com');
-  const [bio, setBio] = useState('자기소개를 입력하세요!');
+const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose }) => {
+  const memberId = useStore((state) => state.memberId);
+  const memberProfile = useStore((state) => state.memberProfile);
+  const updateNickname = useStore((state) => state.updateNickname);
+  const updateIntroduce = useStore((state) => state.updateIntroduce);
+  const updateProfilePicture = useStore((state) => state.updateProfilePicture);
+
+  const [nickname, setNickname] = useState('');
+  const [email, setEmail] = useState('');
+  const [bio, setBio] = useState('');
   const [profilePic, setProfilePic] = useState<File | null>(null);
+
+  useEffect(() => {
+    if (memberProfile) {
+      setNickname(memberProfile.nickName);
+      setEmail(memberProfile.email);
+      setBio(memberProfile.introduce);
+    }
+  }, [memberProfile]);
 
   const handleSave = async () => {
     try {
-      // 닉네임 수정 요청
-      await fetch(`http://localhost:8080/api/v1/members/${memberId}/nickname`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ nickname }),
-      });
-
-      // 소개글 수정 요청
-      await fetch(`http://localhost:8080/api/v1/members/${memberId}/introduce`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ introduce: bio }),
-      });
-
-      // 프로필 사진 수정 요청
-      if (profilePic) {
-        const formData = new FormData();
-        formData.append('file', profilePic);
-
-        await fetch(`http://localhost:8080/api/v1/members/${memberId}/profile`, {
-          method: 'PUT',
-          body: formData,
-        });
+      if (memberId) {
+        await updateNickname(memberId, nickname);
+        await updateIntroduce(memberId, bio);
+        if (profilePic) {
+          await updateProfilePicture(memberId, profilePic);
+        }
+        onClose();
       }
-
-      onClose(); // 저장 후 모달 닫기
     } catch (error) {
       console.error('Error updating profile:', error);
       alert('프로필 수정 중 오류가 발생했습니다.');
@@ -75,7 +67,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ isOpen, onClose, me
               />
             ) : (
               <img
-                src="https://via.placeholder.com/100"
+                src={memberProfile?.profileUrl || 'https://via.placeholder.com/100'}
                 alt="Profile"
                 className="rounded-full w-30 h-30"
               />

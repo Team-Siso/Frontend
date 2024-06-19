@@ -75,7 +75,10 @@ const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose }) => {
         다음
       </button>
 
-      <SignUpModalStep2 isOpen={isStep2Open} onClose={closeStep2} />
+      <SignUpModalStep2 
+        isOpen={isStep2Open} 
+        onClose={closeStep2} 
+      />
     </Modal>
   );
 };
