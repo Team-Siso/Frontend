@@ -47,7 +47,6 @@ interface Member {
   profileUrl: string;
 }
 
-
 interface Friend {
   profilePicture: string;
   nickname: string;
@@ -91,7 +90,7 @@ interface AppState {
   setGoal: (title: string) => Promise<void>; // 추가된 함수
   toggleGoalCompletion: (id: number) => void; // 추가된 함수
   deleteGoal: (id: number) => void; // 추가된 함수
-  updateProgress: (goalId: number, progress: number) => Promise<void>; // 추가된 함수  setRoutines: (routines: Routine[]) => void;
+  updateProgress: (goalId: number, progress: number) => Promise<void>; // 추가된 함수
   setFollowings: (followings: Follow[]) => void;
   setFollowers: (followers: Follower[]) => void;
   setMembers: (members: Member[]) => void;
@@ -108,20 +107,20 @@ interface AppState {
   addTodo: (memberId: number, newTodo: Omit<Schedule, "id">) => Promise<void>;
 }
 
-// 모달 상태와 이를 변경하는 메서드를 정의
 interface ModalState {
   isFriendSearchOpen: boolean;
   setFriendSearchOpen: (isOpen: boolean) => void;
   isSettingsOpen: boolean;
   setSettingsOpen: (isOpen: boolean) => void;
-
   isEditModalOpen: boolean;
   setEditModalOpen: (isOpen: boolean) => void;
   memberId: number | null;
   setMemberId: (memberId: number) => void;
 }
 
-type StoreState = SignUpState & AppState & ModalState;
+interface StoreState extends SignUpState, AppState, ModalState {
+  resetState: () => void;
+}
 
 // localStorage를 PersistStorage 타입으로 변환하는 함수
 const storage: PersistStorage<StoreState> = {
@@ -179,8 +178,32 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   setMembers: (members) => set({ members }),
   setMemberProfile: (memberProfile) => set({ memberProfile }),
 
+  resetState: () => {
+    set({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      nickname: '',
+      bio: '',
+      profilePic: '',
+      searchTerm: '',
+      friends: [],
+      schedules: [],
+      goals: [],
+      routines: [],
+      followings: [],
+      followers: [],
+      members: [],
+      memberProfile: null,
+      isFriendSearchOpen: false,
+      isSettingsOpen: false,
+      isEditModalOpen: false,
+      memberId: null,
+    });
+  },
+
   signUp: async () => {
-    const { email, password, bio, nickname } = get();
+    const { email, password, bio, nickname, resetState } = get();
 
     const formData = {
       email,
@@ -204,6 +227,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
       const data = await response.json();
       console.log('회원가입 성공:', data);
+      resetState();
       set({
         email: '',
         password: '',
@@ -211,9 +235,10 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
         nickname: '',
         bio: '',
         profilePic: '',
+        memberId: data.id,
       });
-      localStorage.setItem('memberId', data.id.toString()); // 로컬스토리지에 멤버 아이디 저장
-      return data.id; // 회원가입 성공 시 memberId 반환
+      localStorage.setItem('memberId', data.id.toString());
+      return data.id;
     } catch (error) {
       console.error('Error:', error);
       alert('회원가입 실패');
@@ -247,6 +272,8 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   },
 
   login: async (email: string, password: string) => {
+    const { resetState } = get();
+
     const params = new URLSearchParams({
       email,
       password,
@@ -266,7 +293,8 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
       const data = await response.json();
       console.log('로그인 성공:', data);
-      set({ memberId: data.id }); // 로그인 성공 시 memberId 설정
+      resetState(); // 상태 초기화
+      set({ memberId: data.id, email: '', password: '' }); // 로그인 성공 시 memberId 설정
       localStorage.setItem('memberId', data.id.toString()); // 로컬스토리지에 멤버 아이디 저장
     } catch (error) {
       console.error('Error:', error);
@@ -348,8 +376,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     } catch (error) {
       console.error('Failed to fetch followings:', error);
     }
-  }
-  ,
+  },
 
   fetchFollowers: async (memberId: number) => {
     try {
@@ -408,6 +435,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       console.error('Failed to fetch member profile:', error);
     }
   },
+
   addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">) => {
     try {
       const response = await fetch(`/api/v1/member/${memberId}/schedule`, {
@@ -456,6 +484,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       }
     }
   },
+
   toggleGoalCompletion: (id: number) => {
     set((state) => ({
       goals: state.goals.map((goal) =>
@@ -469,6 +498,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       goals: state.goals.filter((goal) => goal.id !== id),
     }));
   },
+
   updateNickname: async (memberId: number, nickname: string) => {
     try {
       const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}/nickname`, {
@@ -494,6 +524,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       console.error('Failed to update nickname:', error);
     }
   },
+
   updateProgress: async (goalId: number, progress: number) => {
     const { memberId } = get();
     if (memberId !== null) {
@@ -522,6 +553,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       }
     }
   },
+
   updateIntroduce: async (memberId: number, introduce: string) => {
     try {
       const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}/introduce`, {
@@ -582,3 +614,4 @@ export const useStore = create<StoreState>()(
     name: 'user-store', // 로컬 스토리지에 저장될 키 이름
     storage: storage, // localStorage를 persist storage로 변환하여 사용
   })
+);

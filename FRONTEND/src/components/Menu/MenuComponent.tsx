@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GrayCircle from "../../assets/GrayCircle.svg";
 import HomeButtonImage from "../../assets/HomeButtonImage.svg";

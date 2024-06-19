@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useStore } from "../store"; // 명명된 내보내기를 사용합니다
 import SignUpModal from "../components/Modal/SignUpModal";
 import LoginModal from "../components/Modal/LoginModal";

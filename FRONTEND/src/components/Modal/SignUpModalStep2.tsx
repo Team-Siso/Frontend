@@ -12,7 +12,6 @@ interface SignUpModalStep2Props {
 }
 
 const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose }) => {
-  const email = useStore((state) => state.email);
   const nickname = useStore((state) => state.nickname);
   const setNickname = useStore((state) => state.setNickname);
   const bio = useStore((state) => state.bio);

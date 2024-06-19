@@ -1,4 +1,3 @@
-import React from "react";
 import RestTasksComponent from "./RestTasksComponent";
 import LogoComponent from "./LogoComponent";
 import NextPageComponent from "./NextPageComponent";

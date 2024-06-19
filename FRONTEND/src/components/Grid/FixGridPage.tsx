@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import WeekGrid from './WeekGrid';
 import './WeekGrid.css';
 import ConfirmButton from '../ConfirmButton';

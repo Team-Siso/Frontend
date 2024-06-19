@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import Custom from "../components/Calendar/CustomCalendar";
+import { useState } from "react";
 import FriendsListSidebar from "../components/FriendsListSidebar/FriendsListSidebar";
 import FriendListSidebar from "../components/ListSidebar/ListSidebar";
 import CalendarPage from "../components/Calendar/CalendarPage";

@@ -8,13 +8,13 @@ import "./CustomCalendar.css";
 type Value = Date | [Date, Date];
 
 interface CustomCalendarProps {
-  onDateChange: (date: Date) => void;
+  onDateChange: (date: Value) => void;
 }
 
 const CustomCalendar: React.FC<CustomCalendarProps> = ({ onDateChange }) => {
   const [value, setValue] = useState<Value>(new Date());
 
-  const handleDateChange = (selectedDate: Date) => {
+  const handleDateChange = (selectedDate: Value) => {
     setValue(selectedDate);
     onDateChange(selectedDate);
   };
@@ -34,7 +34,7 @@ const CustomCalendar: React.FC<CustomCalendarProps> = ({ onDateChange }) => {
           locale="en-US"
           onChange={handleDateChange}
           value={value}
-          formatDay={(locale, date) => moment(date).format("DD")}
+          formatDay={(date) => moment(date).format("DD")}
           tileClassName={tileClassName}
           showNeighboringMonth={false}
           tileContent={({ date }) => <div className="date-tile">{date.getDate()}</div>}

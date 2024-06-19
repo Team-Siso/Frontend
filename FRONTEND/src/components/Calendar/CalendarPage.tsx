@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import CustomCalendar from './CustomCalendar';
 import WeekGridPage from '../Grid/WeekGridPage';
 import ConfirmButton from '../ConfirmButton';
@@ -30,6 +30,7 @@ const CalendarPage = ({ onPageChange }) => {
       <div style={{ display: "flex", justifyContent: "flex-end", padding: "10px" }}>
         <Toggle
           id="view-toggle"
+          label="Toggle View" // 추가된 부분
           onToggle={handleToggleChange}
         />
       </div>
