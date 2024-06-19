@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
-import Modal from './Modal';
-import Input from '../Input';
-import SignUpModalStep2 from './SignUpModalStep2';
+import React, { useState } from "react";
+import Modal from "./Modal";
+import Input from "../Input";
+import SignUpModalStep2 from "./SignUpModalStep2";
+import { useStore } from "../../store";
 
 interface SignUpModalProps {
   isOpen: boolean;
   onClose: () => void;
-  email: string;
 }
 
-const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, email }) => {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose }) => {
+  const password = useStore((state) => state.password);
+  const setPassword = useStore((state) => state.setPassword);
+  const confirmPassword = useStore((state) => state.confirmPassword);
+  const setConfirmPassword = useStore((state) => state.setConfirmPassword);
   const [isStep2Open, setIsStep2Open] = useState(false);
 
   const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,7 +40,7 @@ const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, email }) => 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <h2 className="text-2xl font-bold mb-8">회원가입</h2>
-      
+
       <div className="mb-4">
         <label htmlFor="password" className="block text-base font-medium text-left">
           비밀번호
@@ -73,12 +75,7 @@ const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose, email }) => 
         다음
       </button>
 
-      <SignUpModalStep2 
-        isOpen={isStep2Open} 
-        onClose={closeStep2} 
-        email={email} 
-        password={password} 
-      />
+      <SignUpModalStep2 isOpen={isStep2Open} onClose={closeStep2} />
     </Modal>
   );
 };
