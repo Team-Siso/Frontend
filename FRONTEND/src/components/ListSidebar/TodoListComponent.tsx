@@ -91,8 +91,25 @@ const TodoListComponent = ({ className }) => {
     setSchedules(updatedTodos);
   };
 
-  const handleDelete = (id) => {
-    setSchedules(todos.filter((todo) => todo.id !== id));
+  const handleDelete = async (id) => {
+    console.log("handleDelete 호출, id:", id);
+    try {
+      const response = await fetch(`/api/v1/schedule/${id}`, {
+        method: "DELETE",
+        headers: {
+          accept: "*/*",
+        },
+      });
+
+      if (response.ok) {
+        console.log("삭제 성공");
+        setSchedules(todos.filter((todo) => todo.id !== id));
+      } else {
+        console.error("삭제 실패:", response.status);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
   };
 
   const startEdit = (id, title) => {
@@ -160,6 +177,7 @@ const TodoListComponent = ({ className }) => {
                     value={editText}
                     onChange={handleEditChange}
                     onBlur={() => handleEditSave(todo.id)}
+                    onKeyPress={(event) => (event.key === "Enter" ? handleAddTodo() : null)}
                   />
                 ) : (
                   todo.content
