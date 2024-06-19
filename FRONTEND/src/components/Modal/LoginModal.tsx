@@ -21,8 +21,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
     try {
       await login(email, password);
       onClose(); // 로그인 성공 후 모달 닫기
-      const memberId = useStore.getState().memberId; // 로그인 성공 시 저장된 memberId 가져오기
-      navigate(`/main/${memberId}`); // 로그인 성공 후 해당 멤버의 메인 페이지로 이동
+      navigate('/main'); // 로그인 성공 후 메인 페이지로 이동
     } catch (error) {
       console.error('로그인 실패:', error);
       alert('로그인에 실패했습니다. 다시 시도해주세요.');

@@ -15,9 +15,9 @@ const Toggle: React.FC<ToggleProps> = ({ id, label, onToggle }) => {
   };
 
   const sizeClasses = {
-    backgroundSize: 'w-8 h-4', 
+    backgroundSize: 'w-8 h-4',
     dotSize: 'w-3 h-3',
-    translateSize: 'translate-x-4', 
+    translateSize: 'translate-x-4',
   };
 
   return (
@@ -32,12 +32,10 @@ const Toggle: React.FC<ToggleProps> = ({ id, label, onToggle }) => {
           onChange={handleOnChange}
         />
         <div className={`${sizeClasses.backgroundSize} rounded-full transition-colors duration-300 ${isChecked ? 'bg-sky-300' : 'bg-gray-300'}`}>
-        <div
-  className={`${sizeClasses.dotSize} absolute left-0.5 top-0.5 bg-white rounded-full transition-transform duration-300 ${
-    isChecked ? 'translate-x-4' : 'translate-x-0'
-  }`}
-></div>
-</div>
+          <div
+            className={`${sizeClasses.dotSize} absolute left-0.5 top-0.5 bg-white rounded-full transition-transform duration-300 ${isChecked ? sizeClasses.translateSize : 'translate-x-0'}`}
+          ></div>
+        </div>
       </div>
     </label>
   );

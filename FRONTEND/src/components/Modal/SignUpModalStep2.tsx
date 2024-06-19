@@ -12,7 +12,6 @@ interface SignUpModalStep2Props {
 }
 
 const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose }) => {
-  const email = useStore((state) => state.email);
   const nickname = useStore((state) => state.nickname);
   const setNickname = useStore((state) => state.setNickname);
   const bio = useStore((state) => state.bio);
@@ -45,7 +44,7 @@ const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose }) 
         console.log('Image upload response:', response); // 이미지 업로드 후 응답을 로그로 출력
       }
       onClose();
-      navigate(`/main/${memberId}`);
+      navigate('/main');
     } catch (error) {
       console.error('Error during signup:', error);
     }

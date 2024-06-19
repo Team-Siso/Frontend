@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import StartPage from './pages/StartPage';
 import MainPage from './pages/MainPage';
@@ -13,7 +12,7 @@ const ModalSwitch = () => {
     <>
       <Routes location={state?.from ? state.from : location}>
         <Route path="/" element={<StartPage />} />
-        <Route path="/main/:memberId" element={<MainPage />} />
+        <Route path="/main" element={<MainPage />} />
       </Routes>
 
       {state?.from && (

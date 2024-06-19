@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "../store";
-import Custom from "../components/Calendar/CustomCalendar";
 import FriendsListSidebar from "../components/FriendsListSidebar/FriendsListSidebar";
 import ListSidebar from "../components/ListSidebar/ListSidebar";
 import CalendarPage from "../components/Calendar/CalendarPage";
