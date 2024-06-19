@@ -11,11 +11,11 @@ const TodoListComponent = ({ className }) => {
   const [editId, setEditId] = useState(null);
   const [editText, setEditText] = useState("");
   const [showEditOptions, setShowEditOptions] = useState(null); // 호버 중인 항목의 ID를 저장하는 상태
-
   const todos = useStore((state) => state.schedules) || []; // store에서 todos 가져오기
   const memberId = useStore((state) => state.memberId);
   const fetchSchedules = useStore((state) => state.fetchSchedules);
   const setSchedules = useStore((state) => state.setSchedules); // setSchedules를 올바르게 가져오기
+
   useEffect(() => {
     console.log("memberId:", memberId); // memberId를 로그로 출력
 
@@ -45,7 +45,7 @@ const TodoListComponent = ({ className }) => {
     }
 
     if (inputValue.trim()) {
-      console.log("저여기있어요ㅛ");
+      console.log("저여기있어요");
       const newTodo = {
         content: inputValue,
         checkStatus: 0,

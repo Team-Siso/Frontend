@@ -15,10 +15,10 @@ import HeartImage_60 from "../../assets/HeartImage_60.svg";
 import HeartImage_80 from "../../assets/HeartImage_80.svg";
 import HeartImage_100 from "../../assets/HeartImage_100.svg";
 
-interface ProgressBarComponentProps {
-  title: string;
-  goalId: number;
-}
+// interface ProgressBarComponentProps {
+//   title: string;
+//   goalId: number;
+// }
 
 const setEditGoal = async (title: string, goalId: number, progress: number) => {
   try {

@@ -12,7 +12,7 @@ const MyGoalComponent: React.FC<{ className: string }> = ({ className }) => {
   const [editText, setEditText] = useState(""); // 편집 중인 목표의 텍스트를 저장하는 상태
   const [showEditOptions, setShowEditOptions] = useState<number | null>(null); // 호버 중인 항목의 ID를 저장하는 상태
 
-  const { goals, setGoal, toggleGoalCompletion, deleteGoal, fetchGoals, memberId } = useStore();
+  const { goals, setGoal, toggleGoalCompletion, fetchGoals, memberId } = useStore();
 
   useEffect(() => {
     if (memberId) {
@@ -49,8 +49,29 @@ const MyGoalComponent: React.FC<{ className: string }> = ({ className }) => {
     toggleGoalCompletion(id);
   };
 
+  const deleteGoal = async (id: number) => {
+    console.log("골 delete 입니다.");
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/goal/${id}`, {
+        method: "DELETE",
+        headers: {
+          accept: "*/*",
+        },
+      });
+
+      if (response.ok) {
+        console.log("삭제 성공");
+        fetchGoals(memberId); // 삭제 후 목표 목록 다시 불러오기
+      } else {
+        console.error("삭제 실패:", response.status);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
   const handleDelete = (id: number) => {
     // 목표를 삭제합니다.
+    console.log("handleDelete 입니다");
     deleteGoal(id);
   };
 

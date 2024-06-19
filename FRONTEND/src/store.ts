@@ -44,6 +44,7 @@ interface Member {
   profileUrl: string;
 }
 
+// 회원가입과 관련된 상태와 메서드를 정의
 interface SignUpState {
   email: string;
   password: string;
@@ -61,6 +62,7 @@ interface SignUpState {
   login: (email: string, password: string) => Promise<void>;
 }
 
+// 애플리케이션의 주요 상태와 이를 조작하는 메서드를 정의
 interface AppState {
   memberId: number | null;
   schedules: Schedule[];
@@ -72,7 +74,6 @@ interface AppState {
   setMemberId: (memberId: number) => void;
   setSchedules: (schedules: Schedule[]) => void;
   setGoal: (title: string) => Promise<void>; // 추가된 함수
-
   toggleGoalCompletion: (id: number) => void; // 추가된 함수
   deleteGoal: (id: number) => void; // 추가된 함수
   updateProgress: (goalId: number, progress: number) => Promise<void>; // 추가된 함수  setRoutines: (routines: Routine[]) => void;
@@ -88,6 +89,7 @@ interface AppState {
   addTodo: (memberId: number, newTodo: Omit<Schedule, "id">) => Promise<void>;
 }
 
+// 모달 상태와 이를 변경하는 메서드를 정의
 interface ModalState {
   isFriendSearchOpen: boolean;
   setFriendSearchOpen: (isOpen: boolean) => void;
@@ -98,6 +100,7 @@ interface ModalState {
 export const useStore = create(
   persist<SignUpState & AppState & ModalState>(
     (set, get) => ({
+      // 상태 초기값 설정
       email: "",
       password: "",
       confirmPassword: "",
@@ -129,9 +132,9 @@ export const useStore = create(
       setFollowers: (followers) => set({ followers }),
       setMembers: (members) => set({ members }),
 
+      // 비동기 함수들
       signUp: async () => {
         const { email, password, bio, nickname, profilePic } = get();
-
         const requestBody = {
           email,
           password,
