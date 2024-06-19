@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useStore } from "../../store";
 
 import ProgressBar_0 from "../../assets/ProgressBar_0.svg";
 import ProgressBar_20 from "../../assets/ProgressBar_20.svg";
@@ -14,10 +15,46 @@ import HeartImage_60 from "../../assets/HeartImage_60.svg";
 import HeartImage_80 from "../../assets/HeartImage_80.svg";
 import HeartImage_100 from "../../assets/HeartImage_100.svg";
 
-const ProgressBarComponent = () => {
+interface ProgressBarComponentProps {
+  title: string;
+  goalId: number;
+}
+
+const setEditGoal = async (title: string, goalId: number, progress: number) => {
+  try {
+    const response = await fetch(`http://localhost:8080/api/v1/goal/${goalId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: `{"title": "${title}", "progress": ${progress}}`,
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to set goal");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error:", error);
+    alert("Failed to set goal");
+    throw error;
+  }
+};
+
+const ProgressBarComponent: React.FC<ProgressBarComponentProps> = ({ goalId, title }) => {
+  const { goals, updateProgress } = useStore();
   const [progress, setProgress] = useState(ProgressBar_Empty);
 
-  const handleHeartClick = (percent) => {
+  useEffect(() => {
+    const goal = goals.find((g) => g.id === goalId);
+    if (goal) {
+      setProgressImage(goal.progress);
+    }
+  }, [goalId, goals]);
+
+  const setProgressImage = (percent: number) => {
     switch (percent) {
       case 0:
         setProgress(ProgressBar_0);
@@ -40,7 +77,18 @@ const ProgressBarComponent = () => {
       default:
         setProgress(ProgressBar_Empty);
     }
-    console.log(`${percent}% 선택됨`);
+  };
+
+  const handleHeartClick = async (percent: number) => {
+    try {
+      await setEditGoal(title, goalId, percent);
+      setProgressImage(percent);
+      //updateProgress( goalId, percent);
+      console.log(`${percent}% 선택됨`);
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to update progress");
+    }
   };
 
   const heartImages = {

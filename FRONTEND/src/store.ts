@@ -14,9 +14,8 @@ interface Follower {
 interface Goal {
   id: number;
   title: string;
-  description: string;
-  dueDate: string;
-  status: string;
+  progress: number;
+  completed: boolean; // 추가
 }
 
 interface Routine {
@@ -72,8 +71,11 @@ interface AppState {
   members: Member[];
   setMemberId: (memberId: number) => void;
   setSchedules: (schedules: Schedule[]) => void;
-  setGoals: (goals: Goal[]) => void;
-  setRoutines: (routines: Routine[]) => void;
+  setGoal: (title: string) => Promise<void>; // 추가된 함수
+
+  toggleGoalCompletion: (id: number) => void; // 추가된 함수
+  deleteGoal: (id: number) => void; // 추가된 함수
+  updateProgress: (goalId: number, progress: number) => Promise<void>; // 추가된 함수  setRoutines: (routines: Routine[]) => void;
   setFollowings: (followings: Follow[]) => void;
   setFollowers: (followers: Follower[]) => void;
   setMembers: (members: Member[]) => void;
@@ -292,6 +294,74 @@ export const useStore = create(
         } catch (error) {
           console.error("Error:", error);
           alert("Failed to add todo");
+        }
+      },
+
+      setGoal: async (title: string) => {
+        const { memberId } = get();
+        if (memberId !== null) {
+          try {
+            const response = await fetch(`http://localhost:8080/api/v1/member/${memberId}/goal`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ title, progress: 0, completed: false }),
+            });
+
+            if (!response.ok) {
+              throw new Error("Failed to set goal");
+            }
+
+            const data = await response.json();
+            set((state) => ({ goals: [...state.goals, data] }));
+          } catch (error) {
+            console.error("Error:", error);
+            alert("Failed to set goal");
+          }
+        }
+      },
+
+      toggleGoalCompletion: (id: number) => {
+        set((state) => ({
+          goals: state.goals.map((goal) =>
+            goal.id === id ? { ...goal, completed: !goal.completed } : goal
+          ),
+        }));
+      },
+
+      deleteGoal: (id: number) => {
+        set((state) => ({
+          goals: state.goals.filter((goal) => goal.id !== id),
+        }));
+      },
+
+      updateProgress: async (goalId: number, progress: number) => {
+        const { memberId } = get();
+        if (memberId !== null) {
+          try {
+            const response = await fetch(
+              `http://localhost:8080/api/v1/member/${memberId}/goal/${goalId}`,
+              {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ progress }),
+              }
+            );
+
+            if (!response.ok) {
+              throw new Error("Failed to update progress");
+            }
+
+            set((state) => ({
+              goals: state.goals.map((goal) => (goal.id === goalId ? { ...goal, progress } : goal)),
+            }));
+          } catch (error) {
+            console.error("Error:", error);
+            alert("Failed to update progress");
+          }
         }
       },
     }),
