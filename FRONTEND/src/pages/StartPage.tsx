@@ -27,7 +27,10 @@ const StartPage = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center w-full h-screen bg-cover bg-center" style={{ backgroundImage: `url(${StartPB})` }}>
+    <div
+      className="flex flex-col items-center justify-center w-full h-screen bg-cover bg-center"
+      style={{ backgroundImage: `url(${StartPB})` }}
+    >
       <div className="mt-auto mb-16 flex flex-col items-center">
         <div className="flex items-center mb-4">
           <input
@@ -38,14 +41,14 @@ const StartPage = () => {
             onChange={(e) => setEmail(e.target.value)}
           />
           <div className="mx-3"></div>
-          <button 
+          <button
             className="px-5 py-3 text-lg text-white bg-blue-400 rounded hover:bg-blue-500"
             onClick={openSignUpModal}
           >
             시작하기
           </button>
         </div>
-        <button 
+        <button
           className="px-5 py-3 text-lg text-white bg-gray-400 rounded-xl hover:bg-gray-500"
           onClick={openLoginModal}
         >

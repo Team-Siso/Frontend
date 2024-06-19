@@ -1,8 +1,8 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import Modal from './Modal';
-import Input from '../Input';
-import { useStore } from '../../store';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import Modal from "./Modal";
+import Input from "../Input";
+import { useStore } from "../../store";
 
 interface LoginModalProps {
   isOpen: boolean;

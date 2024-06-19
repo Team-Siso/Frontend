@@ -17,9 +17,8 @@ interface Follower {
 interface Goal {
   id: number;
   title: string;
-  description: string;
-  dueDate: string;
-  status: string;
+  progress: number;
+  completed: boolean;
 }
 
 interface Routine {
@@ -32,10 +31,12 @@ interface Routine {
 
 interface Schedule {
   id: number;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
+  content: string;
+  checkStatus: number;
+  thisDay: string;
+  startTime: string;
+  endTime: string;
+  completed?: boolean;
 }
 
 interface Member {
@@ -45,6 +46,7 @@ interface Member {
   introduce: string;
   profileUrl: string;
 }
+
 
 interface Friend {
   profilePicture: string;
@@ -82,13 +84,17 @@ interface AppState {
   followers: Follower[];
   members: Member[];
   memberProfile: Member | null;
-  setSchedules: (schedules: Schedule[]) => void;
-  setGoals: (goals: Goal[]) => void;
   setRoutines: (routines: Routine[]) => void;
+  setMemberProfile: (memberProfile: Member) => void;
+  setMemberId: (memberId: number) => void;
+  setSchedules: (schedules: Schedule[]) => void;
+  setGoal: (title: string) => Promise<void>; // 추가된 함수
+  toggleGoalCompletion: (id: number) => void; // 추가된 함수
+  deleteGoal: (id: number) => void; // 추가된 함수
+  updateProgress: (goalId: number, progress: number) => Promise<void>; // 추가된 함수  setRoutines: (routines: Routine[]) => void;
   setFollowings: (followings: Follow[]) => void;
   setFollowers: (followers: Follower[]) => void;
   setMembers: (members: Member[]) => void;
-  setMemberProfile: (memberProfile: Member) => void;
   fetchSchedules: (memberId: number) => Promise<void>;
   fetchGoals: (memberId: number) => Promise<void>;
   fetchRoutines: (memberId: number) => Promise<void>;
@@ -99,13 +105,16 @@ interface AppState {
   updateNickname: (memberId: number, nickname: string) => Promise<void>;
   updateIntroduce: (memberId: number, introduce: string) => Promise<void>;
   updateProfilePicture: (memberId: number, file: File) => Promise<void>;
+  addTodo: (memberId: number, newTodo: Omit<Schedule, "id">) => Promise<void>;
 }
 
+// 모달 상태와 이를 변경하는 메서드를 정의
 interface ModalState {
   isFriendSearchOpen: boolean;
   setFriendSearchOpen: (isOpen: boolean) => void;
   isSettingsOpen: boolean;
   setSettingsOpen: (isOpen: boolean) => void;
+
   isEditModalOpen: boolean;
   setEditModalOpen: (isOpen: boolean) => void;
   memberId: number | null;
@@ -265,19 +274,26 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     }
   },
 
-  fetchSchedules: async (memberId: number) => {
+  fetchSchedules: async (memberId: number): Promise<void> => {
     try {
       const response = await fetch(`/api/v1/calendar/${memberId}`);
+
       if (!response.ok) {
-        throw new Error('Failed to fetch schedules');
+        throw new Error(`Failed to fetch schedules: ${response.statusText}`);
       }
-      const data = await response.json();
-      set({ schedules: data });
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new TypeError("Expected JSON response");
+      }
+
+      const data: Schedule[] = await response.json();
+      set({ schedules: data || [] }); // data가 undefined일 경우 빈 배열 설정
     } catch (error) {
-      console.error('Failed to fetch schedules:', error);
+      console.error("Failed to fetch schedules:", error);
+      set({ schedules: [] }); // 에러 발생 시 빈 배열 설정
     }
   },
-
   fetchGoals: async (memberId: number) => {
     try {
       const response = await fetch(`/api/v1/goal/${memberId}`);
@@ -392,7 +408,67 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       console.error('Failed to fetch member profile:', error);
     }
   },
+  addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">) => {
+    try {
+      const response = await fetch(`/api/v1/member/${memberId}/schedule`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newTodo),
+      });
 
+      if (!response.ok) {
+        throw new Error("Failed to add todo");
+      }
+
+      const data = await response.json();
+      set((state) => ({
+        schedules: [...state.schedules, { ...data, id: data.id }],
+      }));
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Failed to add todo");
+    }
+  },
+
+  setGoal: async (title: string) => {
+    const { memberId } = get();
+    if (memberId !== null) {
+      try {
+        const response = await fetch(`http://localhost:8080/api/v1/member/${memberId}/goal`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ title, progress: 0, completed: false }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to set goal");
+        }
+
+        const data = await response.json();
+        set((state) => ({ goals: [...state.goals, data] }));
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Failed to set goal");
+      }
+    }
+  },
+  toggleGoalCompletion: (id: number) => {
+    set((state) => ({
+      goals: state.goals.map((goal) =>
+        goal.id === id ? { ...goal, completed: !goal.completed } : goal
+      ),
+    }));
+  },
+
+  deleteGoal: (id: number) => {
+    set((state) => ({
+      goals: state.goals.filter((goal) => goal.id !== id),
+    }));
+  },
   updateNickname: async (memberId: number, nickname: string) => {
     try {
       const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}/nickname`, {
@@ -418,7 +494,34 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       console.error('Failed to update nickname:', error);
     }
   },
+  updateProgress: async (goalId: number, progress: number) => {
+    const { memberId } = get();
+    if (memberId !== null) {
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/v1/member/${memberId}/goal/${goalId}`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ progress }),
+          }
+        );
 
+        if (!response.ok) {
+          throw new Error("Failed to update progress");
+        }
+
+        set((state) => ({
+          goals: state.goals.map((goal) => (goal.id === goalId ? { ...goal, progress } : goal)),
+        }));
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Failed to update progress");
+      }
+    }
+  },
   updateIntroduce: async (memberId: number, introduce: string) => {
     try {
       const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}/introduce`, {
@@ -479,4 +582,3 @@ export const useStore = create<StoreState>()(
     name: 'user-store', // 로컬 스토리지에 저장될 키 이름
     storage: storage, // localStorage를 persist storage로 변환하여 사용
   })
-);

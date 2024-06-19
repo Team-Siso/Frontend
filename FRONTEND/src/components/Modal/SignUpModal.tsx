@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import Modal from './Modal';
-import Input from '../Input';
-import SignUpModalStep2 from './SignUpModalStep2';
-import { useStore } from '../../store';
+import React, { useState } from "react";
+import Modal from "./Modal";
+import Input from "../Input";
+import SignUpModalStep2 from "./SignUpModalStep2";
+import { useStore } from "../../store";
 
 interface SignUpModalProps {
   isOpen: boolean;
@@ -40,7 +40,7 @@ const SignUpModal: React.FC<SignUpModalProps> = ({ isOpen, onClose }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <h2 className="text-2xl font-bold mb-8">회원가입</h2>
-      
+
       <div className="mb-4">
         <label htmlFor="password" className="block text-base font-medium text-left">
           비밀번호

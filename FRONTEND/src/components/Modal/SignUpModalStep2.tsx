@@ -12,6 +12,7 @@ interface SignUpModalStep2Props {
 }
 
 const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose }) => {
+  const email = useStore((state) => state.email);
   const nickname = useStore((state) => state.nickname);
   const setNickname = useStore((state) => state.setNickname);
   const bio = useStore((state) => state.bio);
@@ -53,7 +54,7 @@ const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose }) 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <h2 className="text-2xl font-bold mb-4">회원가입</h2>
-      
+
       <div className="relative flex flex-col items-center mb-4">
         <img src={profilePic || profileImage} alt="Profile" className="rounded-full w-24 h-24" />
         <input 
@@ -63,12 +64,12 @@ const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose }) 
           id="profile-pic-input" 
           onChange={handleProfilePicChange} 
         />
-        <img 
-          src={cameraIcon} 
-          alt="Edit profile" 
-          className="absolute bottom-4 right-21 w-10 h-10 cursor-pointer" 
-          style={{ transform: 'translate(50%, 50%)' }} 
-          onClick={() => document.getElementById('profile-pic-input')?.click()} 
+        <img
+          src={cameraIcon}
+          alt="Edit profile"
+          className="absolute bottom-4 right-21 w-10 h-10 cursor-pointer"
+          style={{ transform: "translate(50%, 50%)" }}
+          onClick={() => document.getElementById("profile-pic-input")?.click()}
         />
       </div>
 
@@ -80,7 +81,10 @@ const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose }) 
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
         />
-        <button style={{ marginTop: '-12px' }} className="w-16 h-8 bg-gray-300 hover:bg-gray-400 text-white py-2 px-4 rounded text-xs">
+        <button
+          style={{ marginTop: "-12px" }}
+          className="w-16 h-8 bg-gray-300 hover:bg-gray-400 text-white py-2 px-4 rounded text-xs"
+        >
           확인
         </button>
       </div>
@@ -93,7 +97,10 @@ const SignUpModalStep2: React.FC<SignUpModalStep2Props> = ({ isOpen, onClose }) 
           value={bio}
           onChange={(e) => setBio(e.target.value)}
         />
-        <button style={{ marginTop: '-12px' }} className="w-16 h-8 bg-gray-300 hover:bg-gray-400 text-white py-2 px-4 rounded text-xs">
+        <button
+          style={{ marginTop: "-12px" }}
+          className="w-16 h-8 bg-gray-300 hover:bg-gray-400 text-white py-2 px-4 rounded text-xs"
+        >
           확인
         </button>
       </div>
