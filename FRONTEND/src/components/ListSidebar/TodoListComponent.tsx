@@ -122,15 +122,30 @@ const TodoListComponent = ({ className }) => {
     setEditText(event.target.value);
   };
 
-  const handleEditSave = (id) => {
-    const updatedTodos = todos.map((todo) => {
-      if (todo.id === id) {
-        return { ...todo, title: editText };
+  const handleEditSave = async (id) => {
+    const todo = todos.find((todo) => todo.id === id);
+    if (todo) {
+      const updatedTodo = { ...todo, content: editText };
+      try {
+        const response = await fetch(`/api/v1/schedule/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedTodo),
+        });
+
+        if (response.ok) {
+          console.log("수정 성공");
+          setSchedules(todos.map((todo) => (todo.id === id ? updatedTodo : todo)));
+          setEditId(null);
+        } else {
+          console.error("수정 실패:", response.status);
+        }
+      } catch (error) {
+        console.error("Error:", error);
       }
-      return todo;
-    });
-    setSchedules(updatedTodos);
-    setEditId(null);
+    }
   };
 
   return (
@@ -177,7 +192,7 @@ const TodoListComponent = ({ className }) => {
                     value={editText}
                     onChange={handleEditChange}
                     onBlur={() => handleEditSave(todo.id)}
-                    onKeyPress={(event) => (event.key === "Enter" ? handleAddTodo() : null)}
+                    onKeyPress={(event) => (event.key === "Enter" ? handleEditSave(todo.id) : null)}
                   />
                 ) : (
                   todo.content
