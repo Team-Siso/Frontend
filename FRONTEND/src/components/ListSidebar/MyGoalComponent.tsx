@@ -69,14 +69,39 @@ const MyGoalComponent: React.FC<{ className: string }> = ({ className }) => {
       console.error("Error:", error);
     }
   };
+
   const handleDelete = (id: number) => {
     // 목표를 삭제합니다.
     console.log("handleDelete 입니다");
     deleteGoal(id);
   };
 
+  const editGoal = async (id: number, title: string, progress: number) => {
+    console.log("editGoal 호출, id:", id, "title:", title, "progress:", progress);
+    try {
+      const response = await fetch(`http://localhost:8080/api/v1/goal/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          accept: "*/*",
+        },
+        body: JSON.stringify({ title, progress }),
+      });
+
+      if (response.ok) {
+        console.log("수정 성공");
+        fetchGoals(memberId); // 수정 후 목표 목록 다시 불러오기
+      } else {
+        console.error("수정 실패:", response.status);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
   const startEdit = (id: number, title: string) => {
     // 목표의 편집 모드를 시작하고 편집 중인 목표의 ID와 텍스트를 설정합니다.
+    console.log("startEdit 함수 호출, id:", id, "title:", title);
     setEditId(id);
     setEditText(title);
     setShowEditOptions(null); // 편집 시작 시, 편집 옵션 숨김
@@ -84,26 +109,22 @@ const MyGoalComponent: React.FC<{ className: string }> = ({ className }) => {
 
   const handleEditChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // 편집 중인 목표의 텍스트를 변경합니다.
+    console.log("handelEditChange 함수 입니다.");
     setEditText(event.target.value);
   };
 
-  // const handleEditSave = async (id: number) => {
-  //   // 목표의 텍스트 편집을 저장하고 편집 모드를 종료합니다.
-  //   try {
-  //     await setEditGoal(id, editText, 0); // progress는 기본값으로 0으로 설정
-  //     const updatedGoals = goals.map((goal) => {
-  //       if (goal.id === id) {
-  //         return { ...goal, title: editText };
-  //       }
-  //       return goal;
-  //     });
-  //     setEditId(null);
-  //     console.log("목표 수정을 완료했습니다");
-  //   } catch (error) {
-  //     console.error("Error:", error);
-  //     alert("목표 수정에 실패했습니다.");
-  //   }
-  // };
+  const handleEditSave = async (id: number) => {
+    // 목표의 텍스트 편집을 저장하고 편집 모드를 종료합니다.
+    console.log("handleEditSave 함수 입니다.");
+
+    // 현재 편집 중인 목표의 progress 값을 가져오기
+    const goal = goals.find((goal) => goal.id === id);
+    const progress = goal ? goal.progress : 0;
+
+    await editGoal(id, editText, progress); // progress는 기본값으로 0으로 설정
+    setEditId(null);
+    console.log("목표 수정을 완료했습니다");
+  };
 
   return (
     <div className={`${className}`}>
@@ -147,7 +168,8 @@ const MyGoalComponent: React.FC<{ className: string }> = ({ className }) => {
                     type="text"
                     value={editText}
                     onChange={handleEditChange}
-                    // onBlur={() => handleEditSave(goal.id)}
+                    onBlur={() => handleEditSave(goal.id)}
+                    onKeyPress={(event) => (event.key === "Enter" ? handleEditSave(goal.id) : null)}
                   />
                 ) : (
                   goal.title
