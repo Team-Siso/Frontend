@@ -15,10 +15,10 @@ import HeartImage_60 from "../../assets/HeartImage_60.svg";
 import HeartImage_80 from "../../assets/HeartImage_80.svg";
 import HeartImage_100 from "../../assets/HeartImage_100.svg";
 
-// interface ProgressBarComponentProps {
-//   title: string;
-//   goalId: number;
-// }
+interface ProgressBarComponentProps {
+  title: string;
+  goalId: number;
+}
 
 const setEditGoal = async (title: string, goalId: number, progress: number) => {
   try {
@@ -44,7 +44,7 @@ const setEditGoal = async (title: string, goalId: number, progress: number) => {
 };
 
 const ProgressBarComponent: React.FC<ProgressBarComponentProps> = ({ goalId, title }) => {
-  const { goals, updateProgress } = useStore();
+  const { goals, fetchGoals, memberId } = useStore();
   const [progress, setProgress] = useState(ProgressBar_Empty);
 
   useEffect(() => {
@@ -83,7 +83,9 @@ const ProgressBarComponent: React.FC<ProgressBarComponentProps> = ({ goalId, tit
     try {
       await setEditGoal(title, goalId, percent);
       setProgressImage(percent);
-      //updateProgress( goalId, percent);
+      if (memberId) {
+        fetchGoals(memberId); // fetchGoals 호출하여 목표 목록 갱신
+      }
       console.log(`${percent}% 선택됨`);
     } catch (error) {
       console.error("Error:", error);

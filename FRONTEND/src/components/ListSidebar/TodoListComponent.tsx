@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import addTodoIcon from "../../assets/addTodoIcon.svg";
 import addTimeTodoIcon from "../../assets/addTimeTodoIcon.svg";
 import UncheckBoxIcon from "../../assets/UncheckBoxIcon.svg";
@@ -171,7 +171,7 @@ const TodoListComponent = ({ className }) => {
       )}
       <ul className="divide-y divide-gray-300 mx-4">
         {todos.length > 0 ? (
-          todos.map((todo, index) => (
+          todos.map((todo) => (
             <li
               key={todo.id}
               className="flex items-center py-3 pl-2 pr-2 relative"

@@ -5,14 +5,24 @@ import UncheckBoxIcon from "../../assets/UncheckBoxIcon.svg";
 import CheckedBoxIcon from "../../assets/CheckedBoxIcon.svg";
 import ProgressBarComponent from "./ProgressBarComponent";
 
-const MyGoalComponent: React.FC<{ className: string }> = ({ className }) => {
+interface MyGoalComponentProps {
+  className: string;
+}
+
+const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
   const [showInput, setShowInput] = useState(false); // 새로운 목표를 추가하기 위한 입력 필드의 가시성을 제어하는 상태
   const [inputValue, setInputValue] = useState(""); // 입력 상자의 현재 값을 저장할 상태
   const [editId, setEditId] = useState<number | null>(null); // 편집 중인 목표의 ID를 저장하는 상태
   const [editText, setEditText] = useState(""); // 편집 중인 목표의 텍스트를 저장하는 상태
   const [showEditOptions, setShowEditOptions] = useState<number | null>(null); // 호버 중인 항목의 ID를 저장하는 상태
 
-  const { goals, setGoal, toggleGoalCompletion, fetchGoals, memberId } = useStore();
+  const { goals, setGoal, toggleGoalCompletion, fetchGoals, memberId } = useStore((state) => ({
+    goals: state.goals,
+    setGoal: state.setGoal,
+    toggleGoalCompletion: state.toggleGoalCompletion,
+    fetchGoals: state.fetchGoals,
+    memberId: state.memberId
+  }));
 
   useEffect(() => {
     if (memberId) {
