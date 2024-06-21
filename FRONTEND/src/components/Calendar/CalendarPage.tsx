@@ -30,7 +30,7 @@ const CalendarPage = ({ onPageChange }) => {
       <div style={{ display: "flex", justifyContent: "flex-end", padding: "10px" }}>
         <Toggle
           id="view-toggle"
-          label="Toggle View" // 추가된 부분
+          label=""
           onToggle={handleToggleChange}
         />
       </div>

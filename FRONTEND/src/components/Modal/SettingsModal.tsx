@@ -29,10 +29,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             <Toggle id="friend-add-notification-toggle" label="친구 추가 알림" onToggle={(value) => handleToggleChange(value, 'Friend add notifications')} />
           </div>
           <hr className="my-3" />
-          <div className="flex justify-center">
-            <Toggle id="friend-request-notification-toggle" label="친구 신청 알림" onToggle={(value) => handleToggleChange(value, 'Friend request notifications')} />
-          </div>
-          <hr className="my-3" />
         </div>
         <button
         type="submit"
