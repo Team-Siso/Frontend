@@ -4,6 +4,7 @@ import addTimeTodoIcon from "../../assets/addTimeTodoIcon.svg";
 import UncheckBoxIcon from "../../assets/UncheckBoxIcon.svg";
 import CheckedBoxIcon from "../../assets/CheckedBoxIcon.svg";
 import { useStore } from "../../store";
+import { zhCN } from "date-fns/locale/zh-CN";
 
 const TodoListComponent = ({ className }) => {
   const [showInput, setShowInput] = useState(false);
@@ -45,7 +46,7 @@ const TodoListComponent = ({ className }) => {
     }
 
     if (inputValue.trim()) {
-      console.log("저여기있어요");
+      console.log("저 여기 있어요");
       const newTodo = {
         content: inputValue,
         checkStatus: 0,
@@ -66,6 +67,8 @@ const TodoListComponent = ({ className }) => {
         if (!response.ok) {
           const errorData = await response.json();
           console.error("Error:", errorData.errorMessage);
+          console.error("todo 추가 에러났어요, memberId는?", { memberId });
+
           return;
         }
 
@@ -165,7 +168,7 @@ const TodoListComponent = ({ className }) => {
             placeholder="할 일 입력"
             value={inputValue}
             onChange={handleInputChange}
-            onKeyPress={(event) => (event.key === "Enter" ? handleAddTodo() : null)}
+            onKeyDown={(event) => (event.key === "Enter" ? handleAddTodo() : null)}
           />
         </div>
       )}
