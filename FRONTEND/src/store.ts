@@ -87,6 +87,7 @@ interface AppState {
   setMemberProfile: (memberProfile: Member) => void;
   setMemberId: (memberId: number) => void;
   setSchedules: (schedules: Schedule[]) => void;
+  setScheduleId: (scheduleId: number) => void;
   setGoal: (title: string) => Promise<void>; // 추가된 함수
   toggleGoalCompletion: (id: number) => void; // 추가된 함수
   deleteGoal: (id: number) => void; // 추가된 함수
@@ -104,7 +105,7 @@ interface AppState {
   updateNickname: (memberId: number, nickname: string) => Promise<void>;
   updateIntroduce: (memberId: number, introduce: string) => Promise<void>;
   updateProfilePicture: (memberId: number, file: File) => Promise<void>;
-  addTodo: (memberId: number, newTodo: Omit<Schedule, "id">) => Promise<void>;
+  addTodo: (memberId: number, scheduleId: number, newTodo: Omit<Schedule, "id">) => Promise<void>;
 }
 
 interface ModalState {
@@ -160,7 +161,10 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   isEditModalOpen: false,
   setEditModalOpen: (isOpen) => set({ isEditModalOpen: isOpen }),
   memberId: null,
+  scheduleId: null,
+
   setMemberId: (memberId) => set({ memberId }),
+  setScheduleId: (scheduleId) => set({ scheduleId }),
 
   setEmail: (email) => set({ email }),
   setPassword: (password) => set({ password }),
