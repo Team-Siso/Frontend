@@ -129,7 +129,7 @@ const TodoListComponent = ({ className }) => {
     if (todo) {
       const updatedTodo = { ...todo, content: editText };
       try {
-        const response = await fetch(`/api/v1/schedule/${id}`, {
+        const response = await fetch(`/api/v1/schedules/${memberId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
