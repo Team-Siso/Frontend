@@ -307,7 +307,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
   fetchSchedules: async (memberId: number): Promise<void> => {
     try {
-      const response = await fetch(`/api/v1/calendar/${memberId}`);
+      const response = await fetch(`/api/v1/schedules/${memberId}`);
 
       if (!response.ok) {
         throw new Error(
