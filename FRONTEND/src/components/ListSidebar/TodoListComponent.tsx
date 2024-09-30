@@ -4,7 +4,6 @@ import addTimeTodoIcon from "../../assets/addTimeTodoIcon.svg";
 import UncheckBoxIcon from "../../assets/UncheckBoxIcon.svg";
 import CheckedBoxIcon from "../../assets/CheckedBoxIcon.svg";
 import { useStore } from "../../store";
-import { zhCN } from "date-fns/locale/zh-CN";
 
 const TodoListComponent = ({ className }) => {
   const [showInput, setShowInput] = useState(false);
@@ -56,7 +55,7 @@ const TodoListComponent = ({ className }) => {
       };
 
       try {
-        const response = await fetch(`/api/v1/member/${memberId}/schedule`, {
+        const response = await fetch(`/api/v1/schedules/${memberId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
