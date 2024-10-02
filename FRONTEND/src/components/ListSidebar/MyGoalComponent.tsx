@@ -21,7 +21,7 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
     setGoal: state.setGoal,
     toggleGoalCompletion: state.toggleGoalCompletion,
     fetchGoals: state.fetchGoals,
-    memberId: state.memberId
+    memberId: state.memberId,
   }));
 
   useEffect(() => {
@@ -89,7 +89,7 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
   const editGoal = async (id: number, title: string, progress: number) => {
     console.log("editGoal 호출, id:", id, "title:", title, "progress:", progress);
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/goal/${id}`, {
+      const response = await fetch(`http://localhost:8080/api/v1/goals/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
