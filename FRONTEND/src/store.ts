@@ -473,7 +473,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     const { memberId } = get();
     if (memberId !== null) {
       try {
-        const response = await fetch(`http://localhost:8080/api/v1/member/${memberId}/goal`, {
+        const response = await fetch(`http://localhost:8080/api/v1/goals/${memberId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
