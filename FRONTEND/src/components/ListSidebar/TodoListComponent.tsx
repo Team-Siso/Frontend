@@ -13,7 +13,6 @@ const TodoListComponent = ({ className }) => {
   const [showEditOptions, setShowEditOptions] = useState(null); // 호버 중인 항목의 ID를 저장하는 상태
   const todos = useStore((state) => state.schedules) || []; // store에서 todos 가져오기
   const memberId = useStore((state) => state.memberId);
-  const scheduleId = useStore((state) => state.scheduleId);
   const fetchSchedules = useStore((state) => state.fetchSchedules);
   const setSchedules = useStore((state) => state.setSchedules); // setSchedules를 올바르게 가져오기
 
