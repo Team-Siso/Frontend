@@ -62,7 +62,7 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
   const deleteGoal = async (id: number) => {
     console.log("골 delete 입니다.");
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/goal/${id}`, {
+      const response = await fetch(`http://localhost:8080/api/v1/goals/${id}`, {
         method: "DELETE",
         headers: {
           accept: "*/*",
