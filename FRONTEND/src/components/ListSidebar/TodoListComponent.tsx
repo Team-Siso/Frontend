@@ -96,7 +96,7 @@ const TodoListComponent = ({ className }) => {
   const handleDelete = async (id) => {
     console.log("handleDelete 호출, id:", id);
     try {
-      const response = await fetch(`/api/v1/schedule/${id}`, {
+      const response = await fetch(`/api/v1/schedules/${id}`, {
         method: "DELETE",
         headers: {
           accept: "*/*",
@@ -129,7 +129,7 @@ const TodoListComponent = ({ className }) => {
     if (todo) {
       const updatedTodo = { ...todo, content: editText };
       try {
-        const response = await fetch(`/api/v1/schedule/${id}`, {
+        const response = await fetch(`/api/v1/schedules/${id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",

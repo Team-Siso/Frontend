@@ -87,6 +87,7 @@ interface AppState {
   setMemberProfile: (memberProfile: Member) => void;
   setMemberId: (memberId: number) => void;
   setSchedules: (schedules: Schedule[]) => void;
+  // setScheduleId: (scheduleId: number) => void;
   setGoal: (title: string) => Promise<void>; // 추가된 함수
   toggleGoalCompletion: (id: number) => void; // 추가된 함수
   deleteGoal: (id: number) => void; // 추가된 함수
@@ -160,6 +161,8 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   isEditModalOpen: false,
   setEditModalOpen: (isOpen) => set({ isEditModalOpen: isOpen }),
   memberId: null,
+  scheduleId: null,
+
   setMemberId: (memberId) => set({ memberId }),
 
   setEmail: (email) => set({ email }),
@@ -307,7 +310,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
   fetchSchedules: async (memberId: number): Promise<void> => {
     try {
-      const response = await fetch(`/api/v1/calendar/${memberId}`);
+      const response = await fetch(`/api/v1/schedules/${memberId}`);
 
       if (!response.ok) {
         throw new Error(
@@ -469,7 +472,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     const { memberId } = get();
     if (memberId !== null) {
       try {
-        const response = await fetch(`http://localhost:8080/api/v1/member/${memberId}/goal`, {
+        const response = await fetch(`http://localhost:8080/api/v1/goals/${memberId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
