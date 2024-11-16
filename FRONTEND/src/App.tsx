@@ -1,40 +1,38 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import StartPage from './pages/StartPage';
-import MainPage from './pages/MainPage';
-import FriendSearchModal from './components/Modal/FriendSearchModal';
-import SettingsModal from './components/Modal/SettingsModal';
+import React, { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import StartPage from "./pages/StartPage";
+import MainPage from "./pages/MainPage";
+import FriendSearchModal from "./components/Modal/FriendSearchModal";
+import SettingsModal from "./components/Modal/SettingsModal";
 
-const ModalSwitch = () => {
-  const location = useLocation();
-  const state = location.state as { from?: string };
+const App: React.FC = () => {
+  const [isFriendSearchModalOpen, setIsFriendSearchModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
-  return (
-    <>
-      <Routes location={state?.from ? state.from : location}>
-        <Route path="/" element={<StartPage />} />
-        <Route path="/main" element={<MainPage />} />
-      </Routes>
+  const openFriendSearchModal = () => setIsFriendSearchModalOpen(true);
+  const closeFriendSearchModal = () => setIsFriendSearchModalOpen(false);
 
-      {state?.from && (
-        <Routes>
-          <Route
-            path="/friend-search"
-            element={<FriendSearchModal isOpen={true} onClose={() => window.history.back()} />}
-          />
-          <Route
-            path="/settings"
-            element={<SettingsModal isOpen={true} onClose={() => window.history.back()} />}
-          />
-        </Routes>
-      )}
-    </>
-  );
-};
+  const openSettingsModal = () => setIsSettingsModalOpen(true);
+  const closeSettingsModal = () => setIsSettingsModalOpen(false);
 
-const App = () => {
   return (
     <Router>
-      <ModalSwitch />
+      <Routes>
+        <Route path="/" element={<StartPage />} />
+        <Route
+          path="/main"
+          element={
+            <MainPage
+              openFriendSearchModal={openFriendSearchModal} // 핸들러 전달
+              openSettingsModal={openSettingsModal} // 핸들러 전달
+            />
+          }
+        />
+      </Routes>
+
+      {/* 모달 렌더링 */}
+      <FriendSearchModal isOpen={isFriendSearchModalOpen} onClose={closeFriendSearchModal} />
+      <SettingsModal isOpen={isSettingsModalOpen} onClose={closeSettingsModal} />
     </Router>
   );
 };

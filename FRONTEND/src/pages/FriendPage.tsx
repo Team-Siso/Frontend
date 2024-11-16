@@ -1,14 +1,19 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import FriendsListSidebar from "../components/FriendsListSidebar/FriendsListSidebar";
 import FriendListSidebar from "../components/ListSidebar/ListSidebar";
 import CalendarPage from "../components/Calendar/CalendarPage";
 import FixGridPage from "../components/Grid/FixGridPage";
 import MenuComponent from "../components/Menu/MenuComponent";
 
-const MainPage = () => {
+interface FriendPageProps {
+  openFriendSearchModal: () => void; // 친구 검색 모달 열기 핸들러
+  openSettingsModal: () => void; // 설정 모달 열기 핸들러
+}
+
+const FriendPage: React.FC<FriendPageProps> = ({ openFriendSearchModal, openSettingsModal }) => {
   const [currentPage, setCurrentPage] = useState("calendar");
 
-  const handlePageChange = (page) => {
+  const handlePageChange = (page: string) => {
     console.log("Page changing to:", page); // 페이지 변경 로그
     setCurrentPage(page);
   };
@@ -25,12 +30,14 @@ const MainPage = () => {
         {currentPage === "calendar" && <CalendarPage onPageChange={handlePageChange} />}
         {currentPage === "fixGrid" && <FixGridPage onPageChange={handlePageChange} />}
       </div>
-      {/* MenuComponent positioned at bottom-left corner with z-index */}
       <div className="absolute bottom-4 left-4 z-50">
-        <MenuComponent />
+        <MenuComponent
+          openFriendSearchModal={openFriendSearchModal} // 친구 검색 모달 핸들러 전달
+          openSettingsModal={openSettingsModal} // 설정 모달 핸들러 전달
+        />
       </div>
     </div>
   );
 };
 
-export default MainPage;
+export default FriendPage;
