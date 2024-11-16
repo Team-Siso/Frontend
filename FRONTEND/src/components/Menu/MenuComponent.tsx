@@ -1,26 +1,17 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import GrayCircle from "../../assets/GrayCircle.svg";
 import HomeButtonImage from "../../assets/HomeButtonImage.svg";
 import SearchButtonImage from "../../assets/SearchButtonImage.svg";
 import SettingButtonImage from "../../assets/SettingButtonImage.svg";
 import KebabMenuButtonImage from "../../assets/KebabMenuButtonImage.svg";
 
-const MenuComponent = () => {
+interface MenuComponentProps {
+  openFriendSearchModal: () => void; // 친구 검색 모달 열기 핸들러
+  openSettingsModal: () => void; // 설정 모달 열기 핸들러
+}
+
+const MenuComponent: React.FC<MenuComponentProps> = ({ openFriendSearchModal, openSettingsModal }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const navigate = useNavigate();
-
-  const handleSearchClick = () => {
-    navigate('/friend-search', { state: { from: window.location.pathname } });
-  };
-
-  const handleHomeClick = () => {
-    navigate('/main');
-  };
-
-  const handleSettingsClick = () => {
-    navigate('/settings', { state: { from: window.location.pathname } });
-  };
 
   return (
     <div
@@ -45,7 +36,7 @@ const MenuComponent = () => {
               src={SearchButtonImage}
               alt="Search"
               className="w-full h-full cursor-pointer"
-              onClick={handleSearchClick}
+              onClick={openFriendSearchModal} // 친구 검색 모달 열기
             />
           </div>
           <div className="absolute w-9 h-9 top-[-2px] right-2">
@@ -53,7 +44,7 @@ const MenuComponent = () => {
               src={HomeButtonImage}
               alt="Home"
               className="w-full h-full cursor-pointer"
-              onClick={handleHomeClick}
+              onClick={() => window.location.href = "/main"} // 메인으로 이동
             />
           </div>
           <div className="absolute w-9 h-9 bottom-2 right-[-3px]">
@@ -61,7 +52,7 @@ const MenuComponent = () => {
               src={SettingButtonImage}
               alt="Settings"
               className="w-full h-full cursor-pointer"
-              onClick={handleSettingsClick}
+              onClick={openSettingsModal} // 설정 모달 열기
             />
           </div>
         </div>
