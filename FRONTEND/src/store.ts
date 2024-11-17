@@ -36,7 +36,7 @@ interface Schedule {
   thisDay: string;
   startTime: string;
   endTime: string;
-  completed?: boolean;
+  completed: boolean;
 }
 
 interface Member {
@@ -249,6 +249,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     }
   },
 
+  // 이미지 업로드
   uploadImage: async (file: File, memberId: number) => {
     const formData = new FormData();
     formData.append("file", file);
@@ -273,7 +274,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       throw error;
     }
   },
-
+  // 로그인
   login: async (email: string, password: string) => {
     const { resetState } = get();
 
@@ -330,6 +331,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       set({ schedules: [] }); // 에러 발생 시 빈 배열 설정
     }
   },
+
   fetchGoals: async (memberId: number) => {
     try {
       const response = await fetch(`/api/v1/goals/${memberId}`);

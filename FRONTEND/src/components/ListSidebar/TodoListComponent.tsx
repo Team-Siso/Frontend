@@ -18,6 +18,7 @@ const TodoListComponent = ({ className }) => {
 
   useEffect(() => {
     console.log("memberId:", memberId); // memberId를 로그로 출력
+    console.log("Updated Schedules:", todos);
 
     if (memberId) {
       fetchSchedules(memberId)
@@ -29,7 +30,10 @@ const TodoListComponent = ({ className }) => {
         });
     }
   }, [memberId, fetchSchedules, setSchedules]);
-
+  // 상태 변경 이후 값 확인
+  useEffect(() => {
+    console.log("Todo 변경 감지:", todos);
+  }, [todos]); // todos가 변경될 때마다 실행
   const handleIconClick = () => {
     setShowInput(true);
   };
@@ -49,6 +53,7 @@ const TodoListComponent = ({ className }) => {
       const newTodo = {
         content: inputValue,
         checkStatus: 0,
+        completed: false,
         thisDay: new Date().toISOString(),
         startTime: new Date().toISOString(),
         endTime: new Date().toISOString(),
@@ -83,14 +88,48 @@ const TodoListComponent = ({ className }) => {
     }
   };
 
-  const toggleTodoCompletion = (id) => {
-    const updatedTodos = todos.map((todo) => {
-      if (todo.id === id) {
-        return { ...todo, completed: !todo.completed };
+  // 체크박스 클릭했을 때 실행되는 함수
+  // const toggleTodoCompletion = (id) => {
+  //   const updatedTodos = todos.map((todo) => {
+  //     if (todo.id === id) {
+  //       const updatedTodo = {
+  //         ...todo,
+  //         checkStatus: todo.checkStatus === 0 ? 1 : 0, // checkStatus 값 토글
+  //       }; // 상태 변경
+  //       console.log("체크박스 클릭!", updatedTodo.completed); // 변경된 상태 출력
+  //       return updatedTodo;
+  //     }
+  //     return todo;
+  //   });
+  //   setSchedules(updatedTodos);
+  // };
+  //2;
+
+  const toggleTodoCompletion = async (id) => {
+    const todo = todos.find((todo) => todo.id === id); // 변경할 todo 찾기
+    if (todo) {
+      const updatedTodo = { ...todo, checkStatus: todo.checkStatus === 0 ? 1 : 0 };
+
+      try {
+        const response = await fetch(`/api/v1/schedules/${id}`, {
+          method: "PUT", // 서버에 상태 업데이트 요청
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedTodo), // 변경할 필드만 포함
+        });
+
+        if (response.ok) {
+          console.log("checkStatus 업데이트 성공:", updatedTodo);
+          setSchedules(todos.map((todo) => (todo.id === id ? updatedTodo : todo)));
+          setEditId(null);
+        } else {
+          console.error("checkStatus 업데이트 실패:", response.status);
+        }
+      } catch (error) {
+        console.error("Error:", error);
       }
-      return todo;
-    });
-    setSchedules(updatedTodos);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -180,13 +219,15 @@ const TodoListComponent = ({ className }) => {
               onMouseOver={() => setShowEditOptions(todo.id)}
               onMouseLeave={() => setShowEditOptions(null)}
             >
+              {/* 체크박스 */}
               <img
-                src={todo.completed ? CheckedBoxIcon : UncheckBoxIcon}
-                alt={todo.completed ? "Todo completed" : "Mark todo as completed"}
+                src={todo.checkStatus === 1 ? CheckedBoxIcon : UncheckBoxIcon}
+                alt={todo.checkStatus === 1 ? "Todo completed" : "Mark todo as completed"}
                 className="cursor-pointer"
                 onClick={() => toggleTodoCompletion(todo.id)}
               />
 
+              {/* Todo 텍스트 */}
               <span className={todo.completed ? "ml-2 line-through" : "ml-2"}>
                 {todo.id === editId ? (
                   <input
@@ -194,7 +235,7 @@ const TodoListComponent = ({ className }) => {
                     value={editText}
                     onChange={handleEditChange}
                     onBlur={() => handleEditSave(todo.id)}
-                    onKeyPress={(event) => (event.key === "Enter" ? handleEditSave(todo.id) : null)}
+                    onKeyDown={(event) => (event.key === "Enter" ? handleEditSave(todo.id) : null)}
                   />
                 ) : (
                   todo.content

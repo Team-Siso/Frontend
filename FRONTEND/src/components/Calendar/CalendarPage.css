@@ -1,11 +1,12 @@
-.calendar-container {
+/* .calendar-container {
   display: flex;
   justify-content: center;
-  align-items: flex-start; /* 상단 정렬 */
-  height: 100vh; /* 화면 전체 높이를 사용 */
-  padding-top: 5vh; /* 상단으로부터 10%의 여백을 두어 조금만 아래로 내림 */
+  align-items: flex-start; 
+  height: 100vh; 
+  padding-top: 5vh;  
 }
+
 .custom-calendar {
   margin: auto;
   width: 80%;
-}
+} */
