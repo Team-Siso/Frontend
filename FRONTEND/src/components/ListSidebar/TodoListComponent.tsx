@@ -103,6 +103,7 @@ const TodoListComponent = ({ className }) => {
   //   });
   //   setSchedules(updatedTodos);
   // };
+  //2;
 
   const toggleTodoCompletion = async (id) => {
     const todo = todos.find((todo) => todo.id === id); // 변경할 todo 찾기
@@ -120,13 +121,6 @@ const TodoListComponent = ({ className }) => {
 
         if (response.ok) {
           console.log("checkStatus 업데이트 성공:", updatedTodo);
-
-          // 상태 업데이트: checkStatus만 변경
-          // setSchedules(
-          //   todos.map((todo) =>
-          //     todo.id === id ? { ...todo, checkStatus: updatedCheckStatus } : todo
-          //   )
-          // );
           setSchedules(todos.map((todo) => (todo.id === id ? updatedTodo : todo)));
           setEditId(null);
         } else {
