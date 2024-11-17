@@ -6,7 +6,7 @@ interface RestTasksComponentProps {
   tasksCount: number; // 할 일의 수를 받기 위한 prop
 }
 
-const RestTasksComponent: React.FC<RestTasksComponentProps> = ({ tasksCount }) => {
+const RestTasksComponent = ({ tasksCount }: RestTasksComponentProps) => {
   return (
     <div
       className="relative bg-no-repeat bg-center bg-contain mb-4"

@@ -3,8 +3,8 @@ import { useStore } from "../store";
 import FriendsListSidebar from "../components/FriendsListSidebar/FriendsListSidebar";
 import ListSidebar from "../components/ListSidebar/ListSidebar";
 import CalendarPage from "../components/Calendar/CalendarPage";
-import FixGridPage from "../components/Grid/FixGridPage";
 import MenuComponent from "../components/Menu/MenuComponent";
+import FixGridPage from "../components/Grid/FixGridPage";
 
 interface MainPageProps {
   openFriendSearchModal: () => void; // 친구 검색 모달 열기 핸들러

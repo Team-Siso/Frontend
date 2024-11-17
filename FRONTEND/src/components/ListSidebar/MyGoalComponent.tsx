@@ -153,7 +153,7 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
             placeholder="할 일 입력"
             value={inputValue}
             onChange={handleInputChange}
-            onKeyPress={(event) => (event.key === "Enter" ? handleAddGoal() : null)}
+            onKeyDown={(event) => (event.key === "Enter" ? handleAddGoal() : null)}
           />
         </div>
       )}
