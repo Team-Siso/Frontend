@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import addTodoIcon from "../../assets/addTodoIcon.svg";
-import addTimeTodoIcon from "../../assets/addTimeTodoIcon.svg";
-import UncheckBoxIcon from "../../assets/UncheckBoxIcon.svg";
-import CheckedBoxIcon from "../../assets/CheckedBoxIcon.svg";
-import { useStore } from "../../store";
+import addTodoIcon from "@/assets/addTodoIcon.svg";
+import addTimeTodoIcon from "@/assets/addTimeTodoIcon.svg";
+import UncheckBoxIcon from "@/assets/UncheckBoxIcon.svg";
+import CheckedBoxIcon from "@/assets/CheckedBoxIcon.svg";
+import { useStore } from "@/store";
 
 const TodoListComponent = ({ className }) => {
   const [showInput, setShowInput] = useState(false);

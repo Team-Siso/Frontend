@@ -1,9 +1,9 @@
-import { useState } from "react";
-import GrayCircle from "../../assets/GrayCircle.svg";
-import HomeButtonImage from "../../assets/HomeButtonImage.svg";
-import SearchButtonImage from "../../assets/SearchButtonImage.svg";
-import SettingButtonImage from "../../assets/SettingButtonImage.svg";
-import KebabMenuButtonImage from "../../assets/KebabMenuButtonImage.svg";
+import React from "react";
+import GrayCircle from "@/assets/GrayCircle.svg";
+import HomeButtonImage from "@/assets/HomeButtonImage.svg";
+import SearchButtonImage from "@/assets/SearchButtonImage.svg";
+import SettingButtonImage from "@/assets/SettingButtonImage.svg";
+import KebabMenuButtonImage from "@/assets/KebabMenuButtonImage.svg";
 
 interface MenuComponentProps {
   openFriendSearchModal: () => void; // 친구 검색 모달 열기 핸들러
@@ -56,4 +56,4 @@ const MenuComponent: React.FC<MenuComponentProps> = ({
   );
 };
 
-export default MenuComponent;
+export default React.memo(MenuComponent);

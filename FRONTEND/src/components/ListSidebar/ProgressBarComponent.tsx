@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { useStore } from "../../store";
+import { useStore } from "@/store";
 
-import ProgressBar_0 from "../../assets/ProgressBar_0.svg";
-import ProgressBar_20 from "../../assets/ProgressBar_20.svg";
-import ProgressBar_40 from "../../assets/ProgressBar_40.svg";
-import ProgressBar_60 from "../../assets/ProgressBar_60.svg";
-import ProgressBar_80 from "../../assets/ProgressBar_80.svg";
-import ProgressBar_100 from "../../assets/ProgressBar_100.svg";
-import ProgressBar_Empty from "../../assets/ProgressBar_Empty.svg";
-import HeartImage_0 from "../../assets/HeartImage_0.svg";
-import HeartImage_20 from "../../assets/HeartImage_20.svg";
-import HeartImage_40 from "../../assets/HeartImage_40.svg";
-import HeartImage_60 from "../../assets/HeartImage_60.svg";
-import HeartImage_80 from "../../assets/HeartImage_80.svg";
-import HeartImage_100 from "../../assets/HeartImage_100.svg";
+import ProgressBar_0 from "@/assets/ProgressBar_0.svg";
+import ProgressBar_20 from "@/assets/ProgressBar_20.svg";
+import ProgressBar_40 from "@/assets/ProgressBar_40.svg";
+import ProgressBar_60 from "@/assets/ProgressBar_60.svg";
+import ProgressBar_80 from "@/assets/ProgressBar_80.svg";
+import ProgressBar_100 from "@/assets/ProgressBar_100.svg";
+import ProgressBar_Empty from "@/assets/ProgressBar_Empty.svg";
+import HeartImage_0 from "@/assets/HeartImage_0.svg";
+import HeartImage_20 from "@/assets/HeartImage_20.svg";
+import HeartImage_40 from "@/assets/HeartImage_40.svg";
+import HeartImage_60 from "@/assets/HeartImage_60.svg";
+import HeartImage_80 from "@/assets/HeartImage_80.svg";
+import HeartImage_100 from "@/assets/HeartImage_100.svg";
 
 interface ProgressBarComponentProps {
   title: string;
