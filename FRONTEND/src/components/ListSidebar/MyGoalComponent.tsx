@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useStore } from "../../store";
-import PlusButton from "../../assets/PlusButton.svg";
-import UncheckBoxIcon from "../../assets/UncheckBoxIcon.svg";
-import CheckedBoxIcon from "../../assets/CheckedBoxIcon.svg";
+import { useStore } from "@/store";
+import PlusButton from "@/assets/PlusButton.svg";
+import UncheckBoxIcon from "@/assets/UncheckBoxIcon.svg";
+import CheckedBoxIcon from "@/assets/CheckedBoxIcon.svg";
 import ProgressBarComponent from "./ProgressBarComponent";
 
 interface MyGoalComponentProps {
