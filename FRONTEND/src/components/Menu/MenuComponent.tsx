@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React from "react";
 import GrayCircle from "@/assets/GrayCircle.svg";
 import HomeButtonImage from "@/assets/HomeButtonImage.svg";
 import SearchButtonImage from "@/assets/SearchButtonImage.svg";
@@ -56,4 +56,4 @@ const MenuComponent: React.FC<MenuComponentProps> = ({
   );
 };
 
-export default MenuComponent;
+export default React.memo(MenuComponent);
