@@ -14,9 +14,11 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:8080", // API 서버 주소
+        target: "http://43.203.231.200:8080", // API 서버 주소
         changeOrigin: true,
       },
     },
   },
 });
+
+//vite,config.ts
