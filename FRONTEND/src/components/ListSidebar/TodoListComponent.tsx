@@ -16,6 +16,11 @@ const TodoListComponent = ({ className }) => {
   const fetchSchedules = useStore((state) => state.fetchSchedules);
   const setSchedules = useStore((state) => state.setSchedules); // setSchedules를 올바르게 가져오기
 
+  //ReactQuery로 바꿀 것
+  // 1. todos
+  // 2. memberId를 기반으로 데이터를 가져오는 로직 (fetchSchedules)
+  // 3.
+
   useEffect(() => {
     console.log("memberId:", memberId); // memberId를 로그로 출력
     console.log("Updated Schedules:", todos);
