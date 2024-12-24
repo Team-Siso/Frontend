@@ -30,7 +30,7 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
       try {
         // API 호출로 친구 검색
         const response = await fetch(
-          `http://localhost:8080/api/v1/members/search?nickNameOrEmail=${encodeURIComponent(query)}`
+          `http://43.203.231.200:8080/api/v1/members/search?nickNameOrEmail=${encodeURIComponent(query)}`
         );
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`); // 오류 처리

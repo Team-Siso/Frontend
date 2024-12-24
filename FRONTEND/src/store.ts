@@ -216,7 +216,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     };
 
     try {
-      const response = await fetch("http://localhost:8080/api/v1/members/signup", {
+      const response = await fetch("http://43.203.231.200:8080/api/v1/members/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -255,10 +255,13 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     formData.append("file", file);
 
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}/profile`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `http://43.203.231.200:8080/api/v1/members/${memberId}/profile`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -285,7 +288,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/v1/members/login?${params.toString()}`,
+        `http://43.203.231.200:8080/api/v1/members/login?${params.toString()}`,
         {
           method: "POST",
           headers: {
@@ -361,7 +364,9 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   fetchFollowings: async (memberId: number) => {
     console.log(`Fetching followings for memberId: ${memberId}`); // 로그 추가
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/follow/${memberId}/following`);
+      const response = await fetch(
+        `http://43.203.231.200:8080/api/v1/follow/${memberId}/following`
+      );
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
@@ -417,7 +422,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   fetchMemberProfile: async (memberId: number) => {
     console.log(`Fetching member profile for memberId: ${memberId}`); // 로그 추가
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}`);
+      const response = await fetch(`http://43.203.231.200:8080/api/v1/members/${memberId}`);
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
@@ -474,7 +479,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     const { memberId } = get();
     if (memberId !== null) {
       try {
-        const response = await fetch(`http://localhost:8080/api/v1/goals/${memberId}`, {
+        const response = await fetch(`http://43.203.231.200:8080/api/v1/goals/${memberId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -511,13 +516,16 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
   updateNickname: async (memberId: number, nickname: string) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}/nickname`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ nickname }),
-      });
+      const response = await fetch(
+        `http://43.203.231.200:8080/api/v1/members/${memberId}/nickname`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ nickname }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to update nickname");
@@ -540,7 +548,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     if (memberId !== null) {
       try {
         const response = await fetch(
-          `http://localhost:8080/api/v1/member/${memberId}/goal/${goalId}`,
+          `http://43.203.231.200:8080/api/v1/member/${memberId}/goal/${goalId}`,
           {
             method: "PATCH",
             headers: {
@@ -566,13 +574,16 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
   updateIntroduce: async (memberId: number, introduce: string) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}/introduce`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ introduce }),
-      });
+      const response = await fetch(
+        `http://43.203.231.200:8080/api/v1/members/${memberId}/introduce`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ introduce }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to update introduce");
@@ -595,10 +606,13 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`http://localhost:8080/api/v1/members/${memberId}/profile`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `http://43.203.231.200:8080/api/v1/members/${memberId}/profile`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to update profile picture");

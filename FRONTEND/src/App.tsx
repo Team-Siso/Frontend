@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import StartPage from "./pages/StartPage";
-import MainPage from "./pages/MainPage";
+//import MainPage from "./pages/MainPage";
+import FriendPage from "./pages/FriendPage";
 import FriendSearchModal from "./components/Modal/FriendSearchModal";
 import SettingsModal from "./components/Modal/SettingsModal";
 
@@ -22,7 +23,7 @@ const App: React.FC = () => {
         <Route
           path="/main"
           element={
-            <MainPage
+            <FriendPage
               openFriendSearchModal={openFriendSearchModal} // 핸들러 전달
               openSettingsModal={openSettingsModal} // 핸들러 전달
             />

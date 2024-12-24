@@ -22,7 +22,7 @@ interface ProgressBarComponentProps {
 
 const setEditGoal = async (title: string, goalId: number, progress: number) => {
   try {
-    const response = await fetch(`http://localhost:8080/api/v1/goals/${goalId}`, {
+    const response = await fetch(`http://43.203.231.200:8080/api/v1/goals/${goalId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
