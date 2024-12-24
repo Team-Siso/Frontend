@@ -23,7 +23,10 @@ const FriendPage: React.FC<FriendPageProps> = ({ openFriendSearchModal, openSett
       <div className="bg-EDEEEE flex-none" style={{ width: "60px" }}>
         <FriendsListSidebar />
       </div>
-      <div className="flex-none border border-EDEEEE rounded" style={{ width: "330px" }}>
+      <div
+        className="bg-[#EDE0EC] flex-none border border-D6D6D6   rounded"
+        style={{ width: "330px" }}
+      >
         <FriendListSidebar />
       </div>
       <div className="flex-grow">

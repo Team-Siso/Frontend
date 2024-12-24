@@ -21,9 +21,9 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<StartPage />} />
         <Route
-          path="/main"
+          path="/friend"
           element={
-            <MainPage
+            <FriendPage
               openFriendSearchModal={openFriendSearchModal} // 핸들러 전달
               openSettingsModal={openSettingsModal} // 핸들러 전달
             />
