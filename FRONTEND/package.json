@@ -11,6 +11,8 @@
     "format": "prettier --write --cache ."
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.61.5",
+    "@tanstack/react-query-devtools": "^5.61.5",
     "@types/react-modal": "^3.16.3",
     "autoprefixer": "^10.4.19",
     "date-fns": "^3.6.0",

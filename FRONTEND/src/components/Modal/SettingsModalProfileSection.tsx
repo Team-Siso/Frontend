@@ -1,63 +1,52 @@
-import React, { useEffect } from 'react';
-import profileImage from '../../assets/profile.png'; // 기본 프로필 이미지
-import penIcon from '../../assets/pen.png'; // 편집 아이콘
-import EditProfileModal from './EditProfileModal'; // 프로필 수정 모달 컴포넌트
-import { useStore } from '../../store';
+import React, { useState } from "react";
+import profileImage from "../../assets/profile.png";
+import penIcon from "../../assets/pen.png";
+import EditProfileModal from "./EditProfileModal";
+import { useMemberProfile } from "../../hooks/member/useMemberProfile";
 
 // ModalProfileSection 컴포넌트 정의
 const ModalProfileSection: React.FC = () => {
-  // Zustand에서 상태 및 메서드 가져오기
-  const isEditModalOpen = useStore((state) => state.isEditModalOpen); // 프로필 수정 모달 열림 여부
-  const setEditModalOpen = useStore((state) => state.setEditModalOpen); // 모달 상태 변경 메서드
-  const memberProfile = useStore((state) => state.memberProfile); // 멤버 프로필 정보
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
+  const memberId = "12345"; // 예제 멤버 ID (Context나 Props로 전달될 수 있음)
 
-  const fetchMemberProfile = useStore((state) => state.fetchMemberProfile); // 멤버 프로필을 가져오는 메서드
-  const memberId = useStore((state) => state.memberId); // 현재 멤버 ID
+  // React Query 훅 사용
+  const { data: memberProfile, isLoading, isError, refetch } = useMemberProfile(memberId);
 
-  // 컴포넌트가 렌더링될 때 멤버 프로필 데이터를 가져옴
-  useEffect(() => {
-    if (memberId) {
-      console.log('Calling fetchMemberProfile with memberId:', memberId); // 디버깅 로그
-      fetchMemberProfile(memberId); // 멤버 프로필 가져오기
-    }
-  }, [memberId, fetchMemberProfile]);
+  // 로딩 상태 처리
+  if (isLoading) return <div>Loading...</div>;
+  if (isError) return <div>Failed to load profile. Please try again later.</div>;
 
-  // 프로필 수정 모달 열기
-  const openEditModal = () => {
-    setEditModalOpen(true);
-  };
-
-  // 프로필 수정 모달 닫기
+  // 프로필 수정 모달 열기 및 닫기 핸들러
+  const openEditModal = () => setEditModalOpen(true);
   const closeEditModal = () => {
     setEditModalOpen(false);
+    refetch(); // 데이터 리패칭
   };
 
-  // memberProfile이 없는 경우 아무것도 렌더링하지 않음
-  if (!memberProfile) {
-    return null;
-  }
+  // memberProfile이 없는 경우
+  if (!memberProfile) return null;
 
   return (
     <div className="flex items-center mb-6 text-left">
       {/* 프로필 이미지 */}
       <img
-        src={memberProfile.profileUrl || profileImage} // 프로필 이미지 URL 또는 기본 이미지 사용
+        src={memberProfile.profileUrl || profileImage}
         alt="Profile"
-        className="rounded-full w-20 h-20 mr-5" // 이미지 스타일
+        className="rounded-full w-20 h-20 mr-5"
       />
       {/* 프로필 정보 */}
       <div className="mr-10">
         <div className="flex items-center">
-          <p className="text-lg font-bold mr-2">{memberProfile.nickName}</p> {/* 닉네임 */}
+          <p className="text-lg font-bold mr-2">{memberProfile.nickName}</p>
           <img
-            src={penIcon} // 편집 아이콘
+            src={penIcon}
             alt="Edit"
-            className="w-4 h-4 cursor-pointer" // 아이콘 스타일
-            onClick={openEditModal} // 클릭 시 프로필 수정 모달 열기
+            className="w-4 h-4 cursor-pointer"
+            onClick={openEditModal}
           />
         </div>
-        <p className="text-sm text-gray-600">{memberProfile.email}</p> {/* 이메일 */}
-        <p className="text-sm text-gray-500">{memberProfile.introduce}</p> {/* 자기소개 */}
+        <p className="text-sm text-gray-600">{memberProfile.email}</p>
+        <p className="text-sm text-gray-500">{memberProfile.introduce}</p>
       </div>
       {/* 프로필 수정 모달 */}
       <EditProfileModal isOpen={isEditModalOpen} onClose={closeEditModal} />
