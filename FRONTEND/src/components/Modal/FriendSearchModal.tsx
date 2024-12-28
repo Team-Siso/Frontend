@@ -30,7 +30,7 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
       try {
         // API 호출로 친구 검색
         const response = await fetch(
-          `http://localhost:8080/api/v1/members/search?nickNameOrEmail=${encodeURIComponent(query)}`
+          `http://43.203.254.169:8080/api/v1/members/search?nickNameOrEmail=${encodeURIComponent(query)}`
         );
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`); // 오류 처리
@@ -87,15 +87,31 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
         {friends.map((friend, index) => (
           <li key={index} className="py-2 flex items-center mt-1 mb-1">
             {/* 친구 프로필 이미지 */}
-            <img
-              src={friend.profilePicture} // 친구 프로필 이미지 URL
-              alt="Profile"
-              className="w-12 h-12 rounded-full mr-4 ml-8"
-            />
-            {/* 친구 정보 (닉네임, 소개글) */}
-            <div className="flex flex-col">
-              <span className="font-bold">{friend.nickname}</span> {/* 닉네임 */}
-              <span className="text-gray-600 ml-2">{friend.bio}</span> {/* 소개글 */}
+            <div className="flex  items-center ">
+              <div className="flex  items-center">
+                <img
+                  src={friend.profilePicture} // 친구 프로필 이미지 URL
+                  alt="Profile"
+                  className="w-12 h-12 rounded-full mr-4 ml-4"
+                />
+                {/* 친구 정보 (닉네임, 소개글) */}
+                <div className="flex flex-row space-x-4">
+                  <div className="flex flex-col max-x-[200px]">
+                    <span className="font-bold truncate">
+                      {friend.nickname.length > 8
+                        ? friend.nickname.slice(0, 8) + "..."
+                        : friend.nickname}
+                    </span>
+
+                    <span className="text-gray-600 truncate">
+                      {friend.bio.length > 8 ? friend.bio.slice(0, 8) + "..." : friend.bio}
+                    </span>
+                  </div>
+                  <div className="flex">
+                    <button className="w-24 bg-purple-200 rounded-full px-4 py-2">팔로우</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </li>
         ))}
