@@ -14,7 +14,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://43.203.254.169:8080", // API 서버 주소
+        target: "https://siiso.site", // API 서버 주소
         changeOrigin: true,
       },
     },

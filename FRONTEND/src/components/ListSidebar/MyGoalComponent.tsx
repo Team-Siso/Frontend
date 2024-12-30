@@ -62,7 +62,7 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
   const deleteGoal = async (id: number) => {
     console.log("골 delete 입니다.");
     try {
-      const response = await fetch(`http://43.203.254.169:8080/api/v1/goals/${id}`, {
+      const response = await fetch(`https://siiso.site/api/v1/goals/${id}`, {
         method: "DELETE",
         headers: {
           accept: "*/*",
@@ -89,7 +89,7 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
   const editGoal = async (id: number, title: string, progress: number) => {
     console.log("editGoal 호출, id:", id, "title:", title, "progress:", progress);
     try {
-      const response = await fetch(`http://43.203.254.169:8080/api/v1/goals/${id}`, {
+      const response = await fetch(`https://siiso.site/api/v1/goals/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

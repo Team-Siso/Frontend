@@ -33,9 +33,9 @@ interface Schedule {
   id: number;
   content: string;
   checkStatus: number;
-  thisDay: string;   // 날짜(예: "YYYY-MM-DD..." 형태)
-  startTime: string;
-  endTime: string;
+  thisDay: string;
+  startTime: string | null;
+  endTime: string | null;
   completed: boolean;
 }
 
@@ -123,7 +123,7 @@ interface AppState {
   updateNickname: (memberId: number, nickname: string) => Promise<void>;
   updateIntroduce: (memberId: number, introduce: string) => Promise<void>;
   updateProfilePicture: (memberId: number, file: File) => Promise<void>;
-  addTodo: (memberId: number, newTodo: Omit<Schedule, "id">) => Promise<void>;
+  addTodo: (memberId: number, newTodo: Omit<Schedule, "id">) => Promise<Schedule | void>;
 }
 
 // ---------------------------
@@ -272,7 +272,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     };
 
     try {
-      const response = await fetch("http://43.203.254.169:8080/api/v1/members/signup", {
+      const response = await fetch("https://siiso.site/api/v1/members/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -308,7 +308,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/members/${memberId}/profile`,
+        `https://siiso.site/api/v1/members/${memberId}/profile`,
         {
           method: "POST",
           body: formData,
@@ -339,7 +339,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/members/login?${params.toString()}`,
+        `https://siiso.site/api/v1/members/login?${params.toString()}`,
         {
           method: "POST",
           headers: {
@@ -369,7 +369,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   fetchSchedules: async (memberId: number): Promise<void> => {
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/schedules/${memberId}`
+        `https://siiso.site/api/v1/schedules/${memberId}`
       );
 
       if (!response.ok) {
@@ -396,37 +396,31 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   fetchSchedulesByDate: async (memberId: number, dateString: string): Promise<void> => {
     try {
-      // GET /api/v1/schedules/{memberId}/{date}
-      const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/schedules/${memberId}/${dateString}`
-      );
-
+      const response = await fetch(`https://siiso.site/api/v1/schedules/${memberId}/${dateString}`);
+  
       if (!response.ok) {
-        throw new Error(
-          `Failed to fetch schedules for date: ${dateString}, status: ${response.status}`
-        );
+        const errorText = await response.text();
+        console.error(`날짜(${dateString})에 해당하는 스케줄 조회 실패:`, errorText);
+        throw new Error(errorText || "알 수 없는 오류");
       }
-
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new TypeError("Expected JSON response");
-      }
-
+  
       const data: Schedule[] = await response.json();
+      console.log(`날짜(${dateString})의 스케줄 조회 성공:`, data);
+  
+      // schedules 상태 업데이트
       set({ schedules: data || [] });
     } catch (error) {
-      console.error("Failed to fetch schedules by date:", error);
-      set({ schedules: [] });
+      console.error("특정 날짜 스케줄 조회 중 오류:", error);
+      set({ schedules: [] }); // 오류 시 스케줄 초기화
     }
   },
-
   // ---------------------------
   // goal 조회
   // ---------------------------
   fetchGoals: async (memberId: number) => {
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/goals/${memberId}`
+        `https://siiso.site/api/v1/goals/${memberId}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch goals(사용자의 모든 goal 조회)");
@@ -444,7 +438,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   fetchRoutines: async (memberId: number) => {
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/routines/${memberId}`
+        `https://siiso.site/api/v1/routines/${memberId}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch routines");
@@ -463,7 +457,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     console.log(`Fetching followings for memberId: ${memberId}`);
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/follows/${memberId}/following`
+        `https://siiso.site/api/v1/follows/${memberId}/following`
       );
       const contentType = response.headers.get("content-type");
 
@@ -497,7 +491,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   fetchFollowers: async (memberId: number) => {
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/follows/${memberId}/followers`
+        `https://siiso.site/api/v1/follows/${memberId}/followers`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch followers");
@@ -515,7 +509,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   fetchMembers: async (query: string) => {
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/members/search?nickNameOrEmail=${query}`
+        `https://siiso.site/api/v1/members/search?nickNameOrEmail=${query}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch members");
@@ -534,7 +528,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     console.log(`Fetching member profile for memberId: ${memberId}`);
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/members/${memberId}`
+        `https://siiso.site/api/v1/members/${memberId}`
       );
       const contentType = response.headers.get("content-type");
 
@@ -567,34 +561,28 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   },
 
   // ---------------------------
-  // Todo(스케줄) 추가
-  // ---------------------------
-  addTodo: async (memberId: number, newTodo) => {
-    try {
-      const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/schedules/${memberId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(newTodo),
-        }
-      );
+// Todo(스케줄) 추가
+// ---------------------------
+addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">): Promise<Schedule> => {
+  try {
+    const response = await fetch(`https://siiso.site/api/v1/schedules/${memberId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newTodo),
+    });
 
-      if (!response.ok) {
-        throw new Error("Failed to add todo");
-      }
-
-      const data = await response.json();
-      set((state) => ({
-        schedules: [...state.schedules, { ...data, id: data.id }],
-      }));
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Failed to add todo");
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || "Failed to add todo");
     }
-  },
+
+    const data: Schedule = await response.json();
+    return data; // 항상 Schedule 반환
+  } catch (error) {
+    console.error("Error adding todo:", error);
+    throw error; // 에러를 호출한 쪽에서 처리하도록 전달
+  }
+},
 
   // ---------------------------
   // goal 추가
@@ -604,7 +592,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     if (memberId !== null) {
       try {
         const response = await fetch(
-          `http://43.203.254.169:8080/api/v1/goals/${memberId}`,
+          `https://siiso.site/api/v1/goals/${memberId}`,
           {
             method: "POST",
             headers: {
@@ -653,7 +641,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   updateNickname: async (memberId: number, nickname: string) => {
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/members/${memberId}/nickname`,
+        `https://siiso.site/api/v1/members/${memberId}/nickname`,
         {
           method: "POST",
           headers: {
@@ -671,7 +659,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       set((state) => ({
         memberProfile: {
           ...state.memberProfile,
-          nickName: data.nickname, 
+          nickName: data.nickname,
         },
       }));
     } catch (error) {
@@ -687,7 +675,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     if (memberId !== null) {
       try {
         const response = await fetch(
-          `http://43.203.254.169:8080/api/v1/goals/${goalId}`,
+          `https://siiso.site/api/v1/goals/${goalId}`,
           {
             method: "PUT",
             headers: {
@@ -719,7 +707,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   updateIntroduce: async (memberId: number, introduce: string) => {
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/members/${memberId}/introduce`,
+        `https://siiso.site/api/v1/members/${memberId}/introduce`,
         {
           method: "POST",
           headers: {
@@ -754,7 +742,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       formData.append("file", file);
 
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/members/${memberId}/profile`,
+        `https://siiso.site/api/v1/members/${memberId}/profile`,
         {
           method: "POST",
           body: formData,

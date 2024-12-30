@@ -1,71 +1,156 @@
-import React, { useState } from 'react';
-import WeekDates from '../Calendar/WeekDates';
-import WeekGrid from './WeekGrid'; 
-import './WeekGrid.css'; 
-import ConfirmButton from '../ConfirmButton';
+import React, { useEffect, useState } from "react";
+import WeekDates from "../Calendar/WeekDates";
+import WeekGrid from "./WeekGrid";
+import "./WeekGrid.css";
+import ConfirmButton from "../ConfirmButton";
+import { useStore } from "../../store";
+import { parseISO } from "date-fns";
 
 interface WeekGridPageProps {
-  selectedDate: Date; // 선택된 날짜를 나타내는 prop
+  selectedDate: Date; // 달력에서 선택된 (로컬) Date
 }
 
-// 주간 날짜와 시간표, 확인 버튼을 렌더링하는 페이지 컴포넌트
 const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
-  // 주간 그리드의 표시 여부 제어
   const [showGrid, setShowGrid] = useState(true);
+  const schedules = useStore((state) => state.schedules);
 
-  // 주간 헤더에 표시할 요일 이름 배열
-  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const [highlightedCells, setHighlightedCells] = useState<{ [key: string]: boolean }>({});
 
   const handleConfirmClick = () => {
-    setShowGrid(false); // WeekGrid 컴포넌트 숨김
+    setShowGrid(false);
   };
 
+  // === 주 시작 계산 (일요일 0) ===
+  const getStartOfWeek = (date: Date) => {
+    // JS date.getDay(): 0=일,1=월,...6=토
+    const dayOfWeek = date.getDay(); // 0=일
+    const newDate = new Date(date);
+    newDate.setHours(0, 0, 0, 0);
+    // date - dayOfWeek → 일요일
+    newDate.setDate(newDate.getDate() - dayOfWeek);
+    return newDate;
+  };
+
+  // weekDates[0] = 일요일
+  const weekStart = getStartOfWeek(selectedDate);
+  const weekDates: Date[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    weekDates.push(d);
+  }
+
+  // 요일 이름
+  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  // === 시간을 "05:00~다음날05:00" 그리드 인덱스로 변환 ===
+  const getGridIndexes = (dateObj: Date) => {
+    const hour = dateObj.getHours();
+    const min = dateObj.getMinutes();
+    // 5시 = 0번 timeIndex
+    const totalMinutes = (hour - 5) * 60 + min;
+    if (totalMinutes < 0 || totalMinutes >= 24 * 60) {
+      return { timeIndex: -1, partIndex: 0 };
+    }
+    const base30 = Math.floor(totalMinutes / 30);
+    const remainder = totalMinutes % 30;
+    const timeIndex = base30;
+    let partIndex = Math.floor(remainder / 10); 
+    if (partIndex > 2) partIndex = 2;
+    return { timeIndex, partIndex };
+  };
+
+  // === 스케줄 -> dayIndex, timeIndex, partIndex
+  const mapScheduleToCells = (stISO: string, etISO: string, dayIndex: number) => {
+    const st = parseISO(stISO);
+    const et = parseISO(etISO);
+    const stIdx = getGridIndexes(st);
+    const etIdx = getGridIndexes(et);
+    if (stIdx.timeIndex < 0 || etIdx.timeIndex < 0) return {};
+
+    const newCells: { [key: string]: boolean } = {};
+    const minT = Math.min(stIdx.timeIndex, etIdx.timeIndex);
+    const maxT = Math.max(stIdx.timeIndex, etIdx.timeIndex);
+
+    for (let t = minT; t <= maxT; t++) {
+      const startPart = t === minT ? stIdx.partIndex : 0;
+      const endPart = t === maxT ? etIdx.partIndex : 2;
+      for (let p = startPart; p <= endPart; p++) {
+        const key = `${dayIndex}-${t}-${p}`;
+        newCells[key] = true;
+      }
+    }
+    return newCells;
+  };
+
+  // === schedules -> highlightedCells
+  useEffect(() => {
+    const newHighlighted: { [key: string]: boolean } = {};
+
+    // dayIndex=0=>일,1=>월,...6=>토
+    weekDates.forEach((dateObj, dayIndex) => {
+      // "YYYY-MM-DD"
+      const y = dateObj.getFullYear();
+      const m = dateObj.getMonth();
+      const d = dateObj.getDate();
+
+      // 이 날짜를 가진 스케줄만
+      schedules.forEach((sch) => {
+        if (!sch.thisDay) return;
+        // sch.thisDay = "YYYY-MM-DD"
+        // 비교
+        const [sy, sm, sd] = sch.thisDay.split("-");
+        if (Number(sy) === y && Number(sm) - 1 === m && Number(sd) === d) {
+          if (sch.startTime && sch.endTime) {
+            const partial = mapScheduleToCells(sch.startTime, sch.endTime, dayIndex);
+            Object.keys(partial).forEach((k) => {
+              newHighlighted[k] = true;
+            });
+          }
+        }
+      });
+    });
+
+    setHighlightedCells(newHighlighted);
+  }, [schedules, selectedDate]);
+
   return (
-    <div style={{ position: 'relative', height: '700px' }}>
-      {/* 선택된 날짜에 해당하는 주간 날짜를 표시 */}
+    <div style={{ position: "relative", height: "700px" }}>
       <WeekDates selectedDate={selectedDate} />
-      
-      {/* 요일 이름을 화면 상단에 표시 */}
-      <div 
-        style={{ 
-          display: 'flex', 
-          justifyContent: 'space-evenly', // 요일 간격을 일정하게 배치
-          padding: '0px 35px', 
-          width: '100%'
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-evenly",
+          padding: "0px 35px",
+          width: "100%",
         }}
       >
-        {daysOfWeek.map(day => (
-          <div 
-            key={day} // 각 요일의 고유 키 (식별자 역할)
-            className={`day day-${day}`} // 기본 클래스와 요일별 동적 클래스 적용
-            style={{ 
-              paddingLeft: '95px',
-              width: 'calc(100% / 7)' // 각 요일의 너비를 7등분하여 분배
+        {daysOfWeek.map((day) => (
+          <div
+            key={day}
+            style={{
+              paddingLeft: "95px",
+              width: "calc(100% / 7)",
             }}
           >
-            {day} {/* 요일 이름 출력 */}
+            {day}
           </div>
         ))}
       </div>
-      
-      {/* 주간 그리드 컴포넌트 */}
-      <WeekGrid showGrid={showGrid} /> {/* showGrid 상태에 따라 그리드 표시 여부 결정 */}
-      
-      {/* 확인 버튼: 화면 하단 우측에 위치 */}
-      <div 
-        style={{ 
-          position: 'absolute',
-          bottom: '-20px', 
-          right: '20px' 
+
+      <WeekGrid showGrid={showGrid} highlightedCells={highlightedCells} />
+
+      <div
+        style={{
+          position: "absolute",
+          bottom: "-20px",
+          right: "20px",
         }}
       >
         <ConfirmButton
-          onClick={handleConfirmClick} // 버튼 클릭 시 실행되는 핸들러
-          text=" 확인 " // 버튼에 표시할 텍스트
-          style={{ 
-            width: '74px',
-            height: '42px'
-          }}
+          onClick={handleConfirmClick}
+          text=" 확인 "
+          style={{ width: "74px", height: "42px" }}
         />
       </div>
     </div>

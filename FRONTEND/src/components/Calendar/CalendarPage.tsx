@@ -21,24 +21,22 @@ import WeekGridPage from "../Grid/WeekGridPage";
 import ConfirmButton from "../ConfirmButton";
 import Toggle from "../Toggle";
 import { useStore } from "../../store";
-import { format } from "date-fns";
 
 const CalendarPage = ({ onPageChange }) => {
   const { memberId, setSelectedDate, fetchSchedulesByDate } = useStore();
 
-  // 기본 뷰: 달력
+  // 화면 모드("calendar" or "weekGrid")
   const [view, setView] = useState("calendar");
-  // 현재 선택된 날짜(프론트 단에서 관리) - moment 또는 date-fns로 처리 가능
-  const [selectedDate, setSelectedDateLocal] = useState(new Date());
+  // 현재 선택된 날짜(로컬 state, Date 객체 형태)
+  const [selectedDateLocal, setSelectedDateLocal] = useState(new Date());
 
-  // 토글
+  // 토글 (달력 <-> 주간 그리드)
   const handleToggleChange = (isWeekGrid) => {
     setView(isWeekGrid ? "weekGrid" : "calendar");
   };
 
-  // 고정 루틴 관리 버튼
+  // 고정 루틴 관리하기 버튼
   const handleConfirmClick = () => {
-    console.log("고정루틴 관리하기 버튼 클릭!");
     if (typeof onPageChange === "function") {
       onPageChange("fixGrid");
     } else {
@@ -50,16 +48,17 @@ const CalendarPage = ({ onPageChange }) => {
   const handleDateChange = (date) => {
     setSelectedDateLocal(date);
 
-    // 여기서 store에 YYYY-MM-DD 포맷으로 저장 & 특정 날짜 스케줄 조회
-    if (memberId) {
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, "0");
-      const dd = String(date.getDate()).padStart(2, "0");
-      const dateString = `${yyyy}-${mm}-${dd}`;
+    // "YYYY-MM-DD" 형태로 변환
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const dateString = `${yyyy}-${mm}-${dd}`;
 
-      // store에 날짜 저장
-      setSelectedDate(dateString);
-      // 해당 날짜의 일정만 불러오기
+    // store.selectedDate = "YYYY-MM-DD"
+    setSelectedDate(dateString);
+
+    // 해당 날짜 스케줄 조회
+    if (memberId) {
       fetchSchedulesByDate(memberId, dateString);
     }
   };
@@ -69,11 +68,13 @@ const CalendarPage = ({ onPageChange }) => {
       <div style={{ display: "flex", justifyContent: "flex-end", padding: "10px" }}>
         <Toggle id="view-toggle" label="" onToggle={handleToggleChange} />
       </div>
+
       {view === "weekGrid" ? (
-        <WeekGridPage selectedDate={selectedDate} />
+        <WeekGridPage selectedDate={selectedDateLocal} />
       ) : (
         <CustomCalendar onDateChange={handleDateChange} />
       )}
+
       {view === "calendar" && (
         <ConfirmButton onClick={handleConfirmClick} text="고정 루틴 관리하기" />
       )}
