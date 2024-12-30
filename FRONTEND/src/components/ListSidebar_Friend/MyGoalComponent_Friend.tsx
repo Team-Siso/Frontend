@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useStore } from "@/store";
-import PlusButton from "@/assets/PlusButton.svg";
+
 import UncheckBoxIcon from "@/assets/UncheckBoxIcon.svg";
 import CheckedBoxIcon from "@/assets/CheckedBoxIcon.svg";
-import ProgressBarComponent from "../ListSidebar/ProgressBarComponent";
+import ProgressBarComponent_Friend from "./ProgressBarComponent_Friend";
 
 interface MyGoalComponentProps {
   className: string;
@@ -29,9 +29,6 @@ const MyGoalComponent_Friend: React.FC<MyGoalComponentProps> = ({ className }) =
       <hr className="mx-4 my-1 border-gray-300" />
       <div className="flex justify-between items-center p-2.5">
         <div className="text-lg text-gray585151 font-bold pl-1">My Goal</div>
-        <div className="flex items-center pr-2">
-          <img src={PlusButton} alt="Add My Goal" />
-        </div>
       </div>
 
       <ul className="divide-y divide-gray-300 mx-4">
@@ -43,8 +40,9 @@ const MyGoalComponent_Friend: React.FC<MyGoalComponentProps> = ({ className }) =
                 alt={goal.completed ? "Goal completed" : "Mark goal as completed"}
                 className="cursor-pointer"
               />
+              <span className={goal.completed ? "ml-2 line-through" : "ml-2"}> {goal.title}</span>
             </div>
-            <ProgressBarComponent goalId={goal.id} title={goal.title} />
+            <ProgressBarComponent_Friend goalId={goal.id} title={goal.title} />
           </li>
         ))}
       </ul>
