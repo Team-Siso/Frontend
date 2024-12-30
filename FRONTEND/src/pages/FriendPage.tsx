@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import FriendsListSidebar from "../components/FriendsListSidebar/FriendsListSidebar";
-import FriendListSidebar from "../components/ListSidebar/ListSidebar";
+import ListSidebar_Friend from "../components/ListSidebar/ListSidebar_Friend";
 import CalendarPage from "../components/Calendar/CalendarPage";
 import FixGridPage from "../components/Grid/FixGridPage";
 import MenuComponent from "../components/Menu/MenuComponent";
@@ -27,7 +27,7 @@ const FriendPage: React.FC<FriendPageProps> = ({ openFriendSearchModal, openSett
         className="bg-[#EDE0EC] flex-none border border-D6D6D6   rounded"
         style={{ width: "330px" }}
       >
-        <FriendListSidebar />
+        <ListSidebar_Friend />
       </div>
       <div className="flex-grow">
         {currentPage === "calendar" && <CalendarPage onPageChange={handlePageChange} />}
