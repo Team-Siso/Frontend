@@ -3,13 +3,13 @@ import { useStore } from "@/store";
 import PlusButton from "@/assets/PlusButton.svg";
 import UncheckBoxIcon from "@/assets/UncheckBoxIcon.svg";
 import CheckedBoxIcon from "@/assets/CheckedBoxIcon.svg";
-import ProgressBarComponent from "./ProgressBarComponent";
+import ProgressBarComponent from "../ListSidebar/ProgressBarComponent";
 
 interface MyGoalComponentProps {
   className: string;
 }
 
-const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
+const MyGoalComponent_Friend: React.FC<MyGoalComponentProps> = ({ className }) => {
   const { goals, fetchGoals, memberId } = useStore((state) => ({
     goals: state.goals,
     setGoal: state.setGoal,
@@ -52,4 +52,4 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
   );
 };
 
-export default MyGoalComponent;
+export default MyGoalComponent_Friend;

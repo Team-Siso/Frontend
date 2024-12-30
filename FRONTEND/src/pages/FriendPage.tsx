@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import FriendsListSidebar from "../components/FriendsListSidebar/FriendsListSidebar";
-import ListSidebar_Friend from "../components/ListSidebar/ListSidebar_Friend";
+import ListSidebar_Friend from "../components/ListSidebar_Friend/ListSidebar_Friend";
 import CalendarPage from "../components/Calendar/CalendarPage";
 import FixGridPage from "../components/Grid/FixGridPage";
 import MenuComponent from "../components/Menu/MenuComponent";
