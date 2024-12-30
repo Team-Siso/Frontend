@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { debounce } from "lodash";
 import Modal from "./Modal";
-import { useStore } from "../../store";
+import { useStore } from "@/store";
 
 // FriendSearchModal 컴포넌트의 props 인터페이스
 interface FriendSearchModalProps {
@@ -12,6 +12,8 @@ interface FriendSearchModalProps {
 // 친구 검색 모달 컴포넌트
 const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }) => {
   // Zustand에서 상태 및 메서드 가져오기
+  const memberId = useStore((state) => state.memberId);
+
   const { searchTerm, friends, setSearchTerm, setFriends } = useStore((state) => ({
     searchTerm: state.searchTerm, // 검색어
     friends: state.friends, // 검색 결과 친구 리스트
@@ -22,39 +24,81 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
   const debouncedSearch = useCallback(
     debounce(async (query) => {
       if (!query.trim()) {
-        // 검색어가 비어 있는 경우
-        setFriends([]); // 친구 리스트 초기화
+        setFriends([]); // 검색어가 비어 있는 경우 친구 리스트 초기화
         return;
       }
 
       try {
         // API 호출로 친구 검색
         const response = await fetch(
-          `http://43.203.254.169:8080/api/v1/members/search?nickNameOrEmail=${encodeURIComponent(query)}`
+          `http://siiso.site:8080/api/v1/members/search?nickNameOrEmail=${encodeURIComponent(query)}`
         );
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`); // 오류 처리
         }
         const data = await response.json();
-        // 검색 결과 업데이트 (프로필 사진, 닉네임, 소개글 포함)
-        setFriends(
-          data.map((friend: any) => ({
-            profilePicture: friend.memberPhoto || "https://via.placeholder.com/100", // 기본 프로필 이미지 URL 사용
+        console.log("API 응답 데이터:", data); // 응답 전체 출력
+
+        // targetMemberId 확인
+        const mappedFriends = data.map((friend: any) => {
+          console.log("친구 ㄱ데이터:", friend); // 각 friend 객체 확인
+          console.log("userId:", friend.userId); // targetMemberId 확인
+          return {
+            id: friend.userId,
+            profilePicture: friend.memberPhoto || "https://via.placeholder.com/100",
             nickname: friend.name,
             bio: friend.introduce,
-          }))
-        );
+          };
+        });
+
+        setFriends(mappedFriends); // 친구 리스트 업데이트
+
+        console.log(mappedFriends);
       } catch (error) {
         console.error("Error fetching friends:", error); // 오류 로그 출력
       }
     }, 500),
     [setFriends]
   );
+
   const handleSearch = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target.value; // 검색어
     setSearchTerm(query); // Zustand의 검색어 상태 업데이트
     debouncedSearch(query);
   };
+
+  const handleFollow = async (targetMemberId: string) => {
+    console.log("69", targetMemberId);
+    if (!memberId) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://siiso.site:8080/api/v1/follows/${memberId}/following/${targetMemberId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.message === "이미 팔로우하고 있습니다.") {
+          alert("이미 팔로우한 사용자입니다.");
+        } else {
+          throw new Error(`Error: ${response.status}`); //
+        }
+      }
+
+      // 성공 시 상태를 업데이트하거나 UI에 반영
+      const data = await response.json();
+      console.log(`팔로우 성공: ${data.nickname}`);
+      alert(`${data.nickname}님을 팔로우했습니다!`);
+    } catch (error) {}
+  };
+
   return (
     // 모달 컴포넌트 사용
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -108,7 +152,15 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
                     </span>
                   </div>
                   <div className="flex">
-                    <button className="w-24 bg-purple-200 rounded-full px-4 py-2">팔로우</button>
+                    <button
+                      onClick={() => {
+                        console.log("팔로우 하려는 ID", friend.id);
+                        handleFollow(friend.id);
+                      }}
+                      className="w-24 bg-purple-200 rounded-full px-4 py-2"
+                    >
+                      팔로우
+                    </button>
                   </div>
                 </div>
               </div>

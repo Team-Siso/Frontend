@@ -1,6 +1,6 @@
 import { create, StateCreator } from "zustand";
 import { persist, PersistStorage } from "zustand/middleware";
-
+import DefaultImage from "@/assets/profile.png";
 // 인터페이스 정의
 interface Follow {
   followingId: number;
@@ -48,6 +48,7 @@ interface Member {
 }
 
 interface Friend {
+  id: string;
   profilePicture: string;
   nickname: string;
   bio: string;
@@ -216,7 +217,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     };
 
     try {
-      const response = await fetch("http://43.203.254.169:8080/api/v1/members/signup", {
+      const response = await fetch("http://siiso.site:8080/api/v1/members/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -255,13 +256,10 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     formData.append("file", file);
 
     try {
-      const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/members/${memberId}/profile`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}/profile`, {
+        method: "POST",
+        body: formData,
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -288,7 +286,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/members/login?${params.toString()}`,
+        `http://siiso.site:8080/api/v1/members/login?${params.toString()}`,
         {
           method: "POST",
           headers: {
@@ -364,9 +362,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   fetchFollowings: async (memberId: number) => {
     console.log(`Fetching followings for memberId: ${memberId}`); // 로그 추가
     try {
-      const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/follows/${memberId}/following`
-      );
+      const response = await fetch(`http://siiso.site:8080/api/v1/follows/${memberId}/following`);
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
@@ -378,7 +374,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
         const followings = data.map((friend: any) => ({
           followingId: friend.followingId,
           name: friend.name,
-          profilePicture: friend.memberPhoto || "default-profile-pic-url",
+          profilePicture: friend.memberPhoto || DefaultImage,
           isActive: friend.isActive, // 추가
         }));
         set({ followings });
@@ -422,7 +418,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   fetchMemberProfile: async (memberId: number) => {
     console.log(`Fetching member profile for memberId: ${memberId}`); // 로그 추가
     try {
-      const response = await fetch(`http://43.203.254.169:8080/api/v1/members/${memberId}`);
+      const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}`);
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
@@ -437,7 +433,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
           email: data.email || "", // email을 빈 문자열로 초기화
           nickName: data.nickname,
           introduce: data.introduce,
-          profileUrl: data.memberPhoto || "default-profile-pic-url",
+          profileUrl: data.memberPhoto || DefaultImage,
         };
         set({ memberProfile });
         console.log("Fetched member profile:", memberProfile); // 로그 추가
@@ -479,7 +475,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     const { memberId } = get();
     if (memberId !== null) {
       try {
-        const response = await fetch(`http://43.203.254.169:8080/api/v1/goals/${memberId}`, {
+        const response = await fetch(`http://siiso.site:8080/api/v1/goals/${memberId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -516,16 +512,13 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
   updateNickname: async (memberId: number, nickname: string) => {
     try {
-      const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/members/${memberId}/nickname`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ nickname }),
-        }
-      );
+      const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}/nickname`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ nickname }),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to update nickname");
@@ -548,7 +541,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     if (memberId !== null) {
       try {
         const response = await fetch(
-          `http://43.203.254.169:8080/api/v1/member/${memberId}/goal/${goalId}`,
+          `http://siiso.site:8080/api/v1/member/${memberId}/goal/${goalId}`,
           {
             method: "PATCH",
             headers: {
@@ -574,16 +567,13 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
   updateIntroduce: async (memberId: number, introduce: string) => {
     try {
-      const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/members/${memberId}/introduce`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ introduce }),
-        }
-      );
+      const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}/introduce`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ introduce }),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to update introduce");
@@ -606,13 +596,10 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/members/${memberId}/profile`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}/profile`, {
+        method: "POST",
+        body: formData,
+      });
 
       if (!response.ok) {
         throw new Error("Failed to update profile picture");
