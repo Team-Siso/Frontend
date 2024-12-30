@@ -1,12 +1,44 @@
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 
 import UncheckBoxIcon from "@/assets/UncheckBoxIcon.svg";
 import CheckedBoxIcon from "@/assets/CheckedBoxIcon.svg";
 import { useStore } from "@/store";
 
 const TodoListComponent_Friend = ({ className }) => {
-  const todos = useStore((state) => state.schedules) || []; // store에서 todos 가져오기
   const memberId = useStore((state) => state.memberId);
+  const [profile, setProfile] = useState({
+    nickname: "",
+  });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (memberId) {
+        try {
+          const response = await fetch(`/api/v1/members/${memberId}`, {
+            method: "GET",
+            headers: {
+              accept: "*/*",
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setProfile({
+              nickname: data.nickname || "",
+            });
+          } else {
+            console.error("프로필 불러오기 실패:", response.status);
+          }
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      }
+    };
+
+    fetchProfile();
+  }, [memberId]);
+
+  const todos = useStore((state) => state.schedules) || []; // store에서 todos 가져오기
   const fetchSchedules = useStore((state) => state.fetchSchedules);
   const setSchedules = useStore((state) => state.setSchedules); // setSchedules를 올바르게 가져오기
 
@@ -28,7 +60,7 @@ const TodoListComponent_Friend = ({ className }) => {
   return (
     <div className={`${className} `}>
       <div className="flex justify-between items-center p-2.5">
-        <div className="text-lg text-gray585151 font-bold pl-1">Todos</div>
+        <div className="text-lg text-gray585151 font-bold pl-1">{profile.nickname}'s Todos</div>
       </div>
 
       <ul className="divide-y divide-gray-300 mx-4">

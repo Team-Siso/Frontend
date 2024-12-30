@@ -23,12 +23,42 @@ const MyGoalComponent_Friend: React.FC<MyGoalComponentProps> = ({ className }) =
       console.log("fetchGoals 성공, memberId : ", memberId);
     }
   }, [memberId, fetchGoals]);
+  const [profile, setProfile] = useState({
+    nickname: "",
+  });
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (memberId) {
+        try {
+          const response = await fetch(`/api/v1/members/${memberId}`, {
+            method: "GET",
+            headers: {
+              accept: "*/*",
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setProfile({
+              nickname: data.nickname || "",
+            });
+          } else {
+            console.error("프로필 불러오기 실패:", response.status);
+          }
+        } catch (error) {
+          console.error("Error:", error);
+        }
+      }
+    };
+
+    fetchProfile();
+  }, [memberId]);
   return (
     <div className={`${className}`}>
       <hr className="mx-4 my-1 border-gray-300" />
       <div className="flex justify-between items-center p-2.5">
-        <div className="text-lg text-gray585151 font-bold pl-1">My Goal</div>
+        <div className="text-lg text-gray585151 font-bold pl-1">{profile.nickname}'s Goal</div>
       </div>
 
       <ul className="divide-y divide-gray-300 mx-4">
