@@ -1,16 +1,56 @@
 import { useState } from "react";
+import { useStore } from "@/store";
 
 const ToggleComponent = () => {
   const [isOn, setIsOn] = useState(false);
-
-  const handleToggle = () => {
-    setIsOn(!isOn);
+  const memberId = useStore((state) => state.memberId);
+  const handleToggle = async () => {
+    if (!memberId) {
+      alert("로그인이 필요한 서비스입니다.");
+      return;
+    }
+    console.log("memberId:", memberId);
+    setIsOn((prev) => !prev);
+    try {
+      if (!isOn) {
+        const response = await fetch(
+          `http://siiso.site:8080/api/v1/follows/${memberId}/following`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+        if (response.ok) {
+          response.json().then((data) => console.log(data));
+        }
+        if (!response.ok) throw new Error("팔로잉 API 호출 실패");
+        console.log("팔로잉 성공");
+      } else {
+        const response = await fetch(
+          `http://siiso.site:8080/api/v1/follows/${memberId}/followers`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+        if (response.ok) {
+          response.json().then((data) => console.log(data));
+        }
+        if (!response.ok) throw new Error("팔로잉 API 호출 실패");
+        console.log("팔로워 보이기 성공");
+      }
+    } catch (error) {}
   };
   return (
-    <div className="inline-block w-[180px] h-[60px] relative">
-      <input type="checkbox" checked={isOn} onClick={handleToggle} />
-      <span className="absolute rounded-s "></span>
-      <label htmlFor="toggle" className="switch"></label>
+    <div className="relative mb-12 flex justify-center " onClick={handleToggle}>
+      <div
+        className={`w-12 h-7 flex  rounded-full transition-colors duration-500 ${isOn ? "bg-blue-600 justify-end" : "bg-gray-400 justify-start"}`}
+      ></div>
+      <div
+        className={`absolute top-0.5 w-6 h-6 flex rounded-full bg-white transition-transform duration-500 ${
+          isOn ? "translate-x-6" : "translate-x-0.5"
+        }`}
+      ></div>
     </div>
   );
 };

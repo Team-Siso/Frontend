@@ -11,7 +11,7 @@ const FriendsListSidebar = () => (
     <div>
       <RestTasksComponent tasksCount={7} />
     </div>
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div className="flex justify-center items-center">
       <div>
         <FriendsListComponent />
         <NextPageComponent />
