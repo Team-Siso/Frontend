@@ -46,11 +46,11 @@ const ToggleComponent = () => {
       <div
         className={`w-12 h-7 flex  rounded-full transition-colors duration-500 ${isOn ? "bg-blue-600 justify-end" : "bg-gray-400 justify-start"}`}
       ></div>
-      <div
+      <button
         className={`absolute top-0.5 w-6 h-6 flex rounded-full bg-white transition-transform duration-500 ${
           isOn ? "translate-x-6" : "translate-x-0.5"
         }`}
-      ></div>
+      ></button>
     </div>
   );
 };
