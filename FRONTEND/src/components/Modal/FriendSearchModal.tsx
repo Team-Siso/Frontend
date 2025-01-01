@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { debounce } from "lodash";
 import Modal from "./Modal";
 import { useStore } from "@/store";
-
+import { Friend } from "@/store";
 // FriendSearchModal 컴포넌트의 props 인터페이스
 interface FriendSearchModalProps {
   isOpen: boolean; // 모달 열림 여부
@@ -43,6 +43,7 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
         const mappedFriends = data.map((friend: any) => {
           console.log("친구 ㄱ데이터:", friend); // 각 friend 객체 확인
           console.log("userId:", friend.userId); // targetMemberId 확인
+
           return {
             id: friend.userId,
             profilePicture: friend.memberPhoto || "https://via.placeholder.com/100",
@@ -67,8 +68,8 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
     debouncedSearch(query);
   };
 
-  const handleFollow = async (targetMemberId: string) => {
-    console.log("69", targetMemberId);
+  const handleFollow = async (friend: Friend) => {
+    console.log(friend.nickname);
     if (!memberId) {
       alert("로그인이 필요합니다.");
       return;
@@ -76,7 +77,7 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
 
     try {
       const response = await fetch(
-        `http://siiso.site:8080/api/v1/follows/${memberId}/following/${targetMemberId}`,
+        `http://siiso.site:8080/api/v1/follows/${memberId}/following/${friend.id}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -93,9 +94,8 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
       }
 
       // 성공 시 상태를 업데이트하거나 UI에 반영
-      const data = await response.json();
-      console.log(`팔로우 성공: ${data.nickname}`);
-      alert(`${data.nickname}님을 팔로우했습니다!`);
+      console.log(`팔로우 성공:,${friend.nickname}`);
+      alert(`${friend.nickname}님을 팔로우했습니다!`);
     } catch (error) {}
   };
 
@@ -155,7 +155,7 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
                     <button
                       onClick={() => {
                         console.log("팔로우 하려는 ID", friend.id);
-                        handleFollow(friend.id);
+                        handleFollow(friend);
                       }}
                       className="w-24 bg-purple-200 rounded-full px-4 py-2"
                     >

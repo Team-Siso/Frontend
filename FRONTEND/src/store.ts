@@ -47,7 +47,7 @@ interface Member {
   profileUrl: string;
 }
 
-interface Friend {
+export interface Friend {
   id: string;
   profilePicture: string;
   nickname: string;
