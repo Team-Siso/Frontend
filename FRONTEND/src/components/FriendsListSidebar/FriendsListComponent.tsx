@@ -4,7 +4,7 @@ import FriendComponent from "./FriendComponent";
 import DefaultImage from "@/assets/profile.png";
 import Toggle from "../Toggle";
 const FriendsListComponent = () => {
-  const { followings, fetchFollowings, memberId } = useStore();
+  const { followings, followers, fetchFollowings, fetchFollowers, memberId } = useStore();
   const [view, setView] = useState("following");
   const handleToggleChange = (isFollowing) => {
     setView(isFollowing ? "following" : "follower");
@@ -13,9 +13,11 @@ const FriendsListComponent = () => {
     if (memberId) {
       console.log("fetchFollowings 호출");
       fetchFollowings(memberId);
+      console.log("fetchFollowers 호출");
+      fetchFollowers(memberId);
     }
-  }, [memberId, fetchFollowings]);
-
+  }, [memberId, fetchFollowings, fetchFollowers]);
+  const listToDisplay = view === "following" ? followings : followers;
   return (
     <div>
       <div className="flex items-center justify-center mb-4">
@@ -31,7 +33,7 @@ const FriendsListComponent = () => {
         />
       </div>
       <div>
-        {(followings || []).map((friend, index) => {
+        {(listToDisplay || []).map((friend, index) => {
           console.log("friend", friend);
           return (
             <FriendComponent

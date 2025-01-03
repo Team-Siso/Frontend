@@ -37,9 +37,7 @@ const Toggle: React.FC<ToggleProps> = ({
   return (
     <label htmlFor={id} className="flex-cols items-center justify-center cursor-pointer">
       <span className="text-xs font-bold text-black">{isChecked ? aText : bText}</span>
-
       <span className=" text-sm font-medium text-gray-900">{label}</span>
-
       <div className={`relative ${marginClassName}`}>
         <input
           id={id}

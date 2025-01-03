@@ -12,6 +12,8 @@ interface Follow {
 interface Follower {
   followerId: number;
   name: string;
+  profilePicture: string;
+  isActive: boolean;
 }
 
 interface Goal {
@@ -391,12 +393,28 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
   fetchFollowers: async (memberId: number) => {
     try {
-      const response = await fetch(`/api/v1/follows/${memberId}/followers`);
+      const response = await fetch(`http://siiso.site:8080/api/v1/follows/${memberId}/followers`);
+      const contentType = response.headers.get("content-type");
+
       if (!response.ok) {
         throw new Error("Failed to fetch followers");
       }
-      const data = await response.json();
-      set({ followers: data.followers });
+
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        const followers = data.map((friend: any) => ({
+          followingId: friend.followingId,
+          name: friend.name,
+          profilePicture: friend.memberPhoto || DefaultImage,
+          isActive: friend.isActive, // 추가
+        }));
+        set({ followers });
+        console.log("Fetched followers:", followers); // 로그 추가
+      } else {
+        const text = await response.text();
+        console.error("Expected JSON, got:", text);
+        throw new Error("Received non-JSON response");
+      }
     } catch (error) {
       console.error("Failed to fetch followers:", error);
     }
@@ -404,7 +422,9 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
   fetchMembers: async (query: string) => {
     try {
-      const response = await fetch(`/api/v1/members/search?nickNameOrEmail=${query}`);
+      const response = await fetch(
+        `http://siiso.site:8080/api/v1/members/search?nickNameOrEmail=${query}`
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch members");
       }
