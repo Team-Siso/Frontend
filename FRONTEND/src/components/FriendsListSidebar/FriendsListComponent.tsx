@@ -19,7 +19,16 @@ const FriendsListComponent = () => {
   return (
     <div>
       <div className="flex items-center justify-center mb-4">
-        <Toggle id="view-toggle" label="" onToggle={handleToggleChange} marginClassName="" />
+        <Toggle
+          id="view-toggle"
+          label=""
+          onToggle={handleToggleChange}
+          marginClassName=""
+          checkedBgClass="bg-pink-500"
+          uncheckedBgClass="bg-blue-500"
+          aText="팔로잉"
+          bText="팔로워"
+        />
       </div>
       <div>
         {(followings || []).map((friend, index) => {

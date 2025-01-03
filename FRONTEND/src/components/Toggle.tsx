@@ -5,9 +5,22 @@ interface ToggleProps {
   label: string;
   onToggle: (checked: boolean) => void;
   marginClassName?: string;
+  checkedBgClass?: string;
+  uncheckedBgClass?: string;
+  aText?: string;
+  bText?: string;
 }
 
-const Toggle: React.FC<ToggleProps> = ({ id, label, onToggle, marginClassName = "ml-20" }) => {
+const Toggle: React.FC<ToggleProps> = ({
+  id,
+  label,
+  onToggle,
+  marginClassName = "ml-20",
+  checkedBgClass = "bg-sky-300",
+  uncheckedBgClass = "bg-gray-300",
+  aText = "Adsad",
+  bText = "Bdasd",
+}) => {
   const [isChecked, setIsChecked] = useState(false);
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,8 +35,11 @@ const Toggle: React.FC<ToggleProps> = ({ id, label, onToggle, marginClassName = 
   };
 
   return (
-    <label htmlFor={id} className="flex items-center justify-center cursor-pointer">
+    <label htmlFor={id} className="flex-cols items-center justify-center cursor-pointer">
+      <span className="text-xs font-bold text-black">{isChecked ? aText : bText}</span>
+
       <span className=" text-sm font-medium text-gray-900">{label}</span>
+
       <div className={`relative ${marginClassName}`}>
         <input
           id={id}
@@ -33,7 +49,7 @@ const Toggle: React.FC<ToggleProps> = ({ id, label, onToggle, marginClassName = 
           onChange={handleOnChange}
         />
         <div
-          className={`${sizeClasses.backgroundSize} rounded-full transition-colors duration-300 ${isChecked ? "bg-sky-300" : "bg-gray-300"}`}
+          className={`${sizeClasses.backgroundSize} rounded-full transition-colors duration-300 ${isChecked ? checkedBgClass : uncheckedBgClass}`}
         >
           <div
             className={`${sizeClasses.dotSize} absolute left-0.5 top-0.5 bg-white rounded-full transition-transform duration-300 ${isChecked ? sizeClasses.translateSize : "translate-x-0"}`}
