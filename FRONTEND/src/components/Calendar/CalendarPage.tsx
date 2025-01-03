@@ -58,7 +58,7 @@ const CalendarPage = ({ onPageChange }) => {
   return (
     <div style={{ position: "relative", height: "100vh" }}>
       <div style={{ display: "flex", justifyContent: "flex-end", padding: "10px" }}>
-        <Toggle id="view-toggle" label="" onToggle={handleToggleChange} />
+        <Toggle id="view-toggle" label="" onToggle={handleToggleChange} marginClassName="ml-20" />
       </div>
       {view === "weekGrid" ? (
         <WeekGridPage selectedDate={selectedDate} />

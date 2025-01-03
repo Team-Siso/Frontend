@@ -22,4 +22,4 @@ const FriendComponent: React.FC<FriendComponentProps> = ({ name, isOnline, profi
   );
 };
 
-export default FriendComponent;
+export default React.memo(FriendComponent);

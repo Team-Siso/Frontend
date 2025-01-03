@@ -1,22 +1,28 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useStore } from "@/store";
 import FriendComponent from "./FriendComponent";
 import DefaultImage from "@/assets/profile.png";
-import ToggleComponent from "./ToggleComponent";
+import Toggle from "../Toggle";
 const FriendsListComponent = () => {
   const { followings, fetchFollowings, memberId } = useStore();
-
+  const [view, setView] = useState("following");
+  const handleToggleChange = (isFollowing) => {
+    setView(isFollowing ? "following" : "follower");
+  };
   useEffect(() => {
     if (memberId) {
+      console.log("fetchFollowings 호출");
       fetchFollowings(memberId);
     }
   }, [memberId, fetchFollowings]);
 
   return (
     <div>
-      <ToggleComponent />
+      <div className="flex items-center justify-center mb-4">
+        <Toggle id="view-toggle" label="" onToggle={handleToggleChange} marginClassName="" />
+      </div>
       <div>
-        {followings.map((friend, index) => {
+        {(followings || []).map((friend, index) => {
           console.log("friend", friend);
           return (
             <FriendComponent
