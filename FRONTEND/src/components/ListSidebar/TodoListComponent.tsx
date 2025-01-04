@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import addTodoIcon from "@/assets/addTodoIcon.svg";
 import addTimeTodoIcon from "@/assets/addTimeTodoIcon.svg";
 import UncheckBoxIcon from "@/assets/UncheckBoxIcon.svg";
