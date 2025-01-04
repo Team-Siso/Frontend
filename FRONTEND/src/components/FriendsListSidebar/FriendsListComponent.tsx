@@ -6,8 +6,11 @@ import Toggle from "../Toggle";
 const FriendsListComponent = () => {
   const { followings, followers, fetchFollowings, fetchFollowers, memberId } = useStore();
   const [view, setView] = useState("following");
-  const handleToggleChange = (isFollowing) => {
-    setView(isFollowing ? "following" : "follower");
+  const [isChecked, setIsChecked] = useState(true);
+  const handleToggleChange = (checked) => {
+    console.log("Follow", checked);
+    setIsChecked(checked);
+    setView(checked ? "following" : "follower");
   };
   useEffect(() => {
     if (memberId) {
@@ -24,7 +27,11 @@ const FriendsListComponent = () => {
         <Toggle
           id="view-toggle"
           label=""
-          onToggle={handleToggleChange}
+          isChecked={isChecked}
+          onToggle={(checked) => {
+            console.log("checkedFollow", checked);
+            handleToggleChange(checked);
+          }}
           marginClassName=""
           checkedBgClass="bg-pink-500"
           uncheckedBgClass="bg-blue-500"

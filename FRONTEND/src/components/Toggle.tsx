@@ -9,22 +9,21 @@ interface ToggleProps {
   uncheckedBgClass?: string;
   aText?: string;
   bText?: string;
+  isChecked?: boolean;
 }
 
 const Toggle: React.FC<ToggleProps> = ({
   id,
   label,
   onToggle,
+  isChecked,
   marginClassName = "ml-20",
   checkedBgClass = "bg-sky-300",
   uncheckedBgClass = "bg-gray-300",
   aText = "Adsad",
   bText = "Bdasd",
 }) => {
-  const [isChecked, setIsChecked] = useState(false);
-
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setIsChecked(e.target.checked);
     onToggle(e.target.checked);
   };
 
