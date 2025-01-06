@@ -36,7 +36,7 @@ interface Schedule {
   thisDay: string;
   startTime: string | null;
   endTime: string | null;
-  completed: boolean;
+  completed?: boolean;
 }
 
 interface Member {
@@ -211,7 +211,10 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   setSearchTerm: (searchTerm) => set({ searchTerm }),
   setFriends: (friends) => set({ friends }),
 
-  setMemberId: (memberId) => set({ memberId }),
+  setMemberId: (memberId) => {
+    console.log("[store] setMemberId:", memberId);
+    set({ memberId });
+  },
   setFriendSearchOpen: (isOpen) => set({ isFriendSearchOpen: isOpen }),
   setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen }),
   setEditModalOpen: (isOpen) => set({ isEditModalOpen: isOpen }),
@@ -334,27 +337,27 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // 로그인
   // ---------------------------
   login: async (email: string, password: string) => {
-    const { resetState } = get();
+    // const { resetState } = get();
     const params = new URLSearchParams({ email, password });
-
+  
     try {
-      const response = await fetch(
-        `https://siiso.site/api/v1/members/login?${params.toString()}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
+      const response = await fetch(`https://siiso.site/api/v1/members/login?${params.toString()}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
       if (!response.ok) {
         throw new Error("로그인 실패");
       }
-
+  
       const data = await response.json();
       console.log("로그인 성공:", data);
-      resetState();
+  
+      // resetState();
+  
+      // memberId만 세팅
       set({ memberId: data.id });
       localStorage.setItem("memberId", data.id.toString());
     } catch (error) {
@@ -362,58 +365,57 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       alert("로그인 실패");
     }
   },
+  
 
   // ---------------------------
   // 스케줄 조회 (전체)
   // ---------------------------
   fetchSchedules: async (memberId: number): Promise<void> => {
+    console.log("[fetchSchedules] Start => memberId:", memberId);
     try {
-      const response = await fetch(
-        `https://siiso.site/api/v1/schedules/${memberId}`
-      );
-
+      const response = await fetch(`https://siiso.site/api/v1/schedules/${memberId}`);
       if (!response.ok) {
         throw new Error(
-          `Failed to fetch schedules(사용자의 모든 일정조회): ${response.statusText}`
+          `Failed to fetch schedules(사용자의 모든 일정 조회): ${response.statusText}`
         );
       }
-
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         throw new TypeError("Expected JSON response");
       }
-
       const data: Schedule[] = await response.json();
+      console.log("[fetchSchedules] Success => data:", data);
+  
       set({ schedules: data || [] });
     } catch (error) {
-      console.error("Failed to fetch schedules:", error);
+      console.error("[fetchSchedules] Error:", error);
       set({ schedules: [] });
     }
   },
 
-  // ---------------------------
-  // ★ 특정 날짜 스케줄 조회
-  // ---------------------------
-  fetchSchedulesByDate: async (memberId: number, dateString: string): Promise<void> => {
-    try {
-      const response = await fetch(`https://siiso.site/api/v1/schedules/${memberId}/${dateString}`);
-  
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`날짜(${dateString})에 해당하는 스케줄 조회 실패:`, errorText);
-        throw new Error(errorText || "알 수 없는 오류");
-      }
-  
-      const data: Schedule[] = await response.json();
-      console.log(`날짜(${dateString})의 스케줄 조회 성공:`, data);
-  
-      // schedules 상태 업데이트
-      set({ schedules: data || [] });
-    } catch (error) {
-      console.error("특정 날짜 스케줄 조회 중 오류:", error);
-      set({ schedules: [] }); // 오류 시 스케줄 초기화
+// ---------------------------
+// ★ 특정 날짜 스케줄 조회
+// ---------------------------
+fetchSchedulesByDate: async (memberId: number, dateString: string): Promise<void> => {
+  console.log("[fetchSchedulesByDate] Start =>", { memberId, dateString });
+  try {
+    const response = await fetch(`https://siiso.site/api/v1/schedules/${memberId}/${dateString}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[fetchSchedulesByDate] Fail => date(${dateString}):`, errorText);
+      throw new Error(errorText || "알 수 없는 오류");
     }
-  },
+    const data: Schedule[] = await response.json();
+    console.log(`[fetchSchedulesByDate] Success => date(${dateString}):`, data);
+
+    // e.g. data.forEach((sch) => sch.startTime = removeOffsetIfExists(sch.startTime));
+
+    set({ schedules: data || [] });
+  } catch (error) {
+    console.error("[fetchSchedulesByDate] Error:", error);
+    set({ schedules: [] });
+  }
+},
   // ---------------------------
   // goal 조회
   // ---------------------------

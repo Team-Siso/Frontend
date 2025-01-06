@@ -25,9 +25,7 @@ import { useStore } from "../../store";
 const CalendarPage = ({ onPageChange }) => {
   const { memberId, setSelectedDate, fetchSchedulesByDate } = useStore();
 
-  // 화면 모드("calendar" or "weekGrid")
   const [view, setView] = useState("calendar");
-  // 현재 선택된 날짜(로컬 state, Date 객체 형태)
   const [selectedDateLocal, setSelectedDateLocal] = useState(new Date());
 
   // 토글 (달력 <-> 주간 그리드)
@@ -44,11 +42,11 @@ const CalendarPage = ({ onPageChange }) => {
     }
   };
 
-  // 달력에서 날짜 클릭 시
+  // 달력에서 날짜 클릭
   const handleDateChange = (date) => {
     setSelectedDateLocal(date);
 
-    // "YYYY-MM-DD" 형태로 변환
+    // "YYYY-MM-DD"
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, "0");
     const dd = String(date.getDate()).padStart(2, "0");
@@ -57,7 +55,7 @@ const CalendarPage = ({ onPageChange }) => {
     // store.selectedDate = "YYYY-MM-DD"
     setSelectedDate(dateString);
 
-    // 해당 날짜 스케줄 조회
+    // 해당 날짜 스케줄 조회(원하는 로직이면 유지)
     if (memberId) {
       fetchSchedulesByDate(memberId, dateString);
     }

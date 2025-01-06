@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import WeekDates from "../Calendar/WeekDates";
 import WeekGrid from "./WeekGrid";
 import "./WeekGrid.css";
@@ -7,132 +7,143 @@ import { useStore } from "../../store";
 import { parseISO } from "date-fns";
 
 interface WeekGridPageProps {
-  selectedDate: Date; // 달력에서 선택된 (로컬) Date
+  selectedDate: Date;
 }
 
 const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
   const [showGrid, setShowGrid] = useState(true);
-  const schedules = useStore((state) => state.schedules);
 
-  const [highlightedCells, setHighlightedCells] = useState<{ [key: string]: boolean }>({});
+  // Store
+  const memberId = useStore((s) => s.memberId);
+  const schedules = useStore((s) => s.schedules);
+  const fetchSchedules = useStore((s) => s.fetchSchedules);
 
-  const handleConfirmClick = () => {
-    setShowGrid(false);
-  };
+  // 한 번만 fetch
+  const didFetchRef = useRef(false);
 
-  // === 주 시작 계산 (일요일 0) ===
-  const getStartOfWeek = (date: Date) => {
-    // JS date.getDay(): 0=일,1=월,...6=토
+  useEffect(() => {
+    if (!memberId) return;
+    if (didFetchRef.current) return; // 이미 불렀으면 중단
+    didFetchRef.current = true;
+
+    console.log("[WeekGridPage] fetchSchedules => memberId:", memberId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchSchedules(memberId); 
+  }, [memberId /*, fetchSchedules */]);
+
+  // --- 주 계산(일요일=0) 로컬 ---
+  function getStartOfWeekLocal(date: Date) {
     const dayOfWeek = date.getDay(); // 0=일
-    const newDate = new Date(date);
-    newDate.setHours(0, 0, 0, 0);
-    // date - dayOfWeek → 일요일
-    newDate.setDate(newDate.getDate() - dayOfWeek);
-    return newDate;
-  };
+    const y = date.getFullYear();
+    const m = date.getMonth();
+    const d = date.getDate();
+    return new Date(y, m, d - dayOfWeek, 0, 0, 0);
+  }
 
-  // weekDates[0] = 일요일
-  const weekStart = getStartOfWeek(selectedDate);
+  const weekStart = getStartOfWeekLocal(selectedDate);
   const weekDates: Date[] = [];
   for (let i = 0; i < 7; i++) {
-    const d = new Date(weekStart);
+    const d = new Date(weekStart.getTime());
     d.setDate(d.getDate() + i);
     weekDates.push(d);
   }
 
-  // 요일 이름
-  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  // === 시간을 "05:00~다음날05:00" 그리드 인덱스로 변환 ===
-  const getGridIndexes = (dateObj: Date) => {
+  // 05:00~다음날05:00 (로컬)
+  function getGridIndexes(dateObj: Date) {
     const hour = dateObj.getHours();
     const min = dateObj.getMinutes();
-    // 5시 = 0번 timeIndex
     const totalMinutes = (hour - 5) * 60 + min;
+
     if (totalMinutes < 0 || totalMinutes >= 24 * 60) {
       return { timeIndex: -1, partIndex: 0 };
     }
     const base30 = Math.floor(totalMinutes / 30);
     const remainder = totalMinutes % 30;
     const timeIndex = base30;
-    let partIndex = Math.floor(remainder / 10); 
+    let partIndex = Math.floor(remainder / 10);
     if (partIndex > 2) partIndex = 2;
     return { timeIndex, partIndex };
-  };
+  }
 
-  // === 스케줄 -> dayIndex, timeIndex, partIndex
-  const mapScheduleToCells = (stISO: string, etISO: string, dayIndex: number) => {
-    const st = parseISO(stISO);
-    const et = parseISO(etISO);
+  // start~end map
+  function mapScheduleToCells(startStr: string, endStr: string, dayIndex: number) {
+    const st = parseISO(startStr); // 서버: UTC, parse => 로컬 시각
+    const et = parseISO(endStr);
+
     const stIdx = getGridIndexes(st);
     const etIdx = getGridIndexes(et);
     if (stIdx.timeIndex < 0 || etIdx.timeIndex < 0) return {};
 
-    const newCells: { [key: string]: boolean } = {};
     const minT = Math.min(stIdx.timeIndex, etIdx.timeIndex);
     const maxT = Math.max(stIdx.timeIndex, etIdx.timeIndex);
+    const newCells: { [key: string]: boolean } = {};
 
-    for (let t = minT; t <= maxT; t++) {
+    for (let t = minT; t < maxT; t++) {
       const startPart = t === minT ? stIdx.partIndex : 0;
-      const endPart = t === maxT ? etIdx.partIndex : 2;
+      let endPart = 2;
+      if (t + 1 === maxT) {
+        // 마지막
+        if (etIdx.partIndex === 0) {
+          endPart = 2;
+        } else {
+          endPart = etIdx.partIndex - 1;
+        }
+        if (endPart < 0) continue;
+      }
       for (let p = startPart; p <= endPart; p++) {
         const key = `${dayIndex}-${t}-${p}`;
         newCells[key] = true;
       }
     }
     return newCells;
-  };
+  }
 
-  // === schedules -> highlightedCells
+  // highlightCells
+  const [highlightedCells, setHighlightedCells] = useState<{ [key: string]: boolean }>({});
+
   useEffect(() => {
     const newHighlighted: { [key: string]: boolean } = {};
 
-    // dayIndex=0=>일,1=>월,...6=>토
-    weekDates.forEach((dateObj, dayIndex) => {
-      // "YYYY-MM-DD"
-      const y = dateObj.getFullYear();
-      const m = dateObj.getMonth();
-      const d = dateObj.getDate();
+    weekDates.forEach((wd, dayIndex) => {
+      const wy = wd.getFullYear();
+      const wm = wd.getMonth();
+      const wday = wd.getDate();
 
-      // 이 날짜를 가진 스케줄만
       schedules.forEach((sch) => {
         if (!sch.thisDay) return;
-        // sch.thisDay = "YYYY-MM-DD"
-        // 비교
-        const [sy, sm, sd] = sch.thisDay.split("-");
-        if (Number(sy) === y && Number(sm) - 1 === m && Number(sd) === d) {
+        const dayDate = parseISO(sch.thisDay); // => 로컬 시각 변환
+        const sy = dayDate.getFullYear();
+        const sm = dayDate.getMonth();
+        const sd = dayDate.getDate();
+        if (wy === sy && wm === sm && wday === sd) {
           if (sch.startTime && sch.endTime) {
             const partial = mapScheduleToCells(sch.startTime, sch.endTime, dayIndex);
-            Object.keys(partial).forEach((k) => {
-              newHighlighted[k] = true;
-            });
+            if (partial) {
+              Object.keys(partial).forEach((k) => {
+                newHighlighted[k] = true;
+              });
+            }
           }
         }
       });
     });
 
     setHighlightedCells(newHighlighted);
-  }, [schedules, selectedDate]);
+  }, [schedules, weekDates]);
+
+  const handleConfirmClick = () => {
+    setShowGrid(false);
+  };
+
+  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   return (
     <div style={{ position: "relative", height: "700px" }}>
       <WeekDates selectedDate={selectedDate} />
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-evenly",
-          padding: "0px 35px",
-          width: "100%",
-        }}
-      >
+
+      <div style={{ display: "flex", justifyContent: "space-evenly", padding: "0px 35px", width: "100%" }}>
         {daysOfWeek.map((day) => (
-          <div
-            key={day}
-            style={{
-              paddingLeft: "95px",
-              width: "calc(100% / 7)",
-            }}
-          >
+          <div key={day} style={{ paddingLeft: "95px", width: "calc(100% / 7)" }}>
             {day}
           </div>
         ))}
@@ -140,13 +151,7 @@ const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
 
       <WeekGrid showGrid={showGrid} highlightedCells={highlightedCells} />
 
-      <div
-        style={{
-          position: "absolute",
-          bottom: "-20px",
-          right: "20px",
-        }}
-      >
+      <div style={{ position: "absolute", bottom: "-20px", right: "20px" }}>
         <ConfirmButton
           onClick={handleConfirmClick}
           text=" 확인 "
