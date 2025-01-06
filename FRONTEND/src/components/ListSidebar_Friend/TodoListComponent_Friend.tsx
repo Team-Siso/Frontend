@@ -62,26 +62,35 @@ const TodoListComponent_Friend = ({ className }) => {
       <div className="flex justify-between items-center p-2.5">
         <div className="text-lg text-gray585151 font-bold pl-1">{profile.nickname}'s Todos</div>
       </div>
+      <div
+        className="overflow-y-auto"
+        style={{
+          maxHeight: "calc(43vh - 60px - 40px)", // 부모 높이에서 텍스트 영역과 입력 영역 제외
+          flexGrow: 1, // 나머지 공간을 차지하도록 설정
+        }}
+      >
+        <ul className="divide-y divide-gray-300 mx-4">
+          {todos.length > 0 ? (
+            todos.map((todo) => (
+              <li key={todo.id} className="flex items-center py-3 pl-2 pr-2 relative">
+                {/* 체크박스 */}
+                <img
+                  src={todo.checkStatus === 1 ? CheckedBoxIcon : UncheckBoxIcon}
+                  alt={todo.checkStatus === 1 ? "Todo completed" : "Mark todo as completed"}
+                  className="cursor-pointer"
+                />
 
-      <ul className="divide-y divide-gray-300 mx-4">
-        {todos.length > 0 ? (
-          todos.map((todo) => (
-            <li key={todo.id} className="flex items-center py-3 pl-2 pr-2 relative">
-              {/* 체크박스 */}
-              <img
-                src={todo.checkStatus === 1 ? CheckedBoxIcon : UncheckBoxIcon}
-                alt={todo.checkStatus === 1 ? "Todo completed" : "Mark todo as completed"}
-                className="cursor-pointer"
-              />
-
-              {/* Todo 텍스트 */}
-              <span className={todo.completed ? "ml-2 line-through" : "ml-2"}>{todo.content}</span>
-            </li>
-          ))
-        ) : (
-          <li className="text-center py-3 text-gray-500">할 일이 없습니다.</li>
-        )}
-      </ul>
+                {/* Todo 텍스트 */}
+                <span className={todo.completed ? "ml-2 line-through" : "ml-2"}>
+                  {todo.content}
+                </span>
+              </li>
+            ))
+          ) : (
+            <li className="text-center py-3 text-gray-500">할 일이 없습니다.</li>
+          )}
+        </ul>
+      </div>
     </div>
   );
 };

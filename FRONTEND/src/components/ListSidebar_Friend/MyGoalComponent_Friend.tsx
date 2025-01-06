@@ -60,22 +60,29 @@ const MyGoalComponent_Friend: React.FC<MyGoalComponentProps> = ({ className }) =
       <div className="flex justify-between items-center p-2.5">
         <div className="text-lg text-gray585151 font-bold pl-1">{profile.nickname}'s Goal</div>
       </div>
-
-      <ul className="divide-y divide-gray-300 mx-4">
-        {goals.map((goal) => (
-          <li key={goal.id} className="flex flex-col py-3 pl-2 pr-2 relative">
-            <div className="flex items-center">
-              <img
-                src={goal.completed ? CheckedBoxIcon : UncheckBoxIcon}
-                alt={goal.completed ? "Goal completed" : "Mark goal as completed"}
-                className="cursor-pointer"
-              />
-              <span className={goal.completed ? "ml-2 line-through" : "ml-2"}> {goal.title}</span>
-            </div>
-            <ProgressBarComponent_Friend goalId={goal.id} title={goal.title} />
-          </li>
-        ))}
-      </ul>
+      <div
+        className="overflow-y-auto"
+        style={{
+          maxHeight: "calc(43vh - 60px - 40px)", // 부모 높이에서 텍스트 영역과 입력 영역 제외
+          flexGrow: 1, // 나머지 공간을 차지하도록 설정
+        }}
+      >
+        <ul className="divide-y divide-gray-300 mx-4">
+          {goals.map((goal) => (
+            <li key={goal.id} className="flex flex-col py-3 pl-2 pr-2 relative">
+              <div className="flex items-center">
+                <img
+                  src={goal.completed ? CheckedBoxIcon : UncheckBoxIcon}
+                  alt={goal.completed ? "Goal completed" : "Mark goal as completed"}
+                  className="cursor-pointer"
+                />
+                <span className={goal.completed ? "ml-2 line-through" : "ml-2"}> {goal.title}</span>
+              </div>
+              <ProgressBarComponent_Friend goalId={goal.id} title={goal.title} />
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
