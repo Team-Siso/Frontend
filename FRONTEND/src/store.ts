@@ -308,7 +308,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       localStorage.setItem("memberId", data.id.toString()); // 로컬스토리지에 멤버 아이디 저장
     } catch (error) {
       console.error("Error:", error);
-      alert("로그인 실패");
+      alert("아이디와 비밀번호를 확인해주세요");
     }
   },
 

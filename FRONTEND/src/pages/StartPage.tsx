@@ -14,6 +14,28 @@ const StartPage = () => {
     setIsSignUpModalOpen(true);
   };
 
+  const validateEmail = async () => {
+    try {
+      const response = await fetch(
+        `https://siiso.site/api/v1/members/valid?email=${encodeURIComponent(email)}`
+      );
+      const responseBody = await response.text();
+
+      if (response.status === 400) {
+        alert("이메일이 유효하지 않습니다. 다른 이메일을 입력해주세요.");
+        return;
+      }
+      if (responseBody === "사용 가능한 이메일 입니다.") {
+        openSignUpModal();
+        console.log("성공");
+
+        // 여기에서 모달 열기 등의 추가 작업 수행
+      } else {
+      }
+    } catch (error) {
+      console.error("유효성 검사 에러:", error);
+    }
+  };
   const closeSignUpModal = () => {
     setIsSignUpModalOpen(false);
   };
@@ -43,7 +65,7 @@ const StartPage = () => {
           <div className="mx-3"></div>
           <button
             className="px-5 py-3 text-lg text-white bg-blue-400 rounded hover:bg-blue-500"
-            onClick={openSignUpModal}
+            onClick={validateEmail}
           >
             시작하기
           </button>

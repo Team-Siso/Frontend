@@ -3,15 +3,18 @@ import { useStore } from "@/store";
 import FriendComponent from "./FriendComponent";
 import DefaultImage from "@/assets/profile.png";
 import Toggle from "../Toggle";
+
 const FriendsListComponent = () => {
   const { followings, followers, fetchFollowings, fetchFollowers, memberId } = useStore();
   const [view, setView] = useState("following");
   const [isChecked, setIsChecked] = useState(true);
+
   const handleToggleChange = (checked) => {
     console.log("Follow", checked);
     setIsChecked(checked);
     setView(checked ? "following" : "follower");
   };
+
   useEffect(() => {
     if (memberId) {
       console.log("fetchFollowings 호출");
