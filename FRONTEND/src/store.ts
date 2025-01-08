@@ -321,12 +321,8 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // 로그인
   // ---------------------------
   login: async (email: string, password: string) => {
-    const { resetState } = get();
-
-    const params = new URLSearchParams({
-      email,
-      password,
-    });
+    // const { resetState } = get();
+    const params = new URLSearchParams({ email, password });
 
     try {
       const response = await fetch(`https://siiso.site/api/v1/members/login?${params.toString()}`, {
@@ -342,9 +338,12 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
       const data = await response.json();
       console.log("로그인 성공:", data);
-      resetState(); // 상태 초기화
-      set({ memberId: data.id, email: "", password: "" });
-      localStorage.setItem("memberId", data.id.toString()
+
+      // resetState();
+
+      // memberId만 세팅
+      set({ memberId: data.id });
+      localStorage.setItem("memberId", data.id.toString());
     } catch (error) {
       console.error("Error:", error);
       alert("로그인 실패");
