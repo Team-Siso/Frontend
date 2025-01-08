@@ -84,8 +84,8 @@ const TodoListComponent_Friend = ({ className }) => {
         }}
       >
         <ul className="divide-y divide-gray-300 mx-4">
-          {todos.length > 0 ? (
-            todos.map((todo) => (
+          {filteredTodos.length > 0 ? (
+            filteredTodos.map((todo) => (
               <li key={todo.id} className="flex items-center py-3 pl-2 pr-2 relative">
                 {/* 체크박스 */}
                 <img
