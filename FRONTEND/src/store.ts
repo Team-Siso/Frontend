@@ -1,6 +1,6 @@
 import { create, StateCreator } from "zustand";
 import { persist, PersistStorage } from "zustand/middleware";
-
+import DefaultImage from "@/assets/profile.png";
 // 인터페이스 정의
 interface Follow {
   followingId: number;
@@ -12,6 +12,8 @@ interface Follow {
 interface Follower {
   followerId: number;
   name: string;
+  profilePicture: string;
+  isActive: boolean;
 }
 
 interface Goal {
@@ -34,9 +36,9 @@ interface Schedule {
   content: string;
   checkStatus: number;
   thisDay: string;
-  startTime: string | null;
-  endTime: string | null;
-  completed?: boolean;
+  startTime: string;
+  endTime: string;
+  completed: boolean;
 }
 
 interface Member {
@@ -47,7 +49,8 @@ interface Member {
   profileUrl: string;
 }
 
-interface Friend {
+export interface Friend {
+  id: string;
   profilePicture: string;
   nickname: string;
   bio: string;
@@ -65,7 +68,6 @@ interface SignUpState {
   profilePic: string;
   searchTerm: string;
   friends: Friend[];
-
   setEmail: (email: string) => void;
   setPassword: (password: string) => void;
   setConfirmPassword: (confirmPassword: string) => void;
@@ -74,12 +76,10 @@ interface SignUpState {
   setProfilePic: (profilePic: string) => void;
   setSearchTerm: (searchTerm: string) => void;
   setFriends: (friends: Friend[]) => void;
-
   signUp: () => Promise<number>;
   uploadImage: (file: File, memberId: number) => Promise<string>;
   login: (email: string, password: string) => Promise<void>;
 }
-
 // ---------------------------
 // AppState
 // ---------------------------
@@ -95,11 +95,11 @@ interface AppState {
   // ★ 추가: 캘린더에서 클릭된 날짜("YYYY-MM-DD") 저장
   selectedDate: string | null;
   setSelectedDate: (date: string) => void;
-
   setRoutines: (routines: Routine[]) => void;
   setMemberProfile: (memberProfile: Member) => void;
   setMemberId: (memberId: number) => void;
   setSchedules: (schedules: Schedule[]) => void;
+
   setGoal: (title: string) => Promise<void>;
   toggleGoalCompletion: (id: number) => void;
   deleteGoal: (id: number) => void;
@@ -107,13 +107,11 @@ interface AppState {
   setFollowings: (followings: Follow[]) => void;
   setFollowers: (followers: Follower[]) => void;
   setMembers: (members: Member[]) => void;
-
   // 기존: 전체 스케줄 조회
   fetchSchedules: (memberId: number) => Promise<void>;
 
   // ★ 추가: 특정 날짜 스케줄 조회
   fetchSchedulesByDate: (memberId: number, dateString: string) => Promise<void>;
-
   fetchGoals: (memberId: number) => Promise<void>;
   fetchRoutines: (memberId: number) => Promise<void>;
   fetchFollowings: (memberId: number) => Promise<void>;
@@ -125,7 +123,6 @@ interface AppState {
   updateProfilePicture: (memberId: number, file: File) => Promise<void>;
   addTodo: (memberId: number, newTodo: Omit<Schedule, "id">) => Promise<Schedule | void>;
 }
-
 // ---------------------------
 // ModalState
 // ---------------------------
@@ -161,13 +158,8 @@ const storage: PersistStorage<StoreState> = {
   },
 };
 
-// ---------------------------
-// stateCreator
-// ---------------------------
+// Zustand 상태 생성기
 const stateCreator: StateCreator<StoreState> = (set, get) => ({
-  // ---------------------------
-  // SignUpState 초기값
-  // ---------------------------
   email: "",
   password: "",
   confirmPassword: "",
@@ -176,10 +168,6 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   profilePic: "",
   searchTerm: "",
   friends: [],
-
-  // ---------------------------
-  // AppState 초기값
-  // ---------------------------
   schedules: [],
   goals: [],
   routines: [],
@@ -187,7 +175,6 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   followers: [],
   members: [],
   memberProfile: null,
-
   // ★ 추가
   selectedDate: null,
 
@@ -198,6 +185,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   isSettingsOpen: false,
   isEditModalOpen: false,
   memberId: null,
+  // scheduleId: null,
 
   // ---------------------------
   // setter들
@@ -227,7 +215,6 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   setMembers: (members) => set({ members }),
   setMemberProfile: (memberProfile) => set({ memberProfile }),
 
-  // ★ 날짜 setter 추가
   setSelectedDate: (date) => set({ selectedDate: date }),
 
   // ---------------------------
@@ -243,7 +230,6 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       profilePic: "",
       searchTerm: "",
       friends: [],
-
       schedules: [],
       goals: [],
       routines: [],
@@ -261,9 +247,6 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     });
   },
 
-  // ---------------------------
-  // signUp
-  // ---------------------------
   signUp: async () => {
     const { email, password, bio, nickname, resetState } = get();
 
@@ -291,6 +274,12 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       console.log("회원가입 성공:", data);
       resetState();
       set({
+        // email: "",
+        // password: "",
+        // confirmPassword: "",
+        // nickname: "",
+        // bio: "",
+        // profilePic: "",
         memberId: data.id,
       });
       localStorage.setItem("memberId", data.id.toString());
@@ -302,9 +291,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     }
   },
 
-  // ---------------------------
   // 이미지 업로드
-  // ---------------------------
   uploadImage: async (file: File, memberId: number) => {
     const formData = new FormData();
     formData.append("file", file);
@@ -334,8 +321,12 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // 로그인
   // ---------------------------
   login: async (email: string, password: string) => {
-    // const { resetState } = get();
-    const params = new URLSearchParams({ email, password });
+    const { resetState } = get();
+
+    const params = new URLSearchParams({
+      email,
+      password,
+    });
 
     try {
       const response = await fetch(`https://siiso.site/api/v1/members/login?${params.toString()}`, {
@@ -351,12 +342,9 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
       const data = await response.json();
       console.log("로그인 성공:", data);
-
-      // resetState();
-
-      // memberId만 세팅
-      set({ memberId: data.id });
-      localStorage.setItem("memberId", data.id.toString());
+      resetState(); // 상태 초기화
+      set({ memberId: data.id, email: "", password: "" });
+      localStorage.setItem("memberId", data.id.toString()
     } catch (error) {
       console.error("Error:", error);
       alert("로그인 실패");
@@ -412,6 +400,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       set({ schedules: [] });
     }
   },
+
   // ---------------------------
   // goal 조회
   // ---------------------------
@@ -448,7 +437,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // 팔로잉 조회
   // ---------------------------
   fetchFollowings: async (memberId: number) => {
-    console.log(`Fetching followings for memberId: ${memberId}`);
+    console.log(`Fetching followings for memberId: ${memberId}`); // 로그 추가
     try {
       const response = await fetch(`https://siiso.site/api/v1/follows/${memberId}/following`);
       const contentType = response.headers.get("content-type");
@@ -462,7 +451,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
         const followings = data.map((friend: any) => ({
           followingId: friend.followingId,
           name: friend.name,
-          profilePicture: friend.memberPhoto || "default-profile-pic-url",
+          profilePicture: friend.memberPhoto || DefaultImage,
           isActive: friend.isActive,
         }));
         set({ followings });
@@ -482,12 +471,28 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   fetchFollowers: async (memberId: number) => {
     try {
-      const response = await fetch(`https://siiso.site/api/v1/follows/${memberId}/followers`);
+      const response = await fetch(`http://siiso.site/api/v1/follows/${memberId}/followers`);
+      const contentType = response.headers.get("content-type");
+
       if (!response.ok) {
         throw new Error("Failed to fetch followers");
       }
-      const data = await response.json();
-      set({ followers: data.followers });
+
+      if (contentType && contentType.includes("application/json")) {
+        const data = await response.json();
+        const followers = data.map((friend: any) => ({
+          followingId: friend.followingId,
+          name: friend.name,
+          profilePicture: friend.memberPhoto || DefaultImage,
+          isActive: friend.isActive, // 추가
+        }));
+        set({ followers });
+        console.log("Fetched followers:", followers); // 로그 추가
+      } else {
+        const text = await response.text();
+        console.error("Expected JSON, got:", text);
+        throw new Error("Received non-JSON response");
+      }
     } catch (error) {
       console.error("Failed to fetch followers:", error);
     }
@@ -526,16 +531,16 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
-        console.log("API Response:", data);
+        console.log("API Response:", data); // API 응답 로그 추가
         const memberProfile = {
           id: memberId,
           email: data.email || "",
           nickName: data.nickname,
           introduce: data.introduce,
-          profileUrl: data.memberPhoto || "default-profile-pic-url",
+          profileUrl: data.memberPhoto || DefaultImage,
         };
         set({ memberProfile });
-        console.log("Fetched member profile:", memberProfile);
+        console.log("Fetched member profile:", memberProfile); // 로그 추가
       } else {
         const text = await response.text();
         console.error("Expected JSON, got:", text);
@@ -545,7 +550,6 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       console.error("Failed to fetch member profile:", error);
     }
   },
-
   // ---------------------------
   // Todo(스케줄) 추가
   // ---------------------------
@@ -577,7 +581,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     const { memberId } = get();
     if (memberId !== null) {
       try {
-        const response = await fetch(`https://siiso.site/api/v1/goals/${memberId}`, {
+        const response = await fetch(`http://siiso.site:8080/api/v1/goals/${memberId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -617,13 +621,12 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       goals: state.goals.filter((goal) => goal.id !== id),
     }));
   },
-
   // ---------------------------
   // 닉네임 수정
   // ---------------------------
   updateNickname: async (memberId: number, nickname: string) => {
     try {
-      const response = await fetch(`https://siiso.site/api/v1/members/${memberId}/nickname`, {
+      const response = await fetch(`http://siiso.site/api/v1/members/${memberId}/nickname`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -646,15 +649,14 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       console.error("Failed to update nickname:", error);
     }
   },
-
-  // ---------------------------
+  // --------------------------
   // goal 진행도 업데이트
   // ---------------------------
   updateProgress: async (goalId: number, progress: number) => {
     const { memberId } = get();
     if (memberId !== null) {
       try {
-        const response = await fetch(`https://siiso.site/api/v1/goals/${goalId}`, {
+        const response = await fetch(`http://siiso.site/api/v1/member/${memberId}/goal/${goalId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
@@ -675,13 +677,12 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       }
     }
   },
-
   // ---------------------------
   // 자기소개 수정
   // ---------------------------
   updateIntroduce: async (memberId: number, introduce: string) => {
     try {
-      const response = await fetch(`https://siiso.site/api/v1/members/${memberId}/introduce`, {
+      const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}/introduce`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -713,7 +714,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`https://siiso.site/api/v1/members/${memberId}/profile`, {
+      const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}/profile`, {
         method: "POST",
         body: formData,
       });
