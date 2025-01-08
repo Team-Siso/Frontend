@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import FriendsListSidebar from "../components/FriendsListSidebar/FriendsListSidebar";
 import ListSidebar_Friend from "../components/ListSidebar_Friend/ListSidebar_Friend";
-import CalendarPage from "../components/Calendar/CalendarPage";
-import FixGridPage from "../components/Grid/FixGridPage";
+import CalendarPage_Friend from "../components/Calendar_Friend/CalendarPage_Friend";
 import MenuComponent from "../components/Menu/MenuComponent";
 
 interface FriendPageProps {
@@ -11,13 +10,6 @@ interface FriendPageProps {
 }
 
 const FriendPage: React.FC<FriendPageProps> = ({ openFriendSearchModal, openSettingsModal }) => {
-  const [currentPage, setCurrentPage] = useState("calendar");
-
-  const handlePageChange = (page: string) => {
-    console.log("Page changing to:", page); // 페이지 변경 로그
-    setCurrentPage(page);
-  };
-
   return (
     <div className="flex w-full h-screen overflow-hidden">
       <div className="bg-EDEEEE flex-none" style={{ width: "60px" }}>
@@ -30,8 +22,7 @@ const FriendPage: React.FC<FriendPageProps> = ({ openFriendSearchModal, openSett
         <ListSidebar_Friend />
       </div>
       <div className="flex-grow">
-        {currentPage === "calendar" && <CalendarPage onPageChange={handlePageChange} />}
-        {currentPage === "fixGrid" && <FixGridPage onPageChange={handlePageChange} />}
+        <CalendarPage_Friend />
       </div>
       <div className="absolute bottom-4 left-4 z-50">
         <MenuComponent
