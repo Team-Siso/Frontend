@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-
 import UncheckBoxIcon from "@/assets/UncheckBoxIcon.svg";
 import CheckedBoxIcon from "@/assets/CheckedBoxIcon.svg";
 import { useStore } from "@/store";
@@ -9,7 +8,22 @@ const TodoListComponent_Friend = ({ className }) => {
   const [profile, setProfile] = useState({
     nickname: "",
   });
-
+  const schedules = useStore((s) => s.schedules);
+  const selectedDate = useStore((s) => s.selectedDate);
+  const fetchSchedulesByDate = useStore((s) => s.fetchSchedulesByDate);
+  const filteredTodos = schedules
+    .filter((td) => td.thisDay?.split("T")[0] === selectedDate)
+    .sort((a, b) => {
+      if (!a.startTime && !b.startTime) return 0;
+      if (!a.startTime) return -1;
+      if (!b.startTime) return 1;
+      return a.startTime < b.startTime ? -1 : 1;
+    });
+  useEffect(() => {
+    if (memberId && selectedDate) {
+      fetchSchedulesByDate(memberId, selectedDate);
+    }
+  }, [memberId, selectedDate]);
   useEffect(() => {
     const fetchProfile = async () => {
       if (memberId) {

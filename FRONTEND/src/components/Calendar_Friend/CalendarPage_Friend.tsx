@@ -1,6 +1,5 @@
 import { useState } from "react";
 import CustomCalendar from "./CustomCalendar";
-import Toggle from "../Toggle";
 import { useStore } from "../../store";
 
 const CalendarPage_Friend = () => {

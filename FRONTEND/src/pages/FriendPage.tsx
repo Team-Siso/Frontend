@@ -21,7 +21,7 @@ const FriendPage: React.FC<FriendPageProps> = ({ openFriendSearchModal, openSett
       >
         <ListSidebar_Friend />
       </div>
-      <div className="flex-grow">
+      <div className=" flex-grow">
         <CalendarPage_Friend />
       </div>
       <div className="absolute bottom-4 left-4 z-50">
