@@ -476,7 +476,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   fetchFollowers: async (memberId: number) => {
     try {
-      const response = await fetch(`http://siiso.site/api/v1/follows/${memberId}/followers`);
+      const response = await fetch(`http://siiso.site:8080/api/v1/follows/${memberId}/followers`);
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
