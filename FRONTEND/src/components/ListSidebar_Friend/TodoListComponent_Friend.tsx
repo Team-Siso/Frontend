@@ -2,9 +2,15 @@ import { useState, useEffect } from "react";
 import UncheckBoxIcon from "@/assets/UncheckBoxIcon.svg";
 import CheckedBoxIcon from "@/assets/CheckedBoxIcon.svg";
 import { useStore } from "@/store";
-
-const TodoListComponent_Friend = ({ className }) => {
-  const memberId = useStore((state) => state.memberId);
+interface TodoListComponentFriendProps {
+  className?: string;
+  friendId: number; // friendId를 숫자로 받음
+}
+const TodoListComponent_Friend: React.FC<TodoListComponentFriendProps> = ({
+  className,
+  friendId,
+}) => {
+  // const memberId = useStore((state) => state.memberId);
   const [profile, setProfile] = useState({
     nickname: "",
   });
@@ -20,15 +26,15 @@ const TodoListComponent_Friend = ({ className }) => {
       return a.startTime < b.startTime ? -1 : 1;
     });
   useEffect(() => {
-    if (memberId && selectedDate) {
-      fetchSchedulesByDate(memberId, selectedDate);
+    if (friendId && selectedDate) {
+      fetchSchedulesByDate(friendId, selectedDate);
     }
-  }, [memberId, selectedDate]);
+  }, [friendId, selectedDate]);
   useEffect(() => {
     const fetchProfile = async () => {
-      if (memberId) {
+      if (friendId) {
         try {
-          const response = await fetch(`/api/v1/members/${memberId}`, {
+          const response = await fetch(`/api/v1/members/${friendId}`, {
             method: "GET",
             headers: {
               accept: "*/*",
@@ -50,18 +56,18 @@ const TodoListComponent_Friend = ({ className }) => {
     };
 
     fetchProfile();
-  }, [memberId]);
+  }, [friendId]);
 
   const todos = useStore((state) => state.schedules) || []; // store에서 todos 가져오기
   const fetchSchedules = useStore((state) => state.fetchSchedules);
   const setSchedules = useStore((state) => state.setSchedules); // setSchedules를 올바르게 가져오기
 
   useEffect(() => {
-    console.log("memberId:", memberId); // memberId를 로그로 출력
+    console.log("friendId:", friendId);
     console.log("Updated Schedules:", todos);
 
-    if (memberId) {
-      fetchSchedules(memberId)
+    if (friendId) {
+      fetchSchedules(friendId)
         .then(() => {
           // fetchSchedules는 void를 반환하므로 별도 처리 불필요
         })
@@ -69,7 +75,7 @@ const TodoListComponent_Friend = ({ className }) => {
           console.error("Error fetching schedules:", error);
         });
     }
-  }, [memberId, fetchSchedules, setSchedules]);
+  }, [friendId, fetchSchedules, setSchedules]);
 
   return (
     <div className={`${className} `}>
