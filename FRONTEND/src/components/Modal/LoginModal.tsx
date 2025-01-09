@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom"; // 페이지 이동을 위한 훅
 import Modal from "./Modal";
 import Input from "../Input";
-import { useStore } from "../../store"; 
+import { useStore } from "../../store";
 
 // LoginModal 컴포넌트의 props 인터페이스
 interface LoginModalProps {
@@ -26,10 +26,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose }) => {
       // 로그인 메서드 호출
       await login(email, password);
       onClose(); // 로그인 성공 시 모달 닫기
-      navigate('/main'); // 로그인 성공 후 메인 페이지로 이동
+      navigate("/main"); // 로그인 성공 후 메인 페이지로 이동
     } catch (error) {
-      console.error('로그인 실패:', error); // 오류 로그 출력
-      alert('로그인에 실패했습니다. 다시 시도해주세요.'); // 오류 알림
+      console.error("로그인 실패:", error); // 오류 로그 출력
       // 실패 시 메인 페이지로 이동하지 않음
     }
   };

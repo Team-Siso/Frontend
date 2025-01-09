@@ -45,6 +45,7 @@ const FriendsListComponent = () => {
       <div>
         {(listToDisplay || []).map((friend, index) => {
           console.log("friend", friend);
+          console.log("친구 활성화 여부", friend.isActive);
           return (
             <FriendComponent
               key={index}

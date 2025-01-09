@@ -110,7 +110,7 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
           value={searchTerm} // Zustand 검색어 상태 바인딩
           onChange={handleSearch} // 검색어 입력 시 이벤트 처리
           className="border mb-2 border-gray-300 rounded-full w-full py-2 pl-12 pr-8"
-          placeholder="친구 검색" // 입력 필드 플레이스홀더
+          placeholder="닉네임 혹은 이메일 검색" // 입력 필드 플레이스홀더
         />
         {/* 돋보기 아이콘 */}
         <svg
