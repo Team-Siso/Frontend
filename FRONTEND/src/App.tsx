@@ -30,7 +30,7 @@ const App: React.FC = () => {
           }
         />
         <Route
-          path="/friend/:friendId"
+          path="/friend"
           element={
             <FriendPage
               openFriendSearchModal={openFriendSearchModal} // 핸들러 전달

@@ -3,7 +3,7 @@ import FriendsListSidebar from "../components/FriendsListSidebar/FriendsListSide
 import ListSidebar_Friend from "../components/ListSidebar_Friend/ListSidebar_Friend";
 import CalendarPage_Friend from "../components/Calendar_Friend/CalendarPage_Friend";
 import MenuComponent from "../components/Menu/MenuComponent";
-import { useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 interface FriendPageProps {
   openFriendSearchModal: () => void; // 친구 검색 모달 열기 핸들러
@@ -11,8 +11,8 @@ interface FriendPageProps {
 }
 
 const FriendPage: React.FC<FriendPageProps> = ({ openFriendSearchModal, openSettingsModal }) => {
-  const { friendId } = useParams<{ friendId: string }>(); // URL에서 friendId 읽기
-  // friendId를 숫자로 변환
+  const location = useLocation();
+  const { friendId } = location.state || {}; // state에서 friendId 가져오기
   const friendIdAsNumber = Number(friendId);
 
   if (isNaN(friendIdAsNumber)) {

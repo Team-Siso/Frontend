@@ -9,17 +9,12 @@ const FriendsListComponent = () => {
   const navigate = useNavigate(); // navigate 훅 사용
 
   const { followings, followers, fetchFollowings, fetchFollowers, memberId } = useStore();
-  const [view, setView] = useState("following");
-  const [isChecked, setIsChecked] = useState(true);
-  const handleToggleChange = (checked) => {
-    console.log("Follow", checked);
-    setIsChecked(checked);
-    setView(checked ? "following" : "follower");
-  };
+  const [view] = useState("following");
+
   const handleFriendClick = (friendId) => {
     console.log("Clicked Friend ID:", friendId);
     // 원하는 페이지로 이동
-    navigate(`/friend`);
+    navigate("/friend", { state: { friendId } }); // state에 memberId 전달
   };
   useEffect(() => {
     if (memberId) {
@@ -62,7 +57,7 @@ const FriendsListComponent = () => {
                   ? friend.profilePicture
                   : DefaultImage
               }
-              onClick={() => handleFriendClick(friend.memberId)} // 클릭 이벤트 핸들러
+              onClick={() => handleFriendClick(friend.followingId)} // 클릭 이벤트 핸들러
             />
           );
         })}
