@@ -3,7 +3,9 @@ import { useStore } from "@/store";
 import FriendComponent from "./FriendComponent";
 import DefaultImage from "@/assets/profile.png";
 import Toggle from "../Toggle";
+import { useNavigate } from "react-router-dom"; // 페이지 이동용
 
+// import Toggle from "../Toggle";
 const FriendsListComponent = () => {
   const { followings, followers, fetchFollowings, fetchFollowers, memberId } = useStore();
   const [view, setView] = useState("following");
@@ -14,7 +16,13 @@ const FriendsListComponent = () => {
     setIsChecked(checked);
     setView(checked ? "following" : "follower");
   };
+  const navigate = useNavigate(); // navigate 훅 사용
 
+  const handleFriendClick = (friendId) => {
+    console.log("Clicked Friend ID:", friendId);
+    // 원하는 페이지로 이동
+    navigate("/friend", { state: { friendId } }); // state에 memberId 전달
+  };
   useEffect(() => {
     if (memberId) {
       console.log("fetchFollowings 호출");
@@ -57,6 +65,7 @@ const FriendsListComponent = () => {
                   ? friend.profilePicture
                   : DefaultImage
               }
+              onClick={() => handleFriendClick(friend.followingId)} // 클릭 이벤트 핸들러
             />
           );
         })}
@@ -64,5 +73,4 @@ const FriendsListComponent = () => {
     </div>
   );
 };
-
 export default FriendsListComponent;

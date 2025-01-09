@@ -4,7 +4,6 @@ import NextPageComponent from "./NextPageComponent";
 import FriendsListComponent from "./FriendsListComponent";
 import { useStore } from "@/store";
 import { useState } from "react";
-
 const FriendsListSidebar = () => {
   const { followings } = useStore();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -13,7 +12,6 @@ const FriendsListSidebar = () => {
       setCurrentIndex((prev) => prev + 1);
     }
   };
-
   const isOverFive = followings.length > 5;
   const displayedFriends = isOverFive ? [followings[currentIndex]] : followings;
   return (
@@ -35,5 +33,4 @@ const FriendsListSidebar = () => {
     </div>
   );
 };
-
 export default FriendsListSidebar;
