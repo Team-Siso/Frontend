@@ -4,7 +4,11 @@ import TodoListComponent_Friend from "./TodoListComponent_Friend";
 import MyGoalComponent_Friend from "./MyGoalComponent_Friend";
 import MyProfileComponent_Friend from "./MyProfileComponent_Friend";
 
-const ListSidebar_Friend = () => {
+interface ListSidebarFriendProps {
+  friendId: number; // friendId를 숫자로 받음
+}
+
+const ListSidebar_Friend: React.FC<ListSidebarFriendProps> = ({ friendId }) => {
   const navigate = useNavigate(); // navigate 훅 사용
 
   const goToMyPage = () => {
@@ -25,13 +29,13 @@ const ListSidebar_Friend = () => {
       <div className="flex-grow flex flex-col">
         {/* TodoListComponent와 MyGoalComponent의 높이를 계산하여 설정 */}
         <div className="flex-none" style={{ height: "calc((100vh - 60px - 120px) / 2)" }}>
-          <TodoListComponent_Friend className="flex-none" />
+          <TodoListComponent_Friend className="flex-none" friendId={friendId} />
         </div>
         <div className="flex-none" style={{ height: "calc((100vh - 60px - 120px) / 2)" }}>
-          <MyGoalComponent_Friend className="flex-none" />
+          <MyGoalComponent_Friend className="flex-none" friendId={friendId} />
         </div>
       </div>
-      <MyProfileComponent_Friend className="flex-none h-120" />
+      <MyProfileComponent_Friend className="flex-none h-120" friendId={friendId} />
     </div>
   );
 };

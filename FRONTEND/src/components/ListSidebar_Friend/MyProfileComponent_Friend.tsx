@@ -2,10 +2,16 @@
 // import React from "react";
 import { useState, useEffect } from "react";
 import FriendsProfileEx from "@/assets/FriendsProfileEx.svg";
-import { useStore } from "@/store";
-
-const MyProfileComponent_Friend = ({ className }) => {
-  const memberId = useStore((state) => state.memberId);
+// import { useStore } from "@/store";
+interface MyProfileComponentFriendProps {
+  className?: string;
+  friendId: number; // friendId를 숫자로 받음
+}
+const MyProfileComponent_Friend: React.FC<MyProfileComponentFriendProps> = ({
+  className,
+  friendId,
+}) => {
+  // const friendId = useStore((state) => state.memberId);
   const [profile, setProfile] = useState({
     nickname: "",
     introduce: "",
@@ -14,9 +20,9 @@ const MyProfileComponent_Friend = ({ className }) => {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (memberId) {
+      if (friendId) {
         try {
-          const response = await fetch(`/api/v1/members/${memberId}`, {
+          const response = await fetch(`/api/v1/members/${friendId}`, {
             method: "GET",
             headers: {
               accept: "*/*",
@@ -40,7 +46,7 @@ const MyProfileComponent_Friend = ({ className }) => {
     };
 
     fetchProfile();
-  }, [memberId]);
+  }, [friendId]);
 
   return (
     <div className={`flex items-center pl-sd7 pr-7 pt-3 font-sans text-lg ${className}`}>
