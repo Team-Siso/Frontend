@@ -20,30 +20,7 @@ interface ProgressBarComponentProps {
   goalId: number;
 }
 
-const setEditGoal = async (title: string, goalId: number, progress: number) => {
-  try {
-    const response = await fetch(`http://siiso.site:8080/api/v1/goals/${goalId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: `{"title": "${title}", "progress": ${progress}}`,
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to set goal");
-    }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error("Error:", error);
-    alert("Failed to set goal");
-    throw error;
-  }
-};
-
-const ProgressBarComponent: React.FC<ProgressBarComponentProps> = ({ goalId, title }) => {
+const ProgressBarComponent_Friend: React.FC<ProgressBarComponentProps> = ({ goalId, title }) => {
   const { goals, fetchGoals, memberId } = useStore();
   const [progress, setProgress] = useState(ProgressBar_Empty);
 
@@ -79,20 +56,6 @@ const ProgressBarComponent: React.FC<ProgressBarComponentProps> = ({ goalId, tit
     }
   };
 
-  const handleHeartClick = async (percent: number) => {
-    try {
-      await setEditGoal(title, goalId, percent);
-      setProgressImage(percent);
-      if (memberId) {
-        fetchGoals(memberId); // fetchGoals 호출하여 목표 목록 갱신
-      }
-      console.log(`${percent}% 선택됨`);
-    } catch (error) {
-      console.error("Error:", error);
-      alert("Failed to update progress");
-    }
-  };
-
   const heartImages = {
     0: HeartImage_0,
     20: HeartImage_20,
@@ -110,7 +73,6 @@ const ProgressBarComponent: React.FC<ProgressBarComponentProps> = ({ goalId, tit
           key={index}
           className="absolute"
           style={{ left: `calc(${percent}% - ${percent * 0.31}px + 7px)`, top: "11px" }} // 하트 이미지가 중앙에 오도록 조정
-          onClick={() => handleHeartClick(percent)}
         >
           <img src={heartImages[percent]} alt={`${percent}% Heart`} className="w-3.5 h-3.5" />{" "}
           {/* 크기 조정 */}
@@ -120,4 +82,4 @@ const ProgressBarComponent: React.FC<ProgressBarComponentProps> = ({ goalId, tit
   );
 };
 
-export default ProgressBarComponent;
+export default ProgressBarComponent_Friend;

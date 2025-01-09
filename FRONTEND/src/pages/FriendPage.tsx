@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import FriendsListSidebar from "../components/FriendsListSidebar/FriendsListSidebar";
-import FriendListSidebar from "../components/ListSidebar/ListSidebar";
-import CalendarPage from "../components/Calendar/CalendarPage";
-import FixGridPage from "../components/Grid/FixGridPage";
+import ListSidebar_Friend from "../components/ListSidebar_Friend/ListSidebar_Friend";
+import CalendarPage_Friend from "../components/Calendar_Friend/CalendarPage_Friend";
 import MenuComponent from "../components/Menu/MenuComponent";
+import { useLocation } from "react-router-dom";
 
 interface FriendPageProps {
   openFriendSearchModal: () => void; // 친구 검색 모달 열기 핸들러
@@ -11,24 +11,26 @@ interface FriendPageProps {
 }
 
 const FriendPage: React.FC<FriendPageProps> = ({ openFriendSearchModal, openSettingsModal }) => {
-  const [currentPage, setCurrentPage] = useState("calendar");
+  const location = useLocation();
+  const { friendId } = location.state || {}; // state에서 friendId 가져오기
+  const friendIdAsNumber = Number(friendId);
 
-  const handlePageChange = (page: string) => {
-    console.log("Page changing to:", page); // 페이지 변경 로그
-    setCurrentPage(page);
-  };
-
+  if (isNaN(friendIdAsNumber)) {
+    return <div>Invalid friend ID</div>; // friendId가 숫자가 아닌 경우 처리
+  }
   return (
     <div className="flex w-full h-screen overflow-hidden">
       <div className="bg-EDEEEE flex-none" style={{ width: "60px" }}>
         <FriendsListSidebar />
       </div>
-      <div className="flex-none border border-EDEEEE rounded" style={{ width: "330px" }}>
-        <FriendListSidebar />
+      <div
+        className="bg-[#EDE0EC] flex-none border border-D6D6D6   rounded"
+        style={{ width: "330px" }}
+      >
+        <ListSidebar_Friend friendId={friendIdAsNumber} />
       </div>
-      <div className="flex-grow">
-        {currentPage === "calendar" && <CalendarPage onPageChange={handlePageChange} />}
-        {currentPage === "fixGrid" && <FixGridPage onPageChange={handlePageChange} />}
+      <div className=" flex-grow">
+        <CalendarPage_Friend friendId={friendIdAsNumber} />
       </div>
       <div className="absolute bottom-4 left-4 z-50">
         <MenuComponent

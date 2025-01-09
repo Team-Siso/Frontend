@@ -62,7 +62,7 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
   const deleteGoal = async (id: number) => {
     console.log("골 delete 입니다.");
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/goals/${id}`, {
+      const response = await fetch(`http://siiso.site:8080/api/v1/goals/${id}`, {
         method: "DELETE",
         headers: {
           accept: "*/*",
@@ -89,7 +89,7 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
   const editGoal = async (id: number, title: string, progress: number) => {
     console.log("editGoal 호출, id:", id, "title:", title, "progress:", progress);
     try {
-      const response = await fetch(`http://localhost:8080/api/v1/goals/${id}`, {
+      const response = await fetch(`http://siiso.site:8080/api/v1/goals/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -145,67 +145,77 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
           <img src={PlusButton} alt="Add My Goal" onClick={handleIconClick} />
         </div>
       </div>
-      {showInput && (
-        <div className="">
-          <input
-            type="text"
-            className="w-full p-3 pl-8 bg-grayEBEBEB"
-            placeholder="할 일 입력"
-            value={inputValue}
-            onChange={handleInputChange}
-            onKeyDown={(event) => (event.key === "Enter" ? handleAddGoal() : null)}
-          />
-        </div>
-      )}
-      <ul className="divide-y divide-gray-300 mx-4">
-        {goals.map((goal) => (
-          <li
-            key={goal.id}
-            className="flex flex-col py-3 pl-2 pr-2 relative"
-            onMouseOver={() => setShowEditOptions(goal.id)}
-            onMouseLeave={() => setShowEditOptions(null)}
-          >
-            <div className="flex items-center">
-              <img
-                src={goal.completed ? CheckedBoxIcon : UncheckBoxIcon}
-                alt={goal.completed ? "Goal completed" : "Mark goal as completed"}
-                className="cursor-pointer"
-                onClick={() => toggleTodoCompletion(goal.id)}
-              />
-              <span className={goal.completed ? "ml-2 line-through" : "ml-2"}>
-                {goal.id === editId ? (
-                  <input
-                    type="text"
-                    value={editText}
-                    onChange={handleEditChange}
-                    onBlur={() => handleEditSave(goal.id)}
-                    onKeyPress={(event) => (event.key === "Enter" ? handleEditSave(goal.id) : null)}
-                  />
-                ) : (
-                  goal.title
-                )}
-              </span>
-            </div>
-            <ProgressBarComponent goalId={goal.id} title={goal.title} />
-            {showEditOptions === goal.id && (
-              <div className="absolute right-0 top-0 rounded-lg">
-                <button
-                  className="px-2 py-1 border-b-2 border-r-2 mr-2 border-gray-300 rounded-lg text-sm"
-                  onClick={() => startEdit(goal.id, goal.title)}
-                >
-                  수정
-                </button>
-                <button
-                  className="px-2 py-1 border-b-2 border-gray-300 rounded-lg text-sm"
-                  onClick={() => handleDelete(goal.id)}
-                >
-                  삭제
-                </button>
+      <div
+        className="overflow-y-auto"
+        style={{
+          maxHeight: "calc(43vh - 60px - 40px)", // 부모 높이에서 텍스트 영역과 입력 영역 제외
+          flexGrow: 1, // 나머지 공간을 차지하도록 설정
+        }}
+      >
+        {showInput && (
+          <div className="">
+            <input
+              type="text"
+              className="w-full p-3 pl-8 bg-grayEBEBEB"
+              placeholder="할 일 입력"
+              value={inputValue}
+              onChange={handleInputChange}
+              onKeyDown={(event) => (event.key === "Enter" ? handleAddGoal() : null)}
+            />
+          </div>
+        )}
+        <ul className="divide-y divide-gray-300 mx-4">
+          {goals.map((goal) => (
+            <li
+              key={goal.id}
+              className="flex flex-col py-3 pl-2 pr-2 relative"
+              onMouseOver={() => setShowEditOptions(goal.id)}
+              onMouseLeave={() => setShowEditOptions(null)}
+            >
+              <div className="flex items-center">
+                <img
+                  src={goal.completed ? CheckedBoxIcon : UncheckBoxIcon}
+                  alt={goal.completed ? "Goal completed" : "Mark goal as completed"}
+                  className="cursor-pointer"
+                  onClick={() => toggleTodoCompletion(goal.id)}
+                />
+                <span className={goal.completed ? "ml-2 line-through" : "ml-2"}>
+                  {goal.id === editId ? (
+                    <input
+                      type="text"
+                      value={editText}
+                      onChange={handleEditChange}
+                      onBlur={() => handleEditSave(goal.id)}
+                      onKeyPress={(event) =>
+                        event.key === "Enter" ? handleEditSave(goal.id) : null
+                      }
+                    />
+                  ) : (
+                    goal.title
+                  )}
+                </span>
               </div>
-            )}
-          </li>
-        ))}
-      </ul>
+              <ProgressBarComponent goalId={goal.id} title={goal.title} />
+              {showEditOptions === goal.id && (
+                <div className="absolute right-0 top-0 rounded-lg">
+                  <button
+                    className="px-2 py-1 border-b-2 border-r-2 mr-2 border-gray-300 rounded-lg text-sm"
+                    onClick={() => startEdit(goal.id, goal.title)}
+                  >
+                    수정
+                  </button>
+                  <button
+                    className="px-2 py-1 border-b-2 border-gray-300 rounded-lg text-sm"
+                    onClick={() => handleDelete(goal.id)}
+                  >
+                    삭제
+                  </button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };

@@ -88,23 +88,6 @@ const TodoListComponent = ({ className }) => {
     }
   };
 
-  // 체크박스 클릭했을 때 실행되는 함수
-  // const toggleTodoCompletion = (id) => {
-  //   const updatedTodos = todos.map((todo) => {
-  //     if (todo.id === id) {
-  //       const updatedTodo = {
-  //         ...todo,
-  //         checkStatus: todo.checkStatus === 0 ? 1 : 0, // checkStatus 값 토글
-  //       }; // 상태 변경
-  //       console.log("체크박스 클릭!", updatedTodo.completed); // 변경된 상태 출력
-  //       return updatedTodo;
-  //     }
-  //     return todo;
-  //   });
-  //   setSchedules(updatedTodos);
-  // };
-  //2;
-
   const toggleTodoCompletion = async (id) => {
     const todo = todos.find((todo) => todo.id === id); // 변경할 todo 찾기
     if (todo) {
@@ -198,71 +181,82 @@ const TodoListComponent = ({ className }) => {
           <img src={addTimeTodoIcon} alt="Add Time to Todo" />
         </div>
       </div>
-      {showInput && (
-        <div className="">
-          <input
-            type="text"
-            className="w-full p-3 pl-8 bg-grayEBEBEB"
-            placeholder="할 일 입력"
-            value={inputValue}
-            onChange={handleInputChange}
-            onKeyDown={(event) => (event.key === "Enter" ? handleAddTodo() : null)}
-          />
-        </div>
-      )}
-      <ul className="divide-y divide-gray-300 mx-4">
-        {todos.length > 0 ? (
-          todos.map((todo) => (
-            <li
-              key={todo.id}
-              className="flex items-center py-3 pl-2 pr-2 relative"
-              onMouseOver={() => setShowEditOptions(todo.id)}
-              onMouseLeave={() => setShowEditOptions(null)}
-            >
-              {/* 체크박스 */}
-              <img
-                src={todo.checkStatus === 1 ? CheckedBoxIcon : UncheckBoxIcon}
-                alt={todo.checkStatus === 1 ? "Todo completed" : "Mark todo as completed"}
-                className="cursor-pointer"
-                onClick={() => toggleTodoCompletion(todo.id)}
-              />
-
-              {/* Todo 텍스트 */}
-              <span className={todo.completed ? "ml-2 line-through" : "ml-2"}>
-                {todo.id === editId ? (
-                  <input
-                    type="text"
-                    value={editText}
-                    onChange={handleEditChange}
-                    onBlur={() => handleEditSave(todo.id)}
-                    onKeyDown={(event) => (event.key === "Enter" ? handleEditSave(todo.id) : null)}
-                  />
-                ) : (
-                  todo.content
-                )}
-              </span>
-              {showEditOptions === todo.id && (
-                <div className="absolute right-0 top-0 rounded-lg">
-                  <button
-                    className="px-2 py-1 border-b-2 border-r-2 mr-2 border-gray-300 rounded-lg text-sm"
-                    onClick={() => startEdit(todo.id, todo.content)}
-                  >
-                    수정
-                  </button>
-                  <button
-                    className="px-2 py-1 border-b-2 border-gray-300 rounded-lg text-sm"
-                    onClick={() => handleDelete(todo.id)}
-                  >
-                    삭제
-                  </button>
-                </div>
-              )}
-            </li>
-          ))
-        ) : (
-          <li className="text-center py-3 text-gray-500">할 일이 없습니다.</li>
+      <div
+        className="overflow-y-auto"
+        style={{
+          maxHeight: "calc(43vh - 60px - 40px)", // 부모 높이에서 텍스트 영역과 입력 영역 제외
+          flexGrow: 1, // 나머지 공간을 차지하도록 설정
+        }}
+      >
+        {showInput && (
+          <div className="">
+            <input
+              type="text"
+              className="w-full p-3 pl-8 bg-grayEBEBEB"
+              placeholder="할 일 입력"
+              value={inputValue}
+              onChange={handleInputChange}
+              onKeyDown={(event) => (event.key === "Enter" ? handleAddTodo() : null)}
+            />
+          </div>
         )}
-      </ul>
+
+        <ul className="divide-y divide-gray-300 mx-4">
+          {todos.length > 0 ? (
+            todos.map((todo) => (
+              <li
+                key={todo.id}
+                className="flex items-center py-3 pl-2 pr-2 relative"
+                onMouseOver={() => setShowEditOptions(todo.id)}
+                onMouseLeave={() => setShowEditOptions(null)}
+              >
+                {/* 체크박스 */}
+                <img
+                  src={todo.checkStatus === 1 ? CheckedBoxIcon : UncheckBoxIcon}
+                  alt={todo.checkStatus === 1 ? "Todo completed" : "Mark todo as completed"}
+                  className="cursor-pointer"
+                  onClick={() => toggleTodoCompletion(todo.id)}
+                />
+
+                {/* Todo 텍스트 */}
+                <span className={todo.completed ? "ml-2 line-through" : "ml-2"}>
+                  {todo.id === editId ? (
+                    <input
+                      type="text"
+                      value={editText}
+                      onChange={handleEditChange}
+                      onBlur={() => handleEditSave(todo.id)}
+                      onKeyDown={(event) =>
+                        event.key === "Enter" ? handleEditSave(todo.id) : null
+                      }
+                    />
+                  ) : (
+                    todo.content
+                  )}
+                </span>
+                {showEditOptions === todo.id && (
+                  <div className="absolute right-0 top-0 rounded-lg">
+                    <button
+                      className="px-2 py-1 border-b-2 border-r-2 mr-2 border-gray-300 rounded-lg text-sm"
+                      onClick={() => startEdit(todo.id, todo.content)}
+                    >
+                      수정
+                    </button>
+                    <button
+                      className="px-2 py-1 border-b-2 border-gray-300 rounded-lg text-sm"
+                      onClick={() => handleDelete(todo.id)}
+                    >
+                      삭제
+                    </button>
+                  </div>
+                )}
+              </li>
+            ))
+          ) : (
+            <li className="text-center py-3 text-gray-500">할 일이 없습니다.</li>
+          )}
+        </ul>
+      </div>
     </div>
   );
 };
