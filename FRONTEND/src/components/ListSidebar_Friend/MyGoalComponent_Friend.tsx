@@ -6,32 +6,31 @@ import CheckedBoxIcon from "@/assets/CheckedBoxIcon.svg";
 import ProgressBarComponent_Friend from "./ProgressBarComponent_Friend";
 
 interface MyGoalComponentProps {
-  className: string;
+  className?: string;
+  friendId: number; // friendId를 숫자로 받음
 }
 
-const MyGoalComponent_Friend: React.FC<MyGoalComponentProps> = ({ className }) => {
-  const { goals, fetchGoals, memberId } = useStore((state) => ({
+const MyGoalComponent_Friend: React.FC<MyGoalComponentProps> = ({ className, friendId }) => {
+  const { goals, fetchGoals } = useStore((state) => ({
     goals: state.goals,
-    setGoal: state.setGoal,
     fetchGoals: state.fetchGoals,
-    memberId: state.memberId,
   }));
 
   useEffect(() => {
-    if (memberId) {
-      fetchGoals(memberId);
-      console.log("fetchGoals 성공, memberId : ", memberId);
+    if (friendId) {
+      fetchGoals(friendId);
+      console.log("fetchGoals 성공, memberId : ", friendId);
     }
-  }, [memberId, fetchGoals]);
+  }, [friendId, fetchGoals]);
   const [profile, setProfile] = useState({
     nickname: "",
   });
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (memberId) {
+      if (friendId) {
         try {
-          const response = await fetch(`/api/v1/members/${memberId}`, {
+          const response = await fetch(`/api/v1/members/${friendId}`, {
             method: "GET",
             headers: {
               accept: "*/*",
@@ -53,7 +52,7 @@ const MyGoalComponent_Friend: React.FC<MyGoalComponentProps> = ({ className }) =
     };
 
     fetchProfile();
-  }, [memberId]);
+  }, [friendId]);
   return (
     <div className={`${className}`}>
       <hr className="mx-4 my-1 border-gray-300" />
