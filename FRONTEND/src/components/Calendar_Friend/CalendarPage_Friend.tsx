@@ -2,10 +2,12 @@ import { useState } from "react";
 import CustomCalendar from "./CustomCalendar";
 import { useStore } from "../../store";
 
-const CalendarPage_Friend = () => {
-  const { memberId, setSelectedDate, fetchSchedulesByDate } = useStore();
+interface CalendarPageFriendProps {
+  friendId: number; // friendId를 props로 받음
+}
+const CalendarPage_Friend: React.FC<CalendarPageFriendProps> = ({ friendId }) => {
+  const { setSelectedDate, fetchSchedulesByDate } = useStore();
 
-  const [view, setView] = useState("calendar");
   const [selectedDateLocal, setSelectedDateLocal] = useState(new Date());
 
   // 달력에서 날짜 클릭
@@ -22,8 +24,8 @@ const CalendarPage_Friend = () => {
     setSelectedDate(dateString);
 
     // 해당 날짜 스케줄 조회(원하는 로직이면 유지)
-    if (memberId) {
-      fetchSchedulesByDate(memberId, dateString);
+    if (friendId) {
+      fetchSchedulesByDate(friendId, dateString);
     }
   };
 

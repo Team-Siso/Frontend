@@ -321,32 +321,38 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // 로그인
   // ---------------------------
   login: async (email: string, password: string) => {
-    // const { resetState } = get();
-    const params = new URLSearchParams({ email, password });
-
+    const { resetState } = get();
+    const params = new URLSearchParams({
+      email,
+      password,
+    });
     try {
-      const response = await fetch(`https://siiso.site/api/v1/members/login?${params.toString()}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
+      const response = await fetch(
+        `http://siiso.site:8080/api/v1/members/login?${params.toString()}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log(response.status);
       if (!response.ok) {
+        if (response.status === 404) {
+          alert("아이디와 비밀번호를 확인해주세요!!");
+        } else {
+          alert("로그인에 실패했습니다.");
+        }
         throw new Error("로그인 실패");
       }
-
       const data = await response.json();
       console.log("로그인 성공:", data);
-
-      // resetState();
-
-      // memberId만 세팅
-      set({ memberId: data.id });
-      localStorage.setItem("memberId", data.id.toString());
+      resetState(); // 상태 초기화
+      set({ memberId: data.id, email: "", password: "" }); // 로그인 성공 시 memberId 설정
+      localStorage.setItem("memberId", data.id.toString()); // 로컬스토리지에 멤버 아이디 저장
     } catch (error) {
       console.error("Error:", error);
-      alert("로그인 실패");
+      throw error; // 예외를 상위에서 처리
     }
   },
 
