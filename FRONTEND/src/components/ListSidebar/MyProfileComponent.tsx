@@ -16,7 +16,7 @@ const MyProfileComponent = ({ className }) => {
     const fetchProfile = async () => {
       if (memberId) {
         try {
-          const response = await fetch(`/api/v1/members/${memberId}`, {
+          const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}`, {
             method: "GET",
             headers: {
               accept: "*/*",

@@ -24,14 +24,16 @@ import Toggle from "../Toggle";
 const CalendarPage = ({ onPageChange }) => {
   // view : 현재 표시되는 뷰 상태('calendar' 또는 'weekGrid')를 관리(기본 설정은 달력이다)
   const [view, setView] = useState("calendar");
-
+  const [isChecked, setIsChecked] = useState(false);
   // selectedDate : 현재 선택된 날짜를 저장(초기값은 오늘 날짜)
   // new Date()는 JavaScript Date 객체로, 호출하는 순간의 시스템 시간을 기준으로 현재 날짜와 시간을 반환
   const [selectedDate, setSelectedDate] = useState(new Date());
 
   // 토글 클릭에 따라 'weekGrid', 'calendar'로 상태를 변경한다.
-  const handleToggleChange = (isWeekGrid) => {
-    setView(isWeekGrid ? "weekGrid" : "calendar");
+  const handleToggleChange = (checked) => {
+    console.log("handleToggleChange called with:", checked);
+    setIsChecked(checked);
+    setView(checked ? "weekGrid" : "calendar");
   };
 
   // '고정 루틴 관리하기' 버튼 클릭 핸들러
@@ -58,7 +60,18 @@ const CalendarPage = ({ onPageChange }) => {
   return (
     <div style={{ position: "relative", height: "100vh" }}>
       <div style={{ display: "flex", justifyContent: "flex-end", padding: "10px" }}>
-        <Toggle id="view-toggle" label="" onToggle={handleToggleChange} />
+        <Toggle
+          id="view-toggle2"
+          label=""
+          isChecked={isChecked}
+          onToggle={(checked) => {
+            console.log("checked:", checked);
+            handleToggleChange(checked);
+          }}
+          marginClassName="ml-20"
+          aText=""
+          bText=""
+        />
       </div>
       {view === "weekGrid" ? (
         <WeekGridPage selectedDate={selectedDate} />

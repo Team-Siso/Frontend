@@ -2,14 +2,21 @@ import { useEffect, useState } from "react";
 import { useStore } from "@/store";
 import FriendComponent from "./FriendComponent";
 import DefaultImage from "@/assets/profile.png";
+import Toggle from "../Toggle";
 import { useNavigate } from "react-router-dom"; // 페이지 이동용
 
 // import Toggle from "../Toggle";
 const FriendsListComponent = () => {
-  const navigate = useNavigate(); // navigate 훅 사용
-
   const { followings, followers, fetchFollowings, fetchFollowers, memberId } = useStore();
-  const [view] = useState("following");
+  const [view, setView] = useState("following");
+  const [isChecked, setIsChecked] = useState(true);
+
+  const handleToggleChange = (checked) => {
+    console.log("Follow", checked);
+    setIsChecked(checked);
+    setView(checked ? "following" : "follower");
+  };
+  const navigate = useNavigate(); // navigate 훅 사용
 
   const handleFriendClick = (friendId) => {
     console.log("Clicked Friend ID:", friendId);
@@ -27,7 +34,7 @@ const FriendsListComponent = () => {
   const listToDisplay = view === "following" ? followings : followers;
   return (
     <div>
-      {/* <div className="flex items-center justify-center mb-4">
+      <div className="flex items-center justify-center mb-4">
         <Toggle
           id="view-toggle"
           label=""
@@ -42,10 +49,11 @@ const FriendsListComponent = () => {
           aText="팔로잉"
           bText="팔로워"
         />
-      </div> */}
+      </div>
       <div>
         {(listToDisplay || []).map((friend, index) => {
           console.log("friend", friend);
+          console.log("친구 활성화 여부", friend.isActive);
           return (
             <FriendComponent
               key={index}
