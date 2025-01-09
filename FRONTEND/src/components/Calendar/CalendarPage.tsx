@@ -20,29 +20,31 @@ import CustomCalendar from "./CustomCalendar";
 import WeekGridPage from "../Grid/WeekGridPage";
 import ConfirmButton from "../ConfirmButton";
 import Toggle from "../Toggle";
+import { useStore } from "../../store";
+import { format } from "date-fns";
 
 const CalendarPage = ({ onPageChange }) => {
-  // view : 현재 표시되는 뷰 상태('calendar' 또는 'weekGrid')를 관리(기본 설정은 달력이다)
+  const { memberId, setSelectedDate, fetchSchedulesByDate } = useStore();
+
+  // 기본 뷰: 달력
   const [view, setView] = useState("calendar");
   const [isChecked, setIsChecked] = useState(false);
   // selectedDate : 현재 선택된 날짜를 저장(초기값은 오늘 날짜)
   // new Date()는 JavaScript Date 객체로, 호출하는 순간의 시스템 시간을 기준으로 현재 날짜와 시간을 반환
-  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // 토글 클릭에 따라 'weekGrid', 'calendar'로 상태를 변경한다.
   const handleToggleChange = (checked) => {
     console.log("handleToggleChange called with:", checked);
     setIsChecked(checked);
     setView(checked ? "weekGrid" : "calendar");
-  };
+  }
+  // 현재 선택된 날짜(프론트 단에서 관리) - moment 또는 date-fns로 처리 가능
+  const [selectedDate, setSelectedDateLocal] = useState(new Date());
 
-  // '고정 루틴 관리하기' 버튼 클릭 핸들러
-  // 1. 'onPageChange' 함수가 전달되었는지 확인하고, 전달된 경우 'fixGrid' 페이지로 이동합니다.
-  // 2. 만약 'onPageChange'가 함수가 아니라면, 콘솔에 오류 메시지를 출력합니다.
+  // 토글
 
-  // 'onPageChange' 가 함수인지 확인하는 이유?
-  // 1. 유연성 확보: CalendarPage 컴포넌트를 재사용하는 상황에서 onPageChange를 전달하지 않아도 에러가 나지 않게 하려는 목적
-  // 2. 안정성 강화: onPageChange가 함수인지 확인함으로써, 잘못된 타입이 들어오면 실행되지 않게 하여 예기치 않은 에러를 방지
+
+  // 고정 루틴 관리 버튼
   const handleConfirmClick = () => {
     console.log("고정루틴 관리하기 버튼 클릭!");
     if (typeof onPageChange === "function") {
@@ -52,9 +54,22 @@ const CalendarPage = ({ onPageChange }) => {
     }
   };
 
-  // 선택된 날짜가 변경되면 'selectedDate' 상태를 업데이트
+  // 달력에서 날짜 클릭 시
   const handleDateChange = (date) => {
-    setSelectedDate(date);
+    setSelectedDateLocal(date);
+
+    // 여기서 store에 YYYY-MM-DD 포맷으로 저장 & 특정 날짜 스케줄 조회
+    if (memberId) {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const dd = String(date.getDate()).padStart(2, "0");
+      const dateString = `${yyyy}-${mm}-${dd}`;
+
+      // store에 날짜 저장
+      setSelectedDate(dateString);
+      // 해당 날짜의 일정만 불러오기
+      fetchSchedulesByDate(memberId, dateString);
+    }
   };
 
   return (
