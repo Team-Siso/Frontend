@@ -47,9 +47,10 @@ const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
     didFetchRef.current = true;
 
     console.log("[WeekGridPage] fetchSchedules => memberId:", memberId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    fetchSchedules(memberId); 
-  }, [memberId /*, fetchSchedules */]);
+    fetchSchedules(memberId).catch((err) => {
+      console.error("[WeekGridPage] fetchSchedules error:", err);
+    });
+  }, [memberId, fetchSchedules]);
 
   // --- 주 계산(일요일=0) 로컬 ---
   function getStartOfWeekLocal(date: Date) {
@@ -86,42 +87,57 @@ const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
   }
 
   // start~end map
-  function mapScheduleToCells(startStr: string, endStr: string, dayIndex: number, sch: Schedule): { [key: string]: RoutineInfo } {
+  function mapScheduleToCells(
+    startStr: string,
+    endStr: string,
+    dayIndex: number,
+    sch: Schedule
+  ): { [key: string]: RoutineInfo } {
     const st = parseISO(startStr); // 서버: UTC, parse => 로컬 시각
     const et = parseISO(endStr);
 
+    if (isNaN(st.getTime()) || isNaN(et.getTime())) return {};
+
     const stIdx = getGridIndexes(st);
     const etIdx = getGridIndexes(et);
+
     if (stIdx.timeIndex < 0 || etIdx.timeIndex < 0) return {};
 
-    const minT = Math.min(stIdx.timeIndex, etIdx.timeIndex);
-    const maxT = Math.max(stIdx.timeIndex, etIdx.timeIndex);
-    const newCells: { [key: string]: RoutineInfo } = {};
+    // Calculate duration in minutes
+    const durationMinutes = (et.getTime() - st.getTime()) / 60000;
+    if (durationMinutes <= 0) return {};
 
-    // 총 셀 개수
-    const totalParts = (maxT - minT) * 3 - stIdx.partIndex + etIdx.partIndex;
+    // Calculate number of 10-minute parts
+    const numberOfParts = Math.ceil(durationMinutes / 10);
 
-    // 중앙 셀 계산
-    const centerPart = Math.floor(totalParts / 2);
-    let currentPart = 0;
+    // Find the start cell
+    let currentTime = new Date(st.getTime());
+    const cellsToFill: { [key: string]: RoutineInfo } = {};
+    let partsFilled = 0;
 
-    for (let t = minT; t < maxT; t++) {
-      const startPart = t === minT ? stIdx.partIndex : 0;
-      const endPart = 2;
-      for (let p = startPart; p <= endPart; p++) {
-        const key = `${dayIndex}-${t}-${p}`;
-        const isCenter = currentPart === centerPart;
-        newCells[key] = {
-          content: sch.content,
-          startTime: sch.startTime?.slice(11, 16) || "",
-          endTime: sch.endTime?.slice(11, 16) || "",
-          isCenter,
-        };
-        currentPart++;
-      }
+    while (partsFilled < numberOfParts) {
+      const { timeIndex, partIndex } = getGridIndexes(currentTime);
+      if (timeIndex === -1) break;
+
+      const key = `${dayIndex}-${timeIndex}-${partIndex}`;
+
+      // Determine if this part is the center
+      const centerPart = Math.floor(numberOfParts / 2);
+      const isCenter = partsFilled === centerPart;
+
+      cellsToFill[key] = {
+        content: sch.content,
+        startTime: st.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        endTime: et.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isCenter,
+      };
+
+      // Move to next 10-minute part
+      currentTime.setMinutes(currentTime.getMinutes() + 10);
+      partsFilled++;
     }
 
-    return newCells;
+    return cellsToFill;
   }
 
   // highlightCells
@@ -131,23 +147,18 @@ const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
     const newHighlighted: { [key: string]: RoutineInfo } = {};
 
     weekDates.forEach((wd, dayIndex) => {
-      const wy = wd.getFullYear();
-      const wm = wd.getMonth();
-      const wday = wd.getDate();
-
       schedules.forEach((sch) => {
         if (!sch.thisDay) return;
         const dayDate = parseISO(sch.thisDay); // => 로컬 시각 변환
-        const sy = dayDate.getFullYear();
-        const sm = dayDate.getMonth();
-        const sd = dayDate.getDate();
-        if (wy === sy && wm === sm && wday === sd) {
+        if (
+          wd.getFullYear() === dayDate.getFullYear() &&
+          wd.getMonth() === dayDate.getMonth() &&
+          wd.getDate() === dayDate.getDate()
+        ) {
           if (sch.startTime && sch.endTime) {
             const partial = mapScheduleToCells(sch.startTime, sch.endTime, dayIndex, sch);
             if (partial) {
-              Object.keys(partial).forEach((k) => {
-                newHighlighted[k] = partial[k];
-              });
+              Object.assign(newHighlighted, partial);
             }
           }
         }
@@ -167,9 +178,19 @@ const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
     <div style={{ position: "relative", height: "700px" }}>
       <WeekDates selectedDate={selectedDate} />
 
-      <div style={{ display: "flex", justifyContent: "space-evenly", padding: "0px 35px", width: "100%" }}>
+      {/* 요일 헤더 */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "80px repeat(7, 1fr)",
+          padding: "0px 35px",
+          width: "100%",
+        }}
+      >
+        {/* 빈 공간 왼쪽 */}
+        <div></div>
         {daysOfWeek.map((day) => (
-          <div key={day} style={{ paddingLeft: "95px", width: "calc(100% / 7)" }}>
+          <div key={day} className="day-header">
             {day}
           </div>
         ))}
@@ -177,7 +198,7 @@ const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
 
       <WeekGrid showGrid={showGrid} highlightedCells={highlightedCells} />
 
-      <div style={{ position: "absolute", bottom: "-20px", right: "20px" }}>
+      <div style={{ position: "absolute", bottom: "20px", right: "20px" }}>
         <ConfirmButton
           onClick={handleConfirmClick}
           text=" 확인 "

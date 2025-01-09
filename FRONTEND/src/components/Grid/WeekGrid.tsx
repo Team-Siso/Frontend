@@ -49,19 +49,20 @@ const WeekGrid: React.FC<WeekGridProps> = ({ showGrid, highlightedCells }) => {
                 {[0, 1, 2].map((partIndex) => {
                   const key = `${dayIndex}-${timeIndex}-${partIndex}`;
                   const routine = highlightedCells[key];
+                  const isCenter = routine?.isCenter;
                   const selected = !!routine;
                   const color = selected ? colors[dayIndex % colors.length] : "transparent";
                   return (
                     <div
                       key={partIndex}
-                      className={`time-cell-part ${selected ? "selected" : ""}`}
+                      className={`time-cell-part ${isCenter ? "selected" : ""}`}
                       style={{
-                        backgroundColor: selected ? color : "transparent",
+                        backgroundColor: color,
                         position: "relative",
                       }}
                     >
                       {/* 루틴 정보 표시 */}
-                      {selected && (
+                      {isCenter && (
                         <div className="routine-info">
                           <strong>{routine.content}</strong>
                           <br />
