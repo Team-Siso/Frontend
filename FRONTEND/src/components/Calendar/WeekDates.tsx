@@ -23,113 +23,64 @@
 */
 
 import React from "react";
-
-/** 
- * "parseToKstDate" 
- * ISO 문자열(UTC) → KST(Date) 
- *   - 예: "2024-12-30T15:00:00Z" ⇒ 한국 시각으로 변환
- */
-function parseToKstDate(isoString: string | Date) {
-  let d = typeof isoString === "string" ? new Date(isoString) : isoString;
-  // d는 UTC 기준 시각
-  // d.getTime() + d.getTimezoneOffset() * 60000 → UTC기준 timestamp(ms)
-  const utc = d.getTime() + d.getTimezoneOffset() * 60_000;
-  // 한국은 UTC+9
-  const kst = utc + 9 * 60 * 60_000;
-  return new Date(kst); // KST 시각
-}
-
-/**
- * "getStartOfWeekKST" 
- *   - KST 시각 기준으로 "일요일 00:00" (week start)을 구함
- */
-function getStartOfWeekKST(kstDate: Date) {
-  // 일요일=0, 월요일=1 ... 
-  // kstDate.getDay() = 요일(0~6)
-  const dayOfWeek = kstDate.getDay(); 
-  // 일요일부터 시작 → dayOfWeek=0이면 그날이 주 시작
-  const start = new Date(kstDate);
-  // 시간을 0시로 맞춤
-  start.setHours(0, 0, 0, 0);
-  // 현재 요일만큼 "날짜를 되돌림"
-  start.setDate(start.getDate() - dayOfWeek);
-  return start;
-}
+import {
+  startOfWeek,
+  eachDayOfInterval,
+  endOfWeek,
+  format,
+  isSameDay,
+} from "date-fns";
+import { useStore } from "../../store";
 
 interface WeekDatesProps {
   selectedDate: Date;
 }
 
-/**
- * WeekDates:
- *   - 일요일(0) ~ 토요일(6)까지 7일 표시
- *   - "오늘 날짜"만 색 다르게
- */
 const WeekDates: React.FC<WeekDatesProps> = ({ selectedDate }) => {
-  // 1) 먼저 selectedDate(보통 로컬 Date)를 "KST"로 환산
-  const kstSelected = parseToKstDate(selectedDate);
+  const { setSelectedDate } = useStore();
 
-  // 2) 일요일 0시를 구함
-  const startOfWeek = getStartOfWeekKST(kstSelected);
+  const startDate = startOfWeek(selectedDate, { weekStartsOn: 0 });
+  const endDate = endOfWeek(selectedDate, { weekStartsOn: 0 });
+  const weekDays = eachDayOfInterval({ start: startDate, end: endDate });
+  const today = new Date();
 
-  // 3) [일~토] 날짜 배열 만들기
-  const weekDays: Date[] = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(startOfWeek);
-    d.setDate(d.getDate() + i);
-    weekDays.push(d);
-  }
-
-  const todayKst = parseToKstDate(new Date()); // "지금 시각"의 KST
-
-  /** 
-   * 날짜를 "일(day)"만 꺼내서 표시 
-   *   - 예: 1일, 2일 ...
-   */
-  const getDayNumber = (d: Date) => {
-    return d.getDate();
-  };
-
-  /** 오늘인지 판별 (연/월/일이 같은지)
-   */
-  const isToday = (d1: Date, d2: Date) => {
-    return (
-      d1.getFullYear() === d2.getFullYear() &&
-      d1.getMonth() === d2.getMonth() &&
-      d1.getDate() === d2.getDate()
-    );
+  const handleDayClick = (day: Date) => {
+    const yyyy = day.getFullYear();
+    const mm = String(day.getMonth() + 1).padStart(2, "0");
+    const dd = String(day.getDate()).padStart(2, "0");
+    setSelectedDate(`${yyyy}-${mm}-${dd}`);
   };
 
   return (
     <div
       style={{
         display: "flex",
-        justifyContent: "flex-end",
+        justifyContent: "flex-end", // 전체 요소를 오른쪽으로 정렬
         margin: "10px 0",
         marginRight: "3px",
       }}
     >
-      {weekDays.map((day, index) => {
-        const isTodayFlag = isToday(day, todayKst);
-        return (
-          <div
-            key={index}
-            style={{
-              display: "inline-block",
-              width: "50px",
-              height: "50px",
-              lineHeight: "50px",
-              backgroundColor: isTodayFlag ? "#5b5b5b" : "#ccc",
-              color: "#fff",
-              borderRadius: "20%",
-              margin: "0 50px",
-              textAlign: "center",
-            }}
-          >
-            {getDayNumber(day)}
-          </div>
-        );
-      })}
+      {weekDays.map((day, index) => (
+        <div
+          key={index}
+          onClick={() => handleDayClick(day)} // 날짜 클릭 이벤트
+          style={{
+            display: "inline-block",
+            width: "50px", // 조정 가능
+            height: "50px", // 조정 가능
+            lineHeight: "50px", // 중앙 정렬을 위해
+            backgroundColor: isSameDay(day, today) ? "#5b5b5b" : "#ccc", // 오늘 날짜는 다른 색상
+            color: "#fff",
+            borderRadius: "20%", // 원형 디자인
+            margin: "0 50px", // 날짜 간 간격 조정
+            textAlign: "center", // 텍스트 중앙 정렬
+            cursor: "pointer", // 클릭 가능하도록 커서 변경
+          }}
+        >
+          {/* day의 일(day)만 추출하여 표시 */}
+          {format(day, "d")}
+        </div>
+      ))}
     </div>
   );
 };

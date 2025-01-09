@@ -111,16 +111,36 @@ const TodoListComponent = ({ className }) => {
   const handleAddTodo = async () => {
     if (!memberId || !selectedDate) return;
     if (!inputValue.trim()) return;
-
+  
     const thisDayUtc = localMidnightToServerUtc(selectedDate);
-
+  
     let newStartTime: string | null = null;
     let newEndTime: string | null = null;
     if (isTimeTodo) {
       newStartTime = localTimeToServerUtc(selectedDate, +startHour, +startMinute);
       newEndTime = localTimeToServerUtc(selectedDate, +endHour, +endMinute);
+  
+      // 시간 겹침 검사
+      const newStart = new Date(newStartTime).getTime();
+      const newEnd = new Date(newEndTime).getTime();
+  
+      const isOverlapping = schedules.some((todo) => {
+        if (!todo.startTime || !todo.endTime) return false; // 시간 없는 투두는 제외
+        const existingStart = new Date(todo.startTime).getTime();
+        const existingEnd = new Date(todo.endTime).getTime();
+        return (
+          (newStart >= existingStart && newStart < existingEnd) || // 새 투두의 시작이 겹치는 경우
+          (newEnd > existingStart && newEnd <= existingEnd) || // 새 투두의 끝이 겹치는 경우
+          (newStart <= existingStart && newEnd >= existingEnd) // 새 투두가 기존 투두를 포함하는 경우
+        );
+      });
+  
+      if (isOverlapping) {
+        alert("시간이 겹치는 투두가 이미 존재합니다. 다른 시간을 선택하세요.");
+        return;
+      }
     }
-
+  
     const newTodo = {
       content: inputValue,
       checkStatus: 0,
@@ -128,13 +148,13 @@ const TodoListComponent = ({ className }) => {
       startTime: newStartTime,
       endTime: newEndTime,
     };
-
+  
     try {
       const response = await addTodo(memberId, newTodo);
       console.log("[handleAddTodo] addTodo response:", response);
       // 재조회
       await fetchSchedulesByDate(memberId, selectedDate);
-
+  
       // 입력창 닫기
       setShowInput(false);
       setInputValue("");

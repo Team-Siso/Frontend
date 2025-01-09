@@ -1,3 +1,4 @@
+// store.ts
 import { create, StateCreator } from "zustand";
 import { persist, PersistStorage } from "zustand/middleware";
 
@@ -24,9 +25,9 @@ interface Goal {
 interface Routine {
   id: number;
   title: string;
-  description: string;
-  frequency: string;
-  nextRun: string;
+  day: string;
+  startTime: string;
+  endTime: string;
 }
 
 interface Schedule {
@@ -116,6 +117,12 @@ interface AppState {
 
   fetchGoals: (memberId: number) => Promise<void>;
   fetchRoutines: (memberId: number) => Promise<void>;
+  addRoutine: (memberId: number, routineData: {
+    title: string;
+    day: string;        // 예: "Sun", "Mon", ...
+    startTime: string;  // ISO String
+    endTime: string;    // ISO String
+  }) => Promise<void>;
   fetchFollowings: (memberId: number) => Promise<void>;
   fetchFollowers: (memberId: number) => Promise<void>;
   fetchMembers: (query: string) => Promise<void>;
@@ -393,29 +400,30 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     }
   },
 
-// ---------------------------
-// ★ 특정 날짜 스케줄 조회
-// ---------------------------
-fetchSchedulesByDate: async (memberId: number, dateString: string): Promise<void> => {
-  console.log("[fetchSchedulesByDate] Start =>", { memberId, dateString });
-  try {
-    const response = await fetch(`https://siiso.site/api/v1/schedules/${memberId}/${dateString}`);
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[fetchSchedulesByDate] Fail => date(${dateString}):`, errorText);
-      throw new Error(errorText || "알 수 없는 오류");
+  // ---------------------------
+  // ★ 특정 날짜 스케줄 조회
+  // ---------------------------
+  fetchSchedulesByDate: async (memberId: number, dateString: string): Promise<void> => {
+    console.log("[fetchSchedulesByDate] Start =>", { memberId, dateString });
+    try {
+      const response = await fetch(`https://siiso.site/api/v1/schedules/${memberId}/${dateString}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[fetchSchedulesByDate] Fail => date(${dateString}):`, errorText);
+        throw new Error(errorText || "알 수 없는 오류");
+      }
+      const data: Schedule[] = await response.json();
+      console.log(`[fetchSchedulesByDate] Success => date(${dateString}):`, data);
+  
+      // e.g. data.forEach((sch) => sch.startTime = removeOffsetIfExists(sch.startTime));
+  
+      set({ schedules: data || [] });
+    } catch (error) {
+      console.error("[fetchSchedulesByDate] Error:", error);
+      set({ schedules: [] });
     }
-    const data: Schedule[] = await response.json();
-    console.log(`[fetchSchedulesByDate] Success => date(${dateString}):`, data);
-
-    // e.g. data.forEach((sch) => sch.startTime = removeOffsetIfExists(sch.startTime));
-
-    set({ schedules: data || [] });
-  } catch (error) {
-    console.error("[fetchSchedulesByDate] Error:", error);
-    set({ schedules: [] });
-  }
-},
+  },
+  
   // ---------------------------
   // goal 조회
   // ---------------------------
@@ -438,17 +446,77 @@ fetchSchedulesByDate: async (memberId: number, dateString: string): Promise<void
   // 루틴 조회
   // ---------------------------
   fetchRoutines: async (memberId: number) => {
+    console.log("[store.fetchRoutines] start => memberId=", memberId);
     try {
-      const response = await fetch(
-        `https://siiso.site/api/v1/routines/${memberId}`
-      );
+      const response = await fetch(`https://siiso.site/api/v1/routines/${memberId}`);
       if (!response.ok) {
-        throw new Error("Failed to fetch routines");
+        const text = await response.text();
+        throw new Error("Failed to fetch routines => " + text);
       }
       const data = await response.json();
-      set({ routines: data });
-    } catch (error) {
-      console.error("Failed to fetch routines:", error);
+      console.log("[store.fetchRoutines] success => raw data=", data);
+
+      // 백엔드 응답 예시:
+      // [
+      //   {
+      //     "id": 1,
+      //     "title": "훟",
+      //     "day": "Tue",
+      //     "start_time": "2025-01-08T00:30:00",
+      //     "end_time": "2025-01-08T00:40:00"
+      //   },
+      //   ...
+      // ]
+
+      // 카멜 케이스로 매핑
+      const routines: Routine[] = data.map((r: any) => ({
+        id: r.id,
+        title: r.title,
+        day: r.day,  
+        startTime: r.start_time,  
+        endTime: r.end_time,    
+      }));
+
+      console.log("[store.fetchRoutines] mapped routines=", routines);
+      set({ routines });
+    } catch (err) {
+      console.error("[store.fetchRoutines] error:", err);
+      set({ routines: [] });
+    }
+  },
+
+  // ---------------------------
+  // 루틴 추가
+  // ---------------------------
+  addRoutine: async (memberId: number, routineData: {
+    title: string;
+    day: string;
+    startTime: string;
+    endTime: string;
+  }) => {
+    console.log("[store.addRoutine] called =>", { memberId, routineData });
+    try {
+      const response = await fetch(`https://siiso.site/api/v1/routines/${memberId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: routineData.title,
+          day: routineData.day,
+          // 카멜 케이스로 필드 이름 수정
+          startTime: routineData.startTime,
+          endTime: routineData.endTime,
+        }),
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error("Failed to add routine => " + text);
+      }
+      console.log("[store.addRoutine] success => calling fetchRoutines again");
+      // 루틴 추가 후 다시 조회하여 업데이트
+      await get().fetchRoutines(memberId);
+    } catch (err) {
+      console.error("[store.addRoutine] error:", err);
+      throw err;
     }
   },
 
@@ -563,28 +631,28 @@ fetchSchedulesByDate: async (memberId: number, dateString: string): Promise<void
   },
 
   // ---------------------------
-// Todo(스케줄) 추가
-// ---------------------------
-addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">): Promise<Schedule> => {
-  try {
-    const response = await fetch(`https://siiso.site/api/v1/schedules/${memberId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newTodo),
-    });
+  // Todo(스케줄) 추가
+  // ---------------------------
+  addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">): Promise<Schedule> => {
+    try {
+      const response = await fetch(`https://siiso.site/api/v1/schedules/${memberId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newTodo),
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || "Failed to add todo");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to add todo");
+      }
+
+      const data: Schedule = await response.json();
+      return data; // 항상 Schedule 반환
+    } catch (error) {
+      console.error("Error adding todo:", error);
+      throw error; // 에러를 호출한 쪽에서 처리하도록 전달
     }
-
-    const data: Schedule = await response.json();
-    return data; // 항상 Schedule 반환
-  } catch (error) {
-    console.error("Error adding todo:", error);
-    throw error; // 에러를 호출한 쪽에서 처리하도록 전달
-  }
-},
+  },
 
   // ---------------------------
   // goal 추가

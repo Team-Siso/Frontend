@@ -1,3 +1,5 @@
+// WeekGridPage.tsx
+
 import React, { useEffect, useRef, useState } from "react";
 import WeekDates from "../Calendar/WeekDates";
 import WeekGrid from "./WeekGrid";
@@ -5,6 +7,24 @@ import "./WeekGrid.css";
 import ConfirmButton from "../ConfirmButton";
 import { useStore } from "../../store";
 import { parseISO } from "date-fns";
+
+// Schedule 인터페이스 정의 (Routine -> Schedule로 통일)
+interface Schedule {
+  id: number;
+  content: string;
+  checkStatus: number;
+  thisDay: string; // 'YYYY-MM-DDTHH:mm:ssZ' 형식의 UTC 문자열
+  startTime: string | null; // 'YYYY-MM-DDTHH:mm:ssZ' 형식의 UTC 문자열 또는 null
+  endTime: string | null; // 'YYYY-MM-DDTHH:mm:ssZ' 형식의 UTC 문자열 또는 null
+}
+
+// RoutineInfo 인터페이스 수정 (title -> content)
+interface RoutineInfo {
+  content: string;
+  startTime: string; // "HH:mm"
+  endTime: string;   // "HH:mm"
+  isCenter?: boolean; // 중앙에 표시할지 여부
+}
 
 interface WeekGridPageProps {
   selectedDate: Date;
@@ -15,7 +35,7 @@ const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
 
   // Store
   const memberId = useStore((s) => s.memberId);
-  const schedules = useStore((s) => s.schedules);
+  const schedules: Schedule[] = useStore((s) => s.schedules);
   const fetchSchedules = useStore((s) => s.fetchSchedules);
 
   // 한 번만 fetch
@@ -66,7 +86,7 @@ const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
   }
 
   // start~end map
-  function mapScheduleToCells(startStr: string, endStr: string, dayIndex: number) {
+  function mapScheduleToCells(startStr: string, endStr: string, dayIndex: number, sch: Schedule): { [key: string]: RoutineInfo } {
     const st = parseISO(startStr); // 서버: UTC, parse => 로컬 시각
     const et = parseISO(endStr);
 
@@ -76,33 +96,39 @@ const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
 
     const minT = Math.min(stIdx.timeIndex, etIdx.timeIndex);
     const maxT = Math.max(stIdx.timeIndex, etIdx.timeIndex);
-    const newCells: { [key: string]: boolean } = {};
+    const newCells: { [key: string]: RoutineInfo } = {};
+
+    // 총 셀 개수
+    const totalParts = (maxT - minT) * 3 - stIdx.partIndex + etIdx.partIndex;
+
+    // 중앙 셀 계산
+    const centerPart = Math.floor(totalParts / 2);
+    let currentPart = 0;
 
     for (let t = minT; t < maxT; t++) {
       const startPart = t === minT ? stIdx.partIndex : 0;
-      let endPart = 2;
-      if (t + 1 === maxT) {
-        // 마지막
-        if (etIdx.partIndex === 0) {
-          endPart = 2;
-        } else {
-          endPart = etIdx.partIndex - 1;
-        }
-        if (endPart < 0) continue;
-      }
+      const endPart = 2;
       for (let p = startPart; p <= endPart; p++) {
         const key = `${dayIndex}-${t}-${p}`;
-        newCells[key] = true;
+        const isCenter = currentPart === centerPart;
+        newCells[key] = {
+          content: sch.content,
+          startTime: sch.startTime?.slice(11, 16) || "",
+          endTime: sch.endTime?.slice(11, 16) || "",
+          isCenter,
+        };
+        currentPart++;
       }
     }
+
     return newCells;
   }
 
   // highlightCells
-  const [highlightedCells, setHighlightedCells] = useState<{ [key: string]: boolean }>({});
+  const [highlightedCells, setHighlightedCells] = useState<{ [key: string]: RoutineInfo }>({});
 
   useEffect(() => {
-    const newHighlighted: { [key: string]: boolean } = {};
+    const newHighlighted: { [key: string]: RoutineInfo } = {};
 
     weekDates.forEach((wd, dayIndex) => {
       const wy = wd.getFullYear();
@@ -117,10 +143,10 @@ const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
         const sd = dayDate.getDate();
         if (wy === sy && wm === sm && wday === sd) {
           if (sch.startTime && sch.endTime) {
-            const partial = mapScheduleToCells(sch.startTime, sch.endTime, dayIndex);
+            const partial = mapScheduleToCells(sch.startTime, sch.endTime, dayIndex, sch);
             if (partial) {
               Object.keys(partial).forEach((k) => {
-                newHighlighted[k] = true;
+                newHighlighted[k] = partial[k];
               });
             }
           }
