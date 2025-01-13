@@ -1,3 +1,5 @@
+// WeekGrid.tsx
+
 import React from "react";
 import "./WeekGrid.css";
 
@@ -56,15 +58,12 @@ const WeekGrid: React.FC<WeekGridProps> = ({ showGrid, highlightedCells }) => {
                       className={`time-cell-part ${isCenter ? "selected" : ""}`}
                       style={{
                         backgroundColor: color,
-                        position: "relative",
                       }}
                     >
-                      {/* 루틴 정보 표시 */}
+                      {/* 루틴 정보 표시 (시간 정보 제거, 좌측 정렬, 짙은 회색) */}
                       {isCenter && (
                         <div className="routine-info">
                           <strong>{routine.content}</strong>
-                          <br />
-                          {routine.startTime} - {routine.endTime}
                         </div>
                       )}
                     </div>

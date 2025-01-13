@@ -41,8 +41,8 @@ export interface Schedule {
   content: string;
   checkStatus: number;
   thisDay: string; // 날짜(예: "YYYY-MM-DD" 형태)
-  startTime: string;
-  endTime: string;
+  startTime: string | null;
+  endTime: string | null;
   completed: boolean;
 }
 
@@ -101,12 +101,13 @@ interface AppState {
   memberProfile: Member | null;
 
   // ★ 추가: 캘린더에서 클릭된 날짜("YYYY-MM-DD") 저장
-  selectedDate: string | null;
+  selectedDate: string;
   setSelectedDate: (date: string) => void;
   setRoutines: (routines: Routine[]) => void;
   setMemberProfile: (memberProfile: Member) => void;
   setMemberId: (memberId: number) => void;
   setSchedules: (schedules: Schedule[]) => void;
+  setGoals: (goals: Goal[]) => void;
   setGoal: (title: string) => Promise<void>;
   toggleGoalCompletion: (id: number) => void;
   deleteGoal: (id: number) => void;
@@ -146,7 +147,7 @@ interface ModalState {
   isEditModalOpen: boolean;
   setEditModalOpen: (isOpen: boolean) => void;
   memberId: number | null;
-  setMemberId: (memberId: number) => void;
+  setMemberIdModal: (memberId: number) => void;
 }
 
 // ---------------------------
@@ -165,7 +166,20 @@ interface StoreState extends SignUpState, AppState, ModalState {
   ) => Promise<void>;
 }
 
+// ---------------------------
+// 날짜 포맷 함수
+// ---------------------------
+const getToday = (): string => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+// ---------------------------
 // localStorage를 PersistStorage 타입으로 변환
+// ---------------------------
 const storage: PersistStorage<StoreState> = {
   getItem: (name) => {
     const value = localStorage.getItem(name);
@@ -206,7 +220,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   members: [],
   memberProfile: null,
   // ★ 추가
-  selectedDate: null,
+  selectedDate: getToday(), // 오늘 날짜로 초기화
   openAddTodo: false, // ★ 추가
 
   // ---------------------------
@@ -236,6 +250,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   setFriendSearchOpen: (isOpen) => set({ isFriendSearchOpen: isOpen }),
   setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen }),
   setEditModalOpen: (isOpen) => set({ isEditModalOpen: isOpen }),
+  setMemberIdModal: (memberId) => set({ memberId }), // 이름 변경: setMemberIdModal
 
   setSchedules: (schedules) => set({ schedules }),
   setGoals: (goals) => set({ goals }),
@@ -271,7 +286,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       members: [],
       memberProfile: null,
 
-      selectedDate: null,
+      selectedDate: getToday(), // 오늘 날짜로 초기화
       openAddTodo: false, // ★ 추가
 
       isFriendSearchOpen: false,
@@ -318,6 +333,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
         // bio: "",
         // profilePic: "",
         memberId: data.id,
+        selectedDate: getToday(), // 회원가입 후 오늘 날짜로 설정
       });
       localStorage.setItem("memberId", data.id.toString());
       return data.id;
@@ -387,7 +403,10 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       const data = await response.json();
       console.log("로그인 성공:", data);
       resetState();
-      set({ memberId: data.id });
+      set({
+        memberId: data.id,
+        selectedDate: getToday(), // 로그인 후 오늘 날짜로 설정
+      });
       localStorage.setItem("memberId", data.id.toString());
     } catch (error) {
       console.error("Error:", error);
@@ -596,7 +615,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
         console.log("API Response:", data);
-        const memberProfile = {
+        const memberProfile: Member = {
           id: memberId,
           email: data.email || "",
           nickName: data.nickname,
@@ -618,7 +637,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   // Todo(스케줄) 추가
   // ---------------------------
-  addTodo: async (memberId: number, newTodo) => {
+  addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">) => {
     try {
       const response = await fetch(
         `http://43.203.254.169:8080/api/v1/schedules/${memberId}`,
@@ -697,7 +716,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   updateNickname: async (memberId: number, nickname: string) => {
     try {
-      const response = await fetch(`http://siiso.site/api/v1/members/${memberId}/nickname`, {
+      const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}/nickname`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -884,5 +903,11 @@ export const useStore = create<StoreState>()(
   persist(stateCreator, {
     name: "user-store", // 로컬 스토리지 키
     storage: storage,
+    // 초기화 시 selectedDate가 없다면 오늘 날짜로 설정
+    onRehydrateStorage: () => (state) => {
+      if (state?.selectedDate === "") {
+        state.setSelectedDate(getToday());
+      }
+    },
   })
 );

@@ -1,3 +1,5 @@
+// WeekGridPage.tsx
+
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import WeekDates from "../Calendar/WeekDates";
 import WeekGrid from "./WeekGrid";
@@ -96,26 +98,17 @@ const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
     const st = parseISO(startStr); // 로컬 시각으로 파싱
     const et = parseISO(endStr);
 
-    if (isNaN(st.getTime()) || isNaN(et.getTime())) return {};
-
-    const stIdx = getGridIndexes(st);
-    const etIdx = getGridIndexes(et);
-    if (stIdx.timeIndex < 0 || etIdx.timeIndex < 0) return {};
-
-    const durationMinutes = (et.getTime() - st.getTime()) / 60000;
-    if (durationMinutes <= 0) return {};
-
-    // 총 10분 단위로 몇 칸?
-    const numberOfParts = Math.ceil(durationMinutes / 10);
+    if (isNaN(st.getTime()) || isNaN(et.getTime()) || et <= st) return {};
 
     const cellsToFill: { [key: string]: RoutineInfo } = {};
-    let partsFilled = 0;
     let currentTime = new Date(st.getTime());
-
-    // 가운데 부분에 텍스트를 표시하기 위해
+    const durationMinutes = (et.getTime() - st.getTime()) / 60000;
+    const numberOfParts = Math.floor(durationMinutes / 10); // 변경: Math.floor 사용
+    const remainder = durationMinutes % 10;
     const centerPart = Math.floor(numberOfParts / 2);
+    let partsFilled = 0;
 
-    while (partsFilled < numberOfParts) {
+    while (partsFilled < numberOfParts || (partsFilled === numberOfParts && remainder > 0)) {
       const { timeIndex, partIndex } = getGridIndexes(currentTime);
       if (timeIndex === -1) break; // 05:00~익일05:00 범위 밖이면 중단
 
@@ -152,7 +145,7 @@ const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
 
       schedules.forEach((sch) => {
         if (!sch.thisDay) return;
-        
+
         // sch.thisDay = "YYYY-MM-DDT00:00:00" 형태라면 parseISO로 안전하게 파싱 후 날짜 부분만 추출
         const scheduleDate = parseISO(sch.thisDay);
         if (isNaN(scheduleDate.getTime())) return;
