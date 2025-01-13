@@ -1,71 +1,217 @@
-import React, { useState } from 'react';
-import WeekDates from '../Calendar/WeekDates';
-import WeekGrid from './WeekGrid'; 
-import './WeekGrid.css'; 
-import ConfirmButton from '../ConfirmButton';
+import React, { useEffect, useRef, useState, useMemo } from "react";
+import WeekDates from "../Calendar/WeekDates";
+import WeekGrid from "./WeekGrid";
+import "./WeekGrid.css";
+import ConfirmButton from "../ConfirmButton";
+import { useStore, Schedule } from "../../store";
+import { parseISO, format } from "date-fns";
 
-interface WeekGridPageProps {
-  selectedDate: Date; // 선택된 날짜를 나타내는 prop
+interface RoutineInfo {
+  content: string;
+  startTime: string; // "HH:mm"
+  endTime: string;   // "HH:mm"
+  isCenter?: boolean;
 }
 
-// 주간 날짜와 시간표, 확인 버튼을 렌더링하는 페이지 컴포넌트
+interface WeekGridPageProps {
+  selectedDate: Date;
+}
+
 const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
-  // 주간 그리드의 표시 여부 제어
   const [showGrid, setShowGrid] = useState(true);
 
-  // 주간 헤더에 표시할 요일 이름 배열
-  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  // Store
+  const memberId = useStore((s) => s.memberId);
+  const schedules: Schedule[] = useStore((s) => s.schedules);
+  const fetchSchedules = useStore((s) => s.fetchSchedules);
 
+  const didFetchRef = useRef(false);
+
+  // ---------------------------------------
+  // (1) 처음에 전체 스케줄 불러오기
+  // ---------------------------------------
+  useEffect(() => {
+    if (!memberId) return;
+    if (didFetchRef.current) return; // 이미 호출했다면 재호출 방지
+    didFetchRef.current = true;
+
+    fetchSchedules(memberId).catch((err) => {
+      console.error("[WeekGridPage] fetchSchedules error:", err);
+    });
+  }, [memberId, fetchSchedules]);
+
+  // ---------------------------------------
+  // 주(Week) 날짜 계산
+  // ---------------------------------------
+  function getStartOfWeekLocal(date: Date) {
+    const dayOfWeek = date.getDay(); // 0=일요일
+    const y = date.getFullYear();
+    const m = date.getMonth();
+    const d = date.getDate();
+    return new Date(y, m, d - dayOfWeek);
+  }
+
+  // ★ weekDates를 memoization 해서 불필요한 재렌더링을 방지
+  const weekDates = useMemo(() => {
+    const start = getStartOfWeekLocal(selectedDate);
+    const dates: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start.getTime());
+      d.setDate(d.getDate() + i);
+      dates.push(d);
+    }
+    return dates;
+  }, [selectedDate]);
+
+  // ---------------------------------------
+  // 05:00~다음날05:00 사이에 매핑하기 위한 헬퍼
+  // ---------------------------------------
+  function getGridIndexes(dateObj: Date) {
+    const hour = dateObj.getHours();
+    const min = dateObj.getMinutes();
+    // 05:00 기준으로 0분이라 가정
+    const totalMinutes = (hour - 5) * 60 + min;
+
+    // 05:00 이전이거나 익일 05:00 이후면 맵핑하지 않음
+    if (totalMinutes < 0 || totalMinutes >= 24 * 60) {
+      return { timeIndex: -1, partIndex: 0 };
+    }
+    const base30 = Math.floor(totalMinutes / 30); // 30분 단위
+    const remainder = totalMinutes % 30;
+    const timeIndex = base30;
+    let partIndex = Math.floor(remainder / 10); // 10분 단위
+    if (partIndex > 2) partIndex = 2;
+    return { timeIndex, partIndex };
+  }
+
+  // ---------------------------------------
+  // 스케줄 하나(start~end)를 여러 셀에 매핑
+  // ---------------------------------------
+  function mapScheduleToCells(
+    startStr: string,
+    endStr: string,
+    dayIndex: number,
+    sch: Schedule
+  ): { [key: string]: RoutineInfo } {
+    const st = parseISO(startStr); // 로컬 시각으로 파싱
+    const et = parseISO(endStr);
+
+    if (isNaN(st.getTime()) || isNaN(et.getTime())) return {};
+
+    const stIdx = getGridIndexes(st);
+    const etIdx = getGridIndexes(et);
+    if (stIdx.timeIndex < 0 || etIdx.timeIndex < 0) return {};
+
+    const durationMinutes = (et.getTime() - st.getTime()) / 60000;
+    if (durationMinutes <= 0) return {};
+
+    // 총 10분 단위로 몇 칸?
+    const numberOfParts = Math.ceil(durationMinutes / 10);
+
+    const cellsToFill: { [key: string]: RoutineInfo } = {};
+    let partsFilled = 0;
+    let currentTime = new Date(st.getTime());
+
+    // 가운데 부분에 텍스트를 표시하기 위해
+    const centerPart = Math.floor(numberOfParts / 2);
+
+    while (partsFilled < numberOfParts) {
+      const { timeIndex, partIndex } = getGridIndexes(currentTime);
+      if (timeIndex === -1) break; // 05:00~익일05:00 범위 밖이면 중단
+
+      const key = `${dayIndex}-${timeIndex}-${partIndex}`;
+      const isCenter = partsFilled === centerPart;
+
+      cellsToFill[key] = {
+        content: sch.content,
+        startTime: st.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        endTime: et.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        isCenter,
+      };
+
+      // 다음 10분으로 이동
+      currentTime.setMinutes(currentTime.getMinutes() + 10);
+      partsFilled++;
+    }
+
+    return cellsToFill;
+  }
+
+  // ---------------------------------------
+  // highlightCells 계산
+  // ---------------------------------------
+  const [highlightedCells, setHighlightedCells] = useState<{ [key: string]: RoutineInfo }>({});
+
+  useEffect(() => {
+    const newHighlighted: { [key: string]: RoutineInfo } = {};
+
+    // 주간에 해당하는 날짜들(weekDates)을 순회
+    weekDates.forEach((wd, dayIndex) => {
+      // 이 날짜를 "yyyy-MM-dd"로
+      const wdString = format(wd, "yyyy-MM-dd");
+
+      schedules.forEach((sch) => {
+        if (!sch.thisDay) return;
+        
+        // sch.thisDay = "YYYY-MM-DDT00:00:00" 형태라면 parseISO로 안전하게 파싱 후 날짜 부분만 추출
+        const scheduleDate = parseISO(sch.thisDay);
+        if (isNaN(scheduleDate.getTime())) return;
+
+        // "yyyy-MM-dd" 형태로
+        const scheduleDay = format(scheduleDate, "yyyy-MM-dd");
+
+        // 날짜가 같은 스케줄만 매핑
+        if (scheduleDay === wdString) {
+          if (sch.startTime && sch.endTime) {
+            const partial = mapScheduleToCells(sch.startTime, sch.endTime, dayIndex, sch);
+            Object.assign(newHighlighted, partial);
+          }
+        }
+      });
+    });
+
+    setHighlightedCells(newHighlighted);
+  }, [schedules, weekDates]);
+
+  // ---------------------------------------
+  // "확인" 버튼
+  // ---------------------------------------
   const handleConfirmClick = () => {
-    setShowGrid(false); // WeekGrid 컴포넌트 숨김
+    setShowGrid(false);
+    // 필요하다면 다른 페이지로 이동 혹은 다른 로직
   };
 
   return (
-    <div style={{ position: 'relative', height: '700px' }}>
-      {/* 선택된 날짜에 해당하는 주간 날짜를 표시 */}
+    <div style={{ position: "relative", height: "700px" }}>
+      {/* 주간 날짜 헤더 */}
       <WeekDates selectedDate={selectedDate} />
-      
-      {/* 요일 이름을 화면 상단에 표시 */}
-      <div 
-        style={{ 
-          display: 'flex', 
-          justifyContent: 'space-evenly', // 요일 간격을 일정하게 배치
-          padding: '0px 35px', 
-          width: '100%'
+
+      {/* 요일 헤더 (Sun ~ Sat) */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "80px repeat(7, 1fr)",
+          padding: "0px 35px",
+          width: "100%",
         }}
       >
-        {daysOfWeek.map(day => (
-          <div 
-            key={day} // 각 요일의 고유 키 (식별자 역할)
-            className={`day day-${day}`} // 기본 클래스와 요일별 동적 클래스 적용
-            style={{ 
-              paddingLeft: '95px',
-              width: 'calc(100% / 7)' // 각 요일의 너비를 7등분하여 분배
-            }}
-          >
-            {day} {/* 요일 이름 출력 */}
+        <div></div>
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+          <div key={day} className="day-header">
+            {day}
           </div>
         ))}
       </div>
-      
-      {/* 주간 그리드 컴포넌트 */}
-      <WeekGrid showGrid={showGrid} /> {/* showGrid 상태에 따라 그리드 표시 여부 결정 */}
-      
-      {/* 확인 버튼: 화면 하단 우측에 위치 */}
-      <div 
-        style={{ 
-          position: 'absolute',
-          bottom: '-20px', 
-          right: '20px' 
-        }}
-      >
+
+      {/* 실제 WeekGrid 표시 */}
+      <WeekGrid showGrid={showGrid} highlightedCells={highlightedCells} />
+
+      {/* 하단 버튼 */}
+      <div style={{ position: "absolute", bottom: "20px", right: "20px" }}>
         <ConfirmButton
-          onClick={handleConfirmClick} // 버튼 클릭 시 실행되는 핸들러
-          text=" 확인 " // 버튼에 표시할 텍스트
-          style={{ 
-            width: '74px',
-            height: '42px'
-          }}
+          onClick={handleConfirmClick}
+          text="확인"
+          style={{ width: "74px", height: "42px" }}
         />
       </div>
     </div>

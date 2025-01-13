@@ -1,6 +1,8 @@
+// store.ts
 import { create, StateCreator } from "zustand";
 import { persist, PersistStorage } from "zustand/middleware";
 import DefaultImage from "@/assets/profile.png";
+
 // 인터페이스 정의
 interface Follow {
   followingId: number;
@@ -23,19 +25,22 @@ interface Goal {
   completed: boolean;
 }
 
-interface Routine {
+export interface Routine {
   id: number;
   title: string;
-  description: string;
-  frequency: string;
-  nextRun: string;
+  day: string;              // "Sun" | "Mon" | ... | "Sat"
+  startTime: string;        // ISO String
+  endTime: string;          // ISO String
+  description?: string;
+  frequency?: string;
+  nextRun?: string;
 }
 
-interface Schedule {
+export interface Schedule {
   id: number;
   content: string;
   checkStatus: number;
-  thisDay: string;   // 날짜(예: "YYYY-MM-DD..." 형태)
+  thisDay: string; // 날짜(예: "YYYY-MM-DD" 형태)
   startTime: string;
   endTime: string;
   completed: boolean;
@@ -82,6 +87,7 @@ interface SignUpState {
   uploadImage: (file: File, memberId: number) => Promise<string>;
   login: (email: string, password: string) => Promise<void>;
 }
+
 // ---------------------------
 // AppState
 // ---------------------------
@@ -123,7 +129,12 @@ interface AppState {
   updateIntroduce: (memberId: number, introduce: string) => Promise<void>;
   updateProfilePicture: (memberId: number, file: File) => Promise<void>;
   addTodo: (memberId: number, newTodo: Omit<Schedule, "id">) => Promise<Schedule | void>;
+
+  // ★ 추가: 투두 입력창 열기 플래그
+  openAddTodo: boolean;
+  setOpenAddTodo: (value: boolean) => void;
 }
+
 // ---------------------------
 // ModalState
 // ---------------------------
@@ -143,6 +154,15 @@ interface ModalState {
 // ---------------------------
 interface StoreState extends SignUpState, AppState, ModalState {
   resetState: () => void;
+  addRoutine: (
+    memberId: number,
+    newRoutineData: {
+      title: string;
+      day: string; // "Sun" | "Mon" | ... | "Sat"
+      startTime: string; // ISO String
+      endTime: string;   // ISO String
+    }
+  ) => Promise<void>;
 }
 
 // localStorage를 PersistStorage 타입으로 변환
@@ -187,6 +207,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   memberProfile: null,
   // ★ 추가
   selectedDate: null,
+  openAddTodo: false, // ★ 추가
 
   // ---------------------------
   // ModalState 초기값
@@ -226,6 +247,8 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
 
   setSelectedDate: (date) => set({ selectedDate: date }),
 
+  setOpenAddTodo: (value) => set({ openAddTodo: value }), // ★ 추가
+
   // ---------------------------
   // resetState
   // ---------------------------
@@ -249,6 +272,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       memberProfile: null,
 
       selectedDate: null,
+      openAddTodo: false, // ★ 추가
 
       isFriendSearchOpen: false,
       isSettingsOpen: false,
@@ -451,8 +475,21 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       if (!response.ok) {
         throw new Error("Failed to fetch routines");
       }
-      const data = await response.json();
-      set({ routines: data });
+      const data: any[] = await response.json();
+
+      // snake_case에서 camelCase로 변환
+      const mappedData: Routine[] = data.map((item) => ({
+        id: item.id,
+        title: item.title,
+        day: item.day,
+        startTime: item.start_time,
+        endTime: item.end_time,
+        description: item.description,
+        frequency: item.frequency,
+        nextRun: item.next_run,
+      }));
+
+      set({ routines: mappedData });
     } catch (error) {
       console.error("Failed to fetch routines:", error);
     }
@@ -506,7 +543,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
         const followers = data.map((friend: any) => ({
-          followingId: friend.followingId,
+          followerId: friend.followerId,
           name: friend.name,
           profilePicture: friend.memberPhoto || DefaultImage,
           isActive: friend.isActive, // 추가
@@ -654,6 +691,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       goals: state.goals.filter((goal) => goal.id !== id),
     }));
   },
+
   // ---------------------------
   // 닉네임 수정
   // ---------------------------
@@ -674,14 +712,15 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       const data = await response.json();
       set((state) => ({
         memberProfile: {
-          ...state.memberProfile,
-          nickName: data.nickname, 
+          ...state.memberProfile!,
+          nickName: data.nickname,
         },
       }));
     } catch (error) {
       console.error("Failed to update nickname:", error);
     }
   },
+
   // --------------------------
   // goal 진행도 업데이트
   // ---------------------------
@@ -710,11 +749,12 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
           ),
         }));
       } catch (error) {
-        console.error("Error:", error);
+        console.error("Error updating progress:", error);
         alert("Failed to update progress");
       }
     }
   },
+
   // ---------------------------
   // 자기소개 수정
   // ---------------------------
@@ -735,7 +775,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       const data = await response.json();
       set((state) => ({
         memberProfile: {
-          ...state.memberProfile,
+          ...state.memberProfile!,
           introduce: data.introduce,
         },
       }));
@@ -765,12 +805,74 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       console.log("Profile picture update successful:", text);
       set((state) => ({
         memberProfile: {
-          ...state.memberProfile,
+          ...state.memberProfile!,
           profileUrl: text,
         },
       }));
     } catch (error) {
       console.error("Failed to update profile picture:", error);
+    }
+  },
+
+  // ---------------------------
+  // 루틴 추가
+  // ---------------------------
+  addRoutine: async (
+    memberId: number,
+    newRoutineData: {
+      title: string;
+      day: string; // "Sun" | "Mon" | ... | "Sat"
+      startTime: string; // ISO String
+      endTime: string;   // ISO String
+    }
+  ) => {
+    try {
+      // 실제로 백엔드에 루틴을 추가할 API Endpoint
+      // (예: POST /api/v1/routines/{memberId})
+      // 백엔드에 따라서 endpoint나 body 구조 조정 필요
+      const response = await fetch(
+        `https://siiso.site/api/v1/routines/${memberId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: newRoutineData.title,
+            day: newRoutineData.day, // 'day'로 수정
+            start_time: newRoutineData.startTime, // 서버가 'start_time'을 기대
+            end_time: newRoutineData.endTime,     // 서버가 'end_time'을 기대
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to add routine');
+      }
+
+      // 응답으로 받은 루틴 데이터를 camelCase로 변환
+      const addedRoutine: any = await response.json();
+      const mappedRoutine: Routine = {
+        id: addedRoutine.id,
+        title: addedRoutine.title,
+        day: addedRoutine.day,
+        startTime: addedRoutine.start_time,
+        endTime: addedRoutine.end_time,
+        description: addedRoutine.description,
+        frequency: addedRoutine.frequency,
+        nextRun: addedRoutine.next_run,
+      };
+
+      // store의 routines 배열에 추가
+      set((state) => ({
+        routines: [...state.routines, mappedRoutine],
+      }));
+
+      console.log('[store] addRoutine => success:', mappedRoutine);
+    } catch (error) {
+      console.error('Error adding routine:', error);
+      throw error; // 상위에서 처리 가능
     }
   },
 });

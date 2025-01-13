@@ -15,6 +15,7 @@ MainPage 접속시 기본으로 렌더링되도록 설정된 컴포넌트
 
 */
 
+// CalendarPage.jsx
 import { useState } from "react";
 import CustomCalendar from "./CustomCalendar";
 import WeekGridPage from "../Grid/WeekGridPage";
@@ -24,25 +25,21 @@ import { useStore } from "../../store";
 import { format } from "date-fns";
 
 const CalendarPage = ({ onPageChange }) => {
-  const { memberId, setSelectedDate, fetchSchedulesByDate } = useStore();
+  const { memberId, setSelectedDate, fetchSchedulesByDate, setOpenAddTodo } = useStore();
 
   // 기본 뷰: 달력
   const [view, setView] = useState("calendar");
   const [isChecked, setIsChecked] = useState(false);
-  // selectedDate : 현재 선택된 날짜를 저장(초기값은 오늘 날짜)
-  // new Date()는 JavaScript Date 객체로, 호출하는 순간의 시스템 시간을 기준으로 현재 날짜와 시간을 반환
+
+  // 현재 선택된 날짜(프론트 단에서 관리)
+  const [selectedDateLocal, setSelectedDateLocal] = useState(new Date());
 
   // 토글 클릭에 따라 'weekGrid', 'calendar'로 상태를 변경한다.
   const handleToggleChange = (checked) => {
     console.log("handleToggleChange called with:", checked);
     setIsChecked(checked);
     setView(checked ? "weekGrid" : "calendar");
-  }
-  // 현재 선택된 날짜(프론트 단에서 관리) - moment 또는 date-fns로 처리 가능
-  const [selectedDate, setSelectedDateLocal] = useState(new Date());
-
-  // 토글
-
+  };
 
   // 고정 루틴 관리 버튼
   const handleConfirmClick = () => {
@@ -58,18 +55,21 @@ const CalendarPage = ({ onPageChange }) => {
   const handleDateChange = (date) => {
     setSelectedDateLocal(date);
 
-    // 여기서 store에 YYYY-MM-DD 포맷으로 저장 & 특정 날짜 스케줄 조회
-    if (memberId) {
-      const yyyy = date.getFullYear();
-      const mm = String(date.getMonth() + 1).padStart(2, "0");
-      const dd = String(date.getDate()).padStart(2, "0");
-      const dateString = `${yyyy}-${mm}-${dd}`;
+    // "YYYY-MM-DD"
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    const dateString = `${yyyy}-${mm}-${dd}`;
 
-      // store에 날짜 저장
-      setSelectedDate(dateString);
-      // 해당 날짜의 일정만 불러오기
+    // store에 날짜 저장
+    setSelectedDate(dateString);
+    // 해당 날짜의 일정만 불러오기
+    if (memberId) {
       fetchSchedulesByDate(memberId, dateString);
     }
+
+    // 투두 입력창 열기 트리거 설정
+    setOpenAddTodo(true);
   };
 
   return (
@@ -79,17 +79,14 @@ const CalendarPage = ({ onPageChange }) => {
           id="view-toggle2"
           label=""
           isChecked={isChecked}
-          onToggle={(checked) => {
-            console.log("checked:", checked);
-            handleToggleChange(checked);
-          }}
+          onToggle={handleToggleChange}
           marginClassName="ml-20"
           aText=""
           bText=""
         />
       </div>
       {view === "weekGrid" ? (
-        <WeekGridPage selectedDate={selectedDate} />
+        <WeekGridPage selectedDate={selectedDateLocal} />
       ) : (
         <CustomCalendar onDateChange={handleDateChange} />
       )}
