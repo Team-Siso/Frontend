@@ -5,71 +5,114 @@ import UncheckBoxIcon from "@/assets/UncheckBoxIcon.svg";
 import CheckedBoxIcon from "@/assets/CheckedBoxIcon.svg";
 import { useStore } from "@/store";
 
+/** 날짜만 => 자정(KST) → UTC "같은 날짜"로 표시 */
+function localMidnightToServerUtc(dateString) {
+  const [yyyy, mm, dd] = dateString.split("-");
+  const localDate = new Date(+yyyy, +mm - 1, +dd, 0, 0, 0);
+  const offsetMs = localDate.getTimezoneOffset() * 60000;
+  const corrected = new Date(localDate.getTime() - offsetMs);
+  return corrected.toISOString(); 
+}
+
+/** 시/분 => UTC (실제 시간 변환) */
+function localTimeToServerUtc(dateString, hour, minute) {
+  const [yyyy, mm, dd] = dateString.split("-");
+  const localDate = new Date(+yyyy, +mm - 1, +dd, hour, minute, 0);
+  return localDate.toISOString();
+}
+
+/** 서버에서 받은 UTC를 로컬로 표시 ("오후 1시 20분" 등) */
+function formatTime(utcString) {
+  if (!utcString) return "";
+  const localString = utcString.replace("Z", ""); // 'Z' 제거
+  const date = new Date(localString);
+  let hh = date.getHours();
+  const mm = date.getMinutes();
+
+  const ampm = hh >= 12 ? "오후" : "오전";
+  hh = hh % 12;
+  if (hh === 0) hh = 12;
+
+  return mm === 0
+    ? `${ampm} ${hh}시`
+    : `${ampm} ${hh}시 ${mm}분`;
+}
+
 const TodoListComponent = ({ className }) => {
-  // ---------------------------
-  // 공통 State
-  // ---------------------------
+  // ----------------------------
+  // 투두 추가 관련 state
+  // ----------------------------
   const [showInput, setShowInput] = useState(false);
   const [inputValue, setInputValue] = useState("");
-
-  // "Add Time to Todo" 인지 여부 (새 Todo 추가 시)
   const [isTimeTodo, setIsTimeTodo] = useState(false);
-  // 새로 Todo 추가 시 시간 설정 창 보이기 여부
   const [showTimePicker, setShowTimePicker] = useState(false);
-
-  // 새 Todo 추가 시 시간 선택
   const [startHour, setStartHour] = useState("0");
   const [startMinute, setStartMinute] = useState("00");
   const [endHour, setEndHour] = useState("0");
   const [endMinute, setEndMinute] = useState("00");
 
-  // ---------------------------
-  // 편집(수정) 관련 State
-  // ---------------------------
+  // ----------------------------
+  // 인라인 수정 관련 state
+  // ----------------------------
   const [editId, setEditId] = useState(null);
-  const [editText, setEditText] = useState("");
-  // 편집 중 마우스 hover 시 버튼 뜨는 용도
-  const [showEditOptions, setShowEditOptions] = useState(null);
-
-  // **편집 시 시간 설정**  
-  const [editTimePicker, setEditTimePicker] = useState(false); // 편집 중 시간 설정 창 보이기
+  const [editContent, setEditContent] = useState("");
   const [editStartHour, setEditStartHour] = useState("0");
   const [editStartMinute, setEditStartMinute] = useState("00");
   const [editEndHour, setEditEndHour] = useState("0");
   const [editEndMinute, setEditEndMinute] = useState("00");
 
-  // ---------------------------
-  // Store
-  // ---------------------------
-  const todos = useStore((state) => state.schedules) || [];
-  const memberId = useStore((state) => state.memberId);
-  const fetchSchedules = useStore((state) => state.fetchSchedules);
-  const setSchedules = useStore((state) => state.setSchedules);
+  // Hover 시 수정/삭제 버튼 노출
+  const [showEditOptions, setShowEditOptions] = useState(null);
 
-  // ---------------------------
-  // 초기 데이터 fetch
-  // ---------------------------
+  // ----------------------------
+  // store (Zustand)
+  // ----------------------------
+  const memberId = useStore((s) => s.memberId);
+  const schedules = useStore((s) => s.schedules);
+  const selectedDate = useStore((s) => s.selectedDate);
+  const openAddTodo = useStore((s) => s.openAddTodo);
+  const setOpenAddTodo = useStore((s) => s.setOpenAddTodo);
+  const fetchSchedulesByDate = useStore((s) => s.fetchSchedulesByDate);
+  const setSchedules = useStore((s) => s.setSchedules);
+
+  // ----------------------------
+  // effect: 날짜 바뀌면 fetch
+  // ----------------------------
   useEffect(() => {
-    console.log("memberId:", memberId);
-    console.log("Updated Schedules:", todos);
-
-    if (memberId) {
-      fetchSchedules(memberId)
-        .then(() => {})
-        .catch((error) => {
-          console.error("Error fetching schedules:", error);
-        });
+    if (memberId && selectedDate) {
+      fetchSchedulesByDate(memberId, selectedDate);
     }
-  }, [memberId, fetchSchedules, setSchedules]);
+  }, [memberId, selectedDate, fetchSchedulesByDate]);
 
   // 상태 변경 로그
   useEffect(() => {
-    console.log("Todo 변경 감지:", todos);
-  }, [todos]);
+    console.log("[TodoList] schedules updated:", schedules);
+  }, [schedules]);
 
-  // ---------------------------
-  // "Add Todo" 버튼 클릭
-  // ---------------------------
+  // ----------------------------
+  // Handle openAddTodo flag
+  // ----------------------------
+  useEffect(() => {
+    if (openAddTodo) {
+      setShowInput(true);
+      setIsTimeTodo(false);
+      setShowTimePicker(false);
+      setInputValue("");
+
+      // 혹시 이전에 남아있을 수 있는 값 초기화
+      setStartHour("0");
+      setStartMinute("00");
+      setEndHour("0");
+      setEndMinute("00");
+
+      // 플래그 초기화
+      setOpenAddTodo(false);
+    }
+  }, [openAddTodo, setOpenAddTodo]);
+
+  // ----------------------------
+  // 투두 추가 (일반/시간)
+  // ----------------------------
   const handleIconClick = () => {
     setShowInput(true);
     setIsTimeTodo(false);
@@ -83,9 +126,6 @@ const TodoListComponent = ({ className }) => {
     setEndMinute("00");
   };
 
-  // ---------------------------
-  // "Add Time to Todo" 버튼 클릭
-  // ---------------------------
   const handleTimeIconClick = () => {
     setShowInput(true);
     setIsTimeTodo(true);
@@ -99,72 +139,51 @@ const TodoListComponent = ({ className }) => {
     setEndMinute("00");
   };
 
-  // ---------------------------
-  // 입력창 변경
-  // ---------------------------
-  const handleInputChange = (event) => {
-    setInputValue(event.target.value);
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
   };
 
-  // ---------------------------
-  // 새 Todo: 시간 설정 창 토글
-  // ---------------------------
-  const handleTimeButtonClick = () => {
-    setShowTimePicker((prev) => !prev);
-  };
-
-  // 새 Todo: 시간 설정 창에서 "확인"
-  const handleConfirmTime = () => {
-    setShowTimePicker(false);
-  };
-
-  // ---------------------------
-  // 새 Todo 생성
-  // ---------------------------
   const handleAddTodo = async () => {
-    if (!memberId) {
-      console.error("Error: memberId가 null 값입니다.");
-      return;
-    }
-
+    if (!memberId || !selectedDate) return;
     if (!inputValue.trim()) return;
-
+  
+    const thisDayUtc = localMidnightToServerUtc(selectedDate);
+  
     let newStartTime = null;
     let newEndTime = null;
-
     if (isTimeTodo) {
-      const now = new Date();
-      const startDate = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        parseInt(startHour),
-        parseInt(startMinute),
-        0,
-        0
-      );
-      const endDate = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        parseInt(endHour),
-        parseInt(endMinute),
-        0,
-        0
-      );
-      newStartTime = startDate.toISOString();
-      newEndTime = endDate.toISOString();
+      newStartTime = localTimeToServerUtc(selectedDate, +startHour, +startMinute);
+      newEndTime = localTimeToServerUtc(selectedDate, +endHour, +endMinute);
+  
+      // 시간 겹침 검사
+      const newStart = new Date(newStartTime).getTime();
+      const newEnd = new Date(newEndTime).getTime();
+  
+      const isOverlapping = schedules.some((todo) => {
+        if (!todo.startTime || !todo.endTime) return false; // 시간 없는 투두는 제외
+        const existingStart = new Date(todo.startTime).getTime();
+        const existingEnd = new Date(todo.endTime).getTime();
+        return (
+          (newStart >= existingStart && newStart < existingEnd) || // 새 투두의 시작이 겹치는 경우
+          (newEnd > existingStart && newEnd <= existingEnd) || // 새 투두의 끝이 겹치는 경우
+          (newStart <= existingStart && newEnd >= existingEnd) // 새 투두가 기존 투두를 포함하는 경우
+        );
+      });
+  
+      if (isOverlapping) {
+        alert("시간이 겹치는 투두가 이미 존재합니다. 다른 시간을 선택하세요.");
+        return;
+      }
     }
-
+  
     const newTodo = {
       content: inputValue,
       checkStatus: 0,
-      completed: false,
-      thisDay: new Date().toISOString(),
+      thisDay: thisDayUtc,
       startTime: newStartTime,
       endTime: newEndTime,
     };
-
+  
     try {
       const response = await fetch(`/api/v1/schedules/${memberId}`, {
         method: "POST",
@@ -173,203 +192,147 @@ const TodoListComponent = ({ className }) => {
         },
         body: JSON.stringify(newTodo),
       });
-
+  
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Error:", errorData.errorMessage);
-        console.error("todo 추가 에러났어요, memberId는?", { memberId });
         return;
       }
-
+  
       const data = await response.json();
-      console.log("Response:", data);
-
-      setSchedules([...todos, data]);
-    } catch (error) {
-      console.error("Error:", error);
+      setSchedules([...schedules, data]);
+    } catch (err) {
+      console.error("Failed to add todo:", err);
     }
-
+  
     setInputValue("");
     setShowInput(false);
   };
 
-  // ---------------------------
-  // 체크박스 클릭 (완료 토글)
-  // ---------------------------
-  const toggleTodoCompletion = async (id) => {
-    const todo = todos.find((todo) => todo.id === id);
-    if (todo) {
-      const updatedTodo = {
-        ...todo,
-        checkStatus: todo.checkStatus === 0 ? 1 : 0,
-      };
-
-      try {
-        const response = await fetch(`/api/v1/schedules/${id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updatedTodo),
-        });
-
-        if (response.ok) {
-          console.log("checkStatus 업데이트 성공:", updatedTodo);
-          setSchedules(todos.map((t) => (t.id === id ? updatedTodo : t)));
-          setEditId(null);
-        } else {
-          console.error("checkStatus 업데이트 실패:", response.status);
-        }
-      } catch (error) {
-        console.error("Error:", error);
-      }
-    }
-  };
-
-  // ---------------------------
-  // 삭제
-  // ---------------------------
-  const handleDelete = async (id) => {
-    console.log("handleDelete 호출, id:", id);
-    try {
-      const response = await fetch(`/api/v1/schedules/${id}`, {
-        method: "DELETE",
-        headers: {
-          accept: "*/*",
-        },
-      });
-
-      if (response.ok) {
-        console.log("삭제 성공");
-        setSchedules(todos.filter((todo) => todo.id !== id));
-      } else {
-        console.error("삭제 실패:", response.status);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
-
-  // ---------------------------
-  // 수정 시작
-  // ---------------------------
-  const startEdit = (id, title, startTime, endTime) => {
-    setEditId(id);
-    setEditText(title);
-    setShowEditOptions(null);
-
-    // 편집용 시간 설정 초기화
-    if (startTime) {
-      // startTime이 있으면 Date로 파싱
-      const sTime = new Date(startTime);
-      setEditStartHour(sTime.getHours().toString());   // "0" ~ "23"
-      setEditStartMinute(sTime.getMinutes().toString().padStart(2, "0")); // "00", "10", "30" 등
+  // ----------------------------
+  // 체크박스 토글
+  // ----------------------------
+  const toggleTodoCompletion = async (todoId) => {
+    const target = schedules.find((td) => td.id === todoId);
+    if (!target) return;
+    const updated = {
+      ...target,
+      checkStatus: target.checkStatus === 0 ? 1 : 0,
+    };
+    const res = await fetch(`/api/v1/schedules/${todoId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updated),
+    });
+    if (res.ok) {
+      setSchedules(schedules.map((td) => (td.id === todoId ? updated : td)));
+      setEditId(null);
     } else {
-      // startTime이 없으면 기본값
+      console.error("checkStatus 업데이트 실패:", res.status);
+    }
+  };
+
+  // ----------------------------
+  // 삭제
+  // ----------------------------
+  const handleDelete = async (todoId) => {
+    const res = await fetch(`/api/v1/schedules/${todoId}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      setSchedules(schedules.filter((td) => td.id !== todoId));
+    }
+  };
+
+  // ----------------------------
+  // "인라인 수정" 시작
+  // ----------------------------
+  const startEditTodo = (todo) => {
+    setEditId(todo.id);
+    setEditContent(todo.content || "");
+  
+    // 시간 있는 투두라면, 기존 시작/완료 시간 파싱
+    if (todo.startTime) {
+      const sDate = new Date(todo.startTime.replace("Z", ""));
+      setEditStartHour(String(sDate.getHours()));
+      setEditStartMinute(String(sDate.getMinutes()).padStart(2, "0"));
+    } else {
       setEditStartHour("0");
       setEditStartMinute("00");
     }
-
-    if (endTime) {
-      const eTime = new Date(endTime);
-      setEditEndHour(eTime.getHours().toString());
-      setEditEndMinute(eTime.getMinutes().toString().padStart(2, "0"));
+  
+    if (todo.endTime) {
+      const eDate = new Date(todo.endTime.replace("Z", ""));
+      setEditEndHour(String(eDate.getHours()));
+      setEditEndMinute(String(eDate.getMinutes()).padStart(2, "0"));
     } else {
       setEditEndHour("0");
       setEditEndMinute("00");
     }
-
-    setEditTimePicker(false); // 처음엔 시간설정창 닫힘
   };
-
-  // ---------------------------
-  // 수정 중 텍스트 변경
-  // ---------------------------
-  const handleEditChange = (event) => {
-    setEditText(event.target.value);
-  };
-
-  // ---------------------------
-  // 수정 중 시간 설정 창 토글
-  // ---------------------------
-  const toggleEditTimePicker = () => {
-    setEditTimePicker((prev) => !prev);
-  };
-
-  // ---------------------------
-  // 수정 중 시간 설정 창에서 "확인"
-  // ---------------------------
-  const handleEditTimeConfirm = () => {
-    setEditTimePicker(false);
-  };
-
-  // ---------------------------
-  // 수정 저장
-  // ---------------------------
-  const handleEditSave = async (id) => {
-    const todo = todos.find((todo) => todo.id === id);
-    if (!todo) return;
-
-    // 수정된 todo 만들기
-    const updatedTodo = { ...todo, content: editText };
-
-    // 편집창에서 선택한 시간 -> ISO
-    // (만약 기존에 시간 없었어도, 편집에서 시간을 추가할 수 있음)
-    const now = new Date();
-    const startDate = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      parseInt(editStartHour),
-      parseInt(editStartMinute),
-      0,
-      0
-    );
-    const endDate = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      parseInt(editEndHour),
-      parseInt(editEndMinute),
-      0,
-      0
-    );
-
-    updatedTodo.startTime = startDate.toISOString();
-    updatedTodo.endTime = endDate.toISOString();
-
+  
+  // ----------------------------
+  // "인라인 수정" 저장 (PUT)
+  // ----------------------------
+  const handleEditSave = async (todoId) => {
+    const target = schedules.find((td) => td.id === todoId);
+    if (!target) return;
+  
+    // 기본: 이름은 항상 수정
+    const updated = {
+      ...target,
+      content: editContent,
+    };
+  
+    // 시간 필드 설정
+    if (target.startTime || target.endTime) {
+      const newStartTime = target.startTime
+        ? localTimeToServerUtc(selectedDate, +editStartHour, +editStartMinute)
+        : null;
+      const newEndTime = target.endTime
+        ? localTimeToServerUtc(selectedDate, +editEndHour, +editEndMinute)
+        : null;
+      updated.startTime = newStartTime;
+      updated.endTime = newEndTime;
+    }
+  
     try {
-      const response = await fetch(`/api/v1/schedules/${id}`, {
+      const res = await fetch(`/api/v1/schedules/${todoId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedTodo),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
       });
-
-      if (response.ok) {
-        console.log("수정 성공");
-        setSchedules(todos.map((t) => (t.id === id ? updatedTodo : t)));
-        setEditId(null);
-      } else {
-        console.error("수정 실패:", response.status);
-      }
-    } catch (error) {
-      console.error("Error:", error);
+      if (!res.ok) throw new Error("투두 수정 실패");
+      // 로컬 업데이트
+      setSchedules(schedules.map((td) => (td.id === todoId ? updated : td)));
+      setEditId(null);
+    } catch (err) {
+      console.error(err);
     }
   };
-
-  // ---------------------------
+  
+  // ----------------------------
   // 시/분 select 옵션
-  // ---------------------------
+  // ----------------------------
   const hours = Array.from({ length: 24 }, (_, i) => i.toString());
   const minutes = ["00", "10", "20", "30", "40", "50"];
 
+  // ----------------------------
+  // (중요) 현재 선택된 날짜에 해당하는 todo만 필터링
+  // ----------------------------
+  const filteredSchedules = schedules.filter((todo) => {
+    if (!todo.thisDay) return false;
+    // todo.thisDay가 "2025-01-15T00:00:00.000Z" 형태이므로, 앞의 10글자(YYYY-MM-DD)를 비교
+    return (
+      todo.thisDay.slice(0, 10) === localMidnightToServerUtc(selectedDate).slice(0, 10)
+    );
+  });
+
   return (
-    <div className={`${className} `}>
-      {/* 상단: Add Todo / Add Time to Todo */}
+    <div className={className}>
+      {/* 헤더 */}
       <div className="flex justify-between items-center p-2.5">
-        <div className="text-lg text-gray585151 font-bold pl-1">Todos</div>
+        <div className="text-lg font-bold pl-1">Todos</div>
         <div className="flex items-center">
           <img
             src={addTodoIcon}
@@ -379,41 +342,32 @@ const TodoListComponent = ({ className }) => {
           />
           <img
             src={addTimeTodoIcon}
-            alt="Add Time to Todo"
+            alt="Add Time Todo"
             className="cursor-pointer"
             onClick={handleTimeIconClick}
           />
         </div>
       </div>
-      <div
-        className="overflow-y-auto"
-        style={{
-          maxHeight: "calc(43vh - 60px - 40px)", // 부모 높이에서 텍스트 영역과 입력 영역 제외
-          flexGrow: 1, // 나머지 공간을 차지하도록 설정
-        }}
-      >
-  
 
-      {/* 새 Todo 입력창 */}
+      {/* 새 투두 입력창 */}
       {showInput && (
-        <div className="bg-grayEBEBEB p-3 flex items-center space-x-2">
+        <div className="bg-gray-100 p-3 flex items-center space-x-2">
           <input
             type="text"
             className="flex-1 p-2"
             placeholder="할 일 입력"
             value={inputValue}
             onChange={handleInputChange}
-            onKeyDown={(event) => (event.key === "Enter" ? handleAddTodo() : null)}
+            onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
           />
-          {/* isTimeTodo일 때만 시간 설정 버튼 */}
-          {isTimeTodo && (
+          {/* {isTimeTodo && (
             <button
               className="bg-blue-400 text-white px-3 py-1 rounded"
-              onClick={handleTimeButtonClick}
+              onClick={() => setShowTimePicker(true)}
             >
               시간 설정
             </button>
-          )}
+          )} */}
           <button
             className="bg-green-500 text-white px-3 py-1 rounded"
             onClick={handleAddTodo}
@@ -423,236 +377,223 @@ const TodoListComponent = ({ className }) => {
         </div>
       )}
 
-      {/* 새 Todo: 시간 설정창 */}
+      {/* 시간 설정 (새 투두 생성 시) */}
       {isTimeTodo && showTimePicker && (
-        <div className="bg-white shadow-md p-3 m-3 border rounded space-y-2">
-          <div className="flex items-center space-x-2">
-            <label>시작시간:</label>
+        <div className="bg-white p-3 m-3 border rounded space-y-2">
+          <div>
+            <label>시작:</label>
             <select
               value={startHour}
               onChange={(e) => setStartHour(e.target.value)}
-              className="border p-1"
             >
               {hours.map((h) => (
-                <option key={`start-h-${h}`} value={h}>
-                  {h.padStart(2, "0")}
+                <option key={h} value={String(h)}>
+                  {String(h).padStart(2, "0")}
                 </option>
               ))}
             </select>
-            <span>:</span>
+            :
             <select
               value={startMinute}
               onChange={(e) => setStartMinute(e.target.value)}
-              className="border p-1"
             >
               {minutes.map((m) => (
-                <option key={`start-m-${m}`} value={m}>
+                <option key={m} value={m}>
                   {m}
                 </option>
               ))}
             </select>
           </div>
-          <div className="flex items-center space-x-2">
-            <label>종료시간:</label>
+          <div>
+            <label>완료:</label>
             <select
               value={endHour}
               onChange={(e) => setEndHour(e.target.value)}
-              className="border p-1"
             >
               {hours.map((h) => (
-                <option key={`end-h-${h}`} value={h}>
-                  {h.padStart(2, "0")}
+                <option key={h} value={String(h)}>
+                  {String(h).padStart(2, "0")}
                 </option>
               ))}
             </select>
-            <span>:</span>
+            :
             <select
               value={endMinute}
               onChange={(e) => setEndMinute(e.target.value)}
-              className="border p-1"
             >
               {minutes.map((m) => (
-                <option key={`end-m-${m}`} value={m}>
+                <option key={m} value={m}>
                   {m}
                 </option>
               ))}
             </select>
           </div>
-          <button
+          {/* <button
             className="bg-blue-500 text-white px-3 py-1 rounded"
-            onClick={handleConfirmTime}
+            onClick={() => setShowTimePicker(false)}
           >
             확인
-          </button>
+          </button> */}
         </div>
       )}
 
-      {/* Todo 목록 */}
-      <ul className="divide-y divide-gray-300 mx-4">
-        {todos.length > 0 ? (
-          todos.map((todo) => (
-            <li
-              key={todo.id}
-              className="flex items-center py-3 pl-2 pr-2 relative"
-              onMouseOver={() => setShowEditOptions(todo.id)}
-              onMouseLeave={() => setShowEditOptions(null)}
-            >
-              {/* 체크박스 */}
-              <img
-                src={todo.checkStatus === 1 ? CheckedBoxIcon : UncheckBoxIcon}
-                alt={todo.checkStatus === 1 ? "Todo completed" : "Mark todo as completed"}
-                className="cursor-pointer"
-                onClick={() => toggleTodoCompletion(todo.id)}
-              />
+      {/* 
+        (수정) Todo 목록에 스크롤을 적용하기 위해
+        아래 ul을 감싸는 div에 overflow-y-auto, maxHeight 등을 적용 
+      */}
+      <div
+        className="overflow-y-auto"
+        style={{
+          maxHeight: "calc(43vh - 60px - 40px)",
+          flexGrow: 1,
+        }}
+      >
+        <ul className="divide-y mx-4">
+          {filteredSchedules.length > 0 ? (
+            filteredSchedules.map((todo) => {
+              const checked = todo.checkStatus === 1;
+              const checkIcon = checked ? CheckedBoxIcon : UncheckBoxIcon;
+              const displayTime = todo.startTime ? formatTime(todo.startTime) : "";
 
-              {/* 편집 중인지 여부에 따른 UI */}
-              {todo.id === editId ? (
-                <div className="flex flex-col ml-2 flex-1">
-                  {/* 텍스트 Input */}
-                  <input
-                    className="p-1 border-b mb-1"
-                    type="text"
-                    value={editText}
-                    onChange={handleEditChange}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        handleEditSave(todo.id);
-                      }
-                    }}
+              // "시간이 있는 투두"인지 체크
+              const hasTime = !!(todo.startTime || todo.endTime);
+
+              // 현재 편집 중인 투두인가?
+              const isEditing = editId === todo.id;
+
+              return (
+                <li
+                  key={todo.id}
+                  className="flex items-center py-3 pl-2 pr-2 relative"
+                  onMouseOver={() => setShowEditOptions(todo.id)}
+                  onMouseLeave={() => setShowEditOptions(null)}
+                >
+                  {/* 체크박스 */}
+                  <img
+                    src={checkIcon}
+                    alt="check"
+                    className="cursor-pointer"
+                    onClick={() => toggleTodoCompletion(todo.id)}
                   />
 
-                  {/* "시간 설정" 버튼 -> toggleEditTimePicker */}
-                  <div className="flex items-center space-x-2">
-                    <button
-                      className="bg-blue-400 text-white px-2 py-1 rounded"
-                      onClick={toggleEditTimePicker}
-                    >
-                      시간 설정
-                    </button>
-                    <button
-                      className="bg-green-500 text-white px-2 py-1 rounded"
-                      onClick={() => handleEditSave(todo.id)}
-                    >
-                      저장
-                    </button>
-                  </div>
+                  {/* 인라인 수정 vs 평시 모드 */}
+                  {isEditing ? (
+                    <div className="ml-2 flex flex-col space-y-2">
+                      {/* 이름 수정 필드 */}
+                      <div>
+                        <label className="block text-sm font-medium">이름:</label>
+                        <input
+                          className="border p-1 w-full"
+                          type="text"
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                        />
+                      </div>
 
-                  {/* 편집 중 시간설정창 */}
-                  {editTimePicker && (
-                    <div className="bg-white shadow-md p-3 mt-2 border rounded space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <label>시작시간:</label>
-                        <select
-                          value={editStartHour}
-                          onChange={(e) => setEditStartHour(e.target.value)}
-                          className="border p-1"
-                        >
-                          {hours.map((h) => (
-                            <option key={`edit-start-h-${h}`} value={h}>
-                              {h.padStart(2, "0")}
-                            </option>
-                          ))}
-                        </select>
-                        <span>:</span>
-                        <select
-                          value={editStartMinute}
-                          onChange={(e) => setEditStartMinute(e.target.value)}
-                          className="border p-1"
-                        >
-                          {minutes.map((m) => (
-                            <option key={`edit-start-m-${m}`} value={m}>
-                              {m}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <label>종료시간:</label>
-                        <select
-                          value={editEndHour}
-                          onChange={(e) => setEditEndHour(e.target.value)}
-                          className="border p-1"
-                        >
-                          {hours.map((h) => (
-                            <option key={`edit-end-h-${h}`} value={h}>
-                              {h.padStart(2, "0")}
-                            </option>
-                          ))}
-                        </select>
-                        <span>:</span>
-                        <select
-                          value={editEndMinute}
-                          onChange={(e) => setEditEndMinute(e.target.value)}
-                          className="border p-1"
-                        >
-                          {minutes.map((m) => (
-                            <option key={`edit-end-m-${m}`} value={m}>
-                              {m}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      {/* (조건부) 시작 시간 수정 */}
+                      {hasTime && (
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium">시작 시간:</label>
+                            <div className="flex items-center space-x-1">
+                              <select
+                                className="border p-1"
+                                value={editStartHour}
+                                onChange={(e) => setEditStartHour(e.target.value)}
+                              >
+                                {hours.map((h) => (
+                                  <option key={`edit-start-h-${h}`} value={h}>
+                                    {h.padStart(2, "0")}
+                                  </option>
+                                ))}
+                              </select>
+                              :
+                              <select
+                                className="border p-1"
+                                value={editStartMinute}
+                                onChange={(e) => setEditStartMinute(e.target.value)}
+                              >
+                                {minutes.map((m) => (
+                                  <option key={`edit-start-m-${m}`} value={m}>
+                                    {m}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* 완료 시간 수정 */}
+                          <div>
+                            <label className="block text-sm font-medium">완료 시간:</label>
+                            <div className="flex items-center space-x-1">
+                              <select
+                                className="border p-1"
+                                value={editEndHour}
+                                onChange={(e) => setEditEndHour(e.target.value)}
+                              >
+                                {hours.map((h) => (
+                                  <option key={`edit-end-h-${h}`} value={h}>
+                                    {h.padStart(2, "0")}
+                                  </option>
+                                ))}
+                              </select>
+                              :
+                              <select
+                                className="border p-1"
+                                value={editEndMinute}
+                                onChange={(e) => setEditEndMinute(e.target.value)}
+                              >
+                                {minutes.map((m) => (
+                                  <option key={`edit-end-m-${m}`} value={m}>
+                                    {m}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* 확인 버튼 */}
                       <button
-                        className="bg-blue-500 text-white px-3 py-1 rounded"
-                        onClick={handleEditTimeConfirm}
+                        className="mt-2 bg-green-500 text-white px-3 py-1 rounded"
+                        onClick={() => handleEditSave(todo.id)}
                       >
                         확인
                       </button>
                     </div>
-                  )}
-                </div>
-              ) : (
-                // 편집 중이 아니면 그냥 표시
-                <>
-                  <span
-                    className={
-                      todo.checkStatus === 1 ? "ml-2 line-through" : "ml-2"
-                    }
-                  >
-                    {todo.content}
-                  </span>
-
-                  {/* 시간 표시 (startTime만 표시) */}
-                  {todo.startTime && (
-                    <span className="ml-auto text-sm text-gray-600">
-                      {new Date(todo.startTime)
-                        .getHours()
-                        .toString()
-                        .padStart(2, "0")}
-                      :
-                      {new Date(todo.startTime)
-                        .getMinutes()
-                        .toString()
-                        .padStart(2, "0")}
+                  ) : (
+                    // 평시 (수정 X)
+                    <span className="ml-2">
+                      {todo.content}
+                      {displayTime && ` (${displayTime})`}
                     </span>
                   )}
-                </>
-              )}
 
-              {/* 우측 상단 수정/삭제 버튼 */}
-              {showEditOptions === todo.id && todo.id !== editId && (
-                <div className="absolute right-0 top-0 rounded-lg bg-white p-1 shadow-md">
-                  <button
-                    className="px-2 py-1 border-b-2 border-r-2 mr-2 border-gray-300 rounded-lg text-sm"
-                    onClick={() => startEdit(todo.id, todo.content, todo.startTime, todo.endTime)}
-                  >
-                    수정
-                  </button>
-                  <button
-                    className="px-2 py-1 border-b-2 border-gray-300 rounded-lg text-sm"
-                    onClick={() => handleDelete(todo.id)}
-                  >
-                    삭제
-                  </button>
-                </div>
-              )}
-            </li>
-          ))
-        ) : (
-          <li className="text-center py-3 text-gray-500">할 일이 없습니다.</li>
-        )}
-</ul>
-       
+                  {/* 우측 상단 수정/삭제 버튼 */}
+                  {showEditOptions === todo.id && !isEditing && (
+                    <div className="absolute right-0 top-0 rounded-lg bg-white p-1 shadow-md">
+                      <button
+                        className="px-2 py-1 mr-2 border-b-2 border-r-2 border-gray-300 rounded-lg text-sm"
+                        onClick={() => startEditTodo(todo)}
+                      >
+                        수정
+                      </button>
+                      <button
+                        className="px-2 py-1 border-b-2 border-gray-300 rounded-lg text-sm"
+                        onClick={() => handleDelete(todo.id)}
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  )}
+                </li>
+              );
+            })
+          ) : (
+            <li className="text-center py-3 text-gray-500">할 일이 없습니다.</li>
+          )}
+        </ul>
       </div>
     </div>
   );

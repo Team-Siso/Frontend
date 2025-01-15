@@ -50,7 +50,7 @@ const FriendsListComponent = () => {
           bText="팔로워"
         />
       </div>
-      <div>
+      <div className="flex flex-col items-center justify-center">
         {(listToDisplay || []).map((friend, index) => {
           console.log("friend", friend);
           console.log("친구 활성화 여부", friend.isActive);

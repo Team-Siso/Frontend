@@ -1,6 +1,8 @@
+// store.ts
 import { create, StateCreator } from "zustand";
 import { persist, PersistStorage } from "zustand/middleware";
 import DefaultImage from "@/assets/profile.png";
+
 // 인터페이스 정의
 interface Follow {
   followingId: number;
@@ -23,21 +25,24 @@ interface Goal {
   completed: boolean;
 }
 
-interface Routine {
+export interface Routine {
   id: number;
   title: string;
-  description: string;
-  frequency: string;
-  nextRun: string;
+  day: string;              // "Sun" | "Mon" | ... | "Sat"
+  startTime: string;        // ISO String
+  endTime: string;          // ISO String
+  description?: string;
+  frequency?: string;
+  nextRun?: string;
 }
 
-interface Schedule {
+export interface Schedule {
   id: number;
   content: string;
   checkStatus: number;
-  thisDay: string;   // 날짜(예: "YYYY-MM-DD..." 형태)
-  startTime: string;
-  endTime: string;
+  thisDay: string; // 날짜(예: "YYYY-MM-DD" 형태)
+  startTime: string | null;
+  endTime: string | null;
   completed: boolean;
 }
 
@@ -82,6 +87,7 @@ interface SignUpState {
   uploadImage: (file: File, memberId: number) => Promise<string>;
   login: (email: string, password: string) => Promise<void>;
 }
+
 // ---------------------------
 // AppState
 // ---------------------------
@@ -95,12 +101,13 @@ interface AppState {
   memberProfile: Member | null;
 
   // ★ 추가: 캘린더에서 클릭된 날짜("YYYY-MM-DD") 저장
-  selectedDate: string | null;
+  selectedDate: string;
   setSelectedDate: (date: string) => void;
   setRoutines: (routines: Routine[]) => void;
   setMemberProfile: (memberProfile: Member) => void;
   setMemberId: (memberId: number) => void;
   setSchedules: (schedules: Schedule[]) => void;
+  setGoals: (goals: Goal[]) => void;
   setGoal: (title: string) => Promise<void>;
   toggleGoalCompletion: (id: number) => void;
   deleteGoal: (id: number) => void;
@@ -123,7 +130,12 @@ interface AppState {
   updateIntroduce: (memberId: number, introduce: string) => Promise<void>;
   updateProfilePicture: (memberId: number, file: File) => Promise<void>;
   addTodo: (memberId: number, newTodo: Omit<Schedule, "id">) => Promise<Schedule | void>;
+
+  // ★ 추가: 투두 입력창 열기 플래그
+  openAddTodo: boolean;
+  setOpenAddTodo: (value: boolean) => void;
 }
+
 // ---------------------------
 // ModalState
 // ---------------------------
@@ -135,7 +147,7 @@ interface ModalState {
   isEditModalOpen: boolean;
   setEditModalOpen: (isOpen: boolean) => void;
   memberId: number | null;
-  setMemberId: (memberId: number) => void;
+  setMemberIdModal: (memberId: number) => void;
 }
 
 // ---------------------------
@@ -143,9 +155,31 @@ interface ModalState {
 // ---------------------------
 interface StoreState extends SignUpState, AppState, ModalState {
   resetState: () => void;
+  addRoutine: (
+    memberId: number,
+    newRoutineData: {
+      title: string;
+      day: string; // "Sun" | "Mon" | ... | "Sat"
+      startTime: string; // ISO String
+      endTime: string;   // ISO String
+    }
+  ) => Promise<void>;
 }
 
+// ---------------------------
+// 날짜 포맷 함수
+// ---------------------------
+const getToday = (): string => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+// ---------------------------
 // localStorage를 PersistStorage 타입으로 변환
+// ---------------------------
 const storage: PersistStorage<StoreState> = {
   getItem: (name) => {
     const value = localStorage.getItem(name);
@@ -186,7 +220,8 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   members: [],
   memberProfile: null,
   // ★ 추가
-  selectedDate: null,
+  selectedDate: getToday(), // 오늘 날짜로 초기화
+  openAddTodo: false, // ★ 추가
 
   // ---------------------------
   // ModalState 초기값
@@ -215,6 +250,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   setFriendSearchOpen: (isOpen) => set({ isFriendSearchOpen: isOpen }),
   setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen }),
   setEditModalOpen: (isOpen) => set({ isEditModalOpen: isOpen }),
+  setMemberIdModal: (memberId) => set({ memberId }), // 이름 변경: setMemberIdModal
 
   setSchedules: (schedules) => set({ schedules }),
   setGoals: (goals) => set({ goals }),
@@ -225,6 +261,8 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   setMemberProfile: (memberProfile) => set({ memberProfile }),
 
   setSelectedDate: (date) => set({ selectedDate: date }),
+
+  setOpenAddTodo: (value) => set({ openAddTodo: value }), // ★ 추가
 
   // ---------------------------
   // resetState
@@ -248,7 +286,8 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       members: [],
       memberProfile: null,
 
-      selectedDate: null,
+      selectedDate: getToday(), // 오늘 날짜로 초기화
+      openAddTodo: false, // ★ 추가
 
       isFriendSearchOpen: false,
       isSettingsOpen: false,
@@ -294,6 +333,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
         // bio: "",
         // profilePic: "",
         memberId: data.id,
+        selectedDate: getToday(), // 회원가입 후 오늘 날짜로 설정
       });
       localStorage.setItem("memberId", data.id.toString());
       return data.id;
@@ -343,7 +383,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     });
     try {
       const response = await fetch(
-        `http://siiso.site:8080/api/v1/members/login?${params.toString()}`,
+        `https://siiso.site:8080/api/v1/members/login?${params.toString()}`,
         {
           method: "POST",
           headers: {
@@ -363,7 +403,10 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       const data = await response.json();
       console.log("로그인 성공:", data);
       resetState();
-      set({ memberId: data.id });
+      set({
+        memberId: data.id,
+        selectedDate: getToday(), // 로그인 후 오늘 날짜로 설정
+      });
       localStorage.setItem("memberId", data.id.toString());
     } catch (error) {
       console.error("Error:", error);
@@ -404,7 +447,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     try {
       // GET /api/v1/schedules/{memberId}/{date}
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/schedules/${memberId}/${dateString}`
+        `https://siiso.site:8080/api/v1/schedules/${memberId}/${dateString}`
       );
 
       if (!response.ok) {
@@ -451,8 +494,21 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       if (!response.ok) {
         throw new Error("Failed to fetch routines");
       }
-      const data = await response.json();
-      set({ routines: data });
+      const data: any[] = await response.json();
+
+      // snake_case에서 camelCase로 변환
+      const mappedData: Routine[] = data.map((item) => ({
+        id: item.id,
+        title: item.title,
+        day: item.day,
+        startTime: item.start_time,
+        endTime: item.end_time,
+        description: item.description,
+        frequency: item.frequency,
+        nextRun: item.next_run,
+      }));
+
+      set({ routines: mappedData });
     } catch (error) {
       console.error("Failed to fetch routines:", error);
     }
@@ -496,7 +552,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   fetchFollowers: async (memberId: number) => {
     try {
-      const response = await fetch(`http://siiso.site:8080/api/v1/follows/${memberId}/followers`);
+      const response = await fetch(`https://siiso.site:8080/api/v1/follows/${memberId}/followers`);
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
@@ -506,7 +562,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
         const followers = data.map((friend: any) => ({
-          followingId: friend.followingId,
+          followerId: friend.followerId,
           name: friend.name,
           profilePicture: friend.memberPhoto || DefaultImage,
           isActive: friend.isActive, // 추가
@@ -559,7 +615,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       if (contentType && contentType.includes("application/json")) {
         const data = await response.json();
         console.log("API Response:", data);
-        const memberProfile = {
+        const memberProfile: Member = {
           id: memberId,
           email: data.email || "",
           nickName: data.nickname,
@@ -581,10 +637,10 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   // Todo(스케줄) 추가
   // ---------------------------
-  addTodo: async (memberId: number, newTodo) => {
+  addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">) => {
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/schedules/${memberId}`,
+        `https://43.203.254.169:8080/api/v1/schedules/${memberId}`,
         {
           method: "POST",
           headers: {
@@ -614,7 +670,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     const { memberId } = get();
     if (memberId !== null) {
       try {
-        const response = await fetch(`http://siiso.site:8080/api/v1/goals/${memberId}`, {
+        const response = await fetch(`https://siiso.site:8080/api/v1/goals/${memberId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -654,12 +710,13 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       goals: state.goals.filter((goal) => goal.id !== id),
     }));
   },
+
   // ---------------------------
   // 닉네임 수정
   // ---------------------------
   updateNickname: async (memberId: number, nickname: string) => {
     try {
-      const response = await fetch(`http://siiso.site/api/v1/members/${memberId}/nickname`, {
+      const response = await fetch(`https://siiso.site:8080/api/v1/members/${memberId}/nickname`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -674,14 +731,15 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       const data = await response.json();
       set((state) => ({
         memberProfile: {
-          ...state.memberProfile,
-          nickName: data.nickname, 
+          ...state.memberProfile!,
+          nickName: data.nickname,
         },
       }));
     } catch (error) {
       console.error("Failed to update nickname:", error);
     }
   },
+
   // --------------------------
   // goal 진행도 업데이트
   // ---------------------------
@@ -690,7 +748,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     if (memberId !== null) {
       try {
         const response = await fetch(
-          `http://43.203.254.169:8080/api/v1/goals/${goalId}`,
+          `https://siiso.site:8080/api/v1/goals/${goalId}`,
           {
             method: "PUT",
             headers: {
@@ -710,17 +768,18 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
           ),
         }));
       } catch (error) {
-        console.error("Error:", error);
+        console.error("Error updating progress:", error);
         alert("Failed to update progress");
       }
     }
   },
+
   // ---------------------------
   // 자기소개 수정
   // ---------------------------
   updateIntroduce: async (memberId: number, introduce: string) => {
     try {
-      const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}/introduce`, {
+      const response = await fetch(`https://siiso.site:8080/api/v1/members/${memberId}/introduce`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -735,7 +794,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       const data = await response.json();
       set((state) => ({
         memberProfile: {
-          ...state.memberProfile,
+          ...state.memberProfile!,
           introduce: data.introduce,
         },
       }));
@@ -752,7 +811,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}/profile`, {
+      const response = await fetch(`https://siiso.site:8080/api/v1/members/${memberId}/profile`, {
         method: "POST",
         body: formData,
       });
@@ -765,12 +824,74 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       console.log("Profile picture update successful:", text);
       set((state) => ({
         memberProfile: {
-          ...state.memberProfile,
+          ...state.memberProfile!,
           profileUrl: text,
         },
       }));
     } catch (error) {
       console.error("Failed to update profile picture:", error);
+    }
+  },
+
+  // ---------------------------
+  // 루틴 추가
+  // ---------------------------
+  addRoutine: async (
+    memberId: number,
+    newRoutineData: {
+      title: string;
+      day: string; // "Sun" | "Mon" | ... | "Sat"
+      startTime: string; // ISO String
+      endTime: string;   // ISO String
+    }
+  ) => {
+    try {
+      // 실제로 백엔드에 루틴을 추가할 API Endpoint
+      // (예: POST /api/v1/routines/{memberId})
+      // 백엔드에 따라서 endpoint나 body 구조 조정 필요
+      const response = await fetch(
+        `https://siiso.site/api/v1/routines/${memberId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: newRoutineData.title,
+            day: newRoutineData.day, // 'day'로 수정
+            start_time: newRoutineData.startTime, // 서버가 'start_time'을 기대
+            end_time: newRoutineData.endTime,     // 서버가 'end_time'을 기대
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to add routine');
+      }
+
+      // 응답으로 받은 루틴 데이터를 camelCase로 변환
+      const addedRoutine: any = await response.json();
+      const mappedRoutine: Routine = {
+        id: addedRoutine.id,
+        title: addedRoutine.title,
+        day: addedRoutine.day,
+        startTime: addedRoutine.start_time,
+        endTime: addedRoutine.end_time,
+        description: addedRoutine.description,
+        frequency: addedRoutine.frequency,
+        nextRun: addedRoutine.next_run,
+      };
+
+      // store의 routines 배열에 추가
+      set((state) => ({
+        routines: [...state.routines, mappedRoutine],
+      }));
+
+      console.log('[store] addRoutine => success:', mappedRoutine);
+    } catch (error) {
+      console.error('Error adding routine:', error);
+      throw error; // 상위에서 처리 가능
     }
   },
 });
@@ -782,5 +903,11 @@ export const useStore = create<StoreState>()(
   persist(stateCreator, {
     name: "user-store", // 로컬 스토리지 키
     storage: storage,
+    // 초기화 시 selectedDate가 없다면 오늘 날짜로 설정
+    onRehydrateStorage: () => (state) => {
+      if (state?.selectedDate === "") {
+        state.setSelectedDate(getToday());
+      }
+    },
   })
 );
