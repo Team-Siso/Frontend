@@ -73,7 +73,6 @@ const TodoListComponent = ({ className }) => {
   const openAddTodo = useStore((s) => s.openAddTodo);
   const setOpenAddTodo = useStore((s) => s.setOpenAddTodo);
   const fetchSchedulesByDate = useStore((s) => s.fetchSchedulesByDate);
-  const addTodo = useStore((s) => s.addTodo);
   const setSchedules = useStore((s) => s.setSchedules);
 
   // ----------------------------
@@ -126,6 +125,7 @@ const TodoListComponent = ({ className }) => {
     setEndHour("0");
     setEndMinute("00");
   };
+
   const handleTimeIconClick = () => {
     setShowInput(true);
     setIsTimeTodo(true);
@@ -138,6 +138,7 @@ const TodoListComponent = ({ className }) => {
     setEndHour("0");
     setEndMinute("00");
   };
+
   const handleInputChange = (e) => {
     setInputValue(e.target.value);
   };
@@ -285,7 +286,6 @@ const TodoListComponent = ({ className }) => {
   
     // 시간 필드 설정
     if (target.startTime || target.endTime) {
-      const [year, month, day] = selectedDate.split("-").map(Number);
       const newStartTime = target.startTime
         ? localTimeToServerUtc(selectedDate, +editStartHour, +editStartMinute)
         : null;
@@ -317,6 +317,17 @@ const TodoListComponent = ({ className }) => {
   const hours = Array.from({ length: 24 }, (_, i) => i.toString());
   const minutes = ["00", "10", "20", "30", "40", "50"];
 
+  // ----------------------------
+  // (중요) 현재 선택된 날짜에 해당하는 todo만 필터링
+  // ----------------------------
+  const filteredSchedules = schedules.filter((todo) => {
+    if (!todo.thisDay) return false;
+    // todo.thisDay가 "2025-01-15T00:00:00.000Z" 형태이므로, 앞의 10글자(YYYY-MM-DD)를 비교
+    return (
+      todo.thisDay.slice(0, 10) === localMidnightToServerUtc(selectedDate).slice(0, 10)
+    );
+  });
+
   return (
     <div className={className}>
       {/* 헤더 */}
@@ -338,7 +349,7 @@ const TodoListComponent = ({ className }) => {
         </div>
       </div>
 
-      {/* 입력창 (새 투두 추가) */}
+      {/* 새 투두 입력창 */}
       {showInput && (
         <div className="bg-gray-100 p-3 flex items-center space-x-2">
           <input
@@ -349,14 +360,14 @@ const TodoListComponent = ({ className }) => {
             onChange={handleInputChange}
             onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
           />
-          {isTimeTodo && (
+          {/* {isTimeTodo && (
             <button
               className="bg-blue-400 text-white px-3 py-1 rounded"
               onClick={() => setShowTimePicker(true)}
             >
               시간 설정
             </button>
-          )}
+          )} */}
           <button
             className="bg-green-500 text-white px-3 py-1 rounded"
             onClick={handleAddTodo}
@@ -417,162 +428,173 @@ const TodoListComponent = ({ className }) => {
               ))}
             </select>
           </div>
-          <button
+          {/* <button
             className="bg-blue-500 text-white px-3 py-1 rounded"
             onClick={() => setShowTimePicker(false)}
           >
             확인
-          </button>
+          </button> */}
         </div>
       )}
 
-      {/* 투두 목록 */}
-      <ul className="divide-y mx-4">
-        {schedules.length > 0 ? (
-          schedules.map((todo) => {
-            const checked = todo.checkStatus === 1;
-            const checkIcon = checked ? CheckedBoxIcon : UncheckBoxIcon;
-            const displayTime = todo.startTime ? formatTime(todo.startTime) : "";
+      {/* 
+        (수정) Todo 목록에 스크롤을 적용하기 위해
+        아래 ul을 감싸는 div에 overflow-y-auto, maxHeight 등을 적용 
+      */}
+      <div
+        className="overflow-y-auto"
+        style={{
+          maxHeight: "calc(43vh - 60px - 40px)",
+          flexGrow: 1,
+        }}
+      >
+        <ul className="divide-y mx-4">
+          {filteredSchedules.length > 0 ? (
+            filteredSchedules.map((todo) => {
+              const checked = todo.checkStatus === 1;
+              const checkIcon = checked ? CheckedBoxIcon : UncheckBoxIcon;
+              const displayTime = todo.startTime ? formatTime(todo.startTime) : "";
 
-            // "시간이 있는 투두"인지 체크
-            const hasTime = !!(todo.startTime || todo.endTime);
+              // "시간이 있는 투두"인지 체크
+              const hasTime = !!(todo.startTime || todo.endTime);
 
-            // 현재 편집 중인 투두인가?
-            const isEditing = editId === todo.id;
+              // 현재 편집 중인 투두인가?
+              const isEditing = editId === todo.id;
 
-            return (
-              <li
-                key={todo.id}
-                className="flex items-center py-3 pl-2 pr-2 relative"
-                onMouseOver={() => setShowEditOptions(todo.id)}
-                onMouseLeave={() => setShowEditOptions(null)}
-              >
-                {/* 체크박스 */}
-                <img
-                  src={checkIcon}
-                  alt="check"
-                  className="cursor-pointer"
-                  onClick={() => toggleTodoCompletion(todo.id)}
-                />
+              return (
+                <li
+                  key={todo.id}
+                  className="flex items-center py-3 pl-2 pr-2 relative"
+                  onMouseOver={() => setShowEditOptions(todo.id)}
+                  onMouseLeave={() => setShowEditOptions(null)}
+                >
+                  {/* 체크박스 */}
+                  <img
+                    src={checkIcon}
+                    alt="check"
+                    className="cursor-pointer"
+                    onClick={() => toggleTodoCompletion(todo.id)}
+                  />
 
-                {/* 인라인 수정 vs 평시 모드 */}
-                {isEditing ? (
-                  <div className="ml-2 flex flex-col space-y-2">
-                    {/* 이름 수정 필드 */}
-                    <div>
-                      <label className="block text-sm font-medium">이름:</label>
-                      <input
-                        className="border p-1 w-full"
-                        type="text"
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                      />
+                  {/* 인라인 수정 vs 평시 모드 */}
+                  {isEditing ? (
+                    <div className="ml-2 flex flex-col space-y-2">
+                      {/* 이름 수정 필드 */}
+                      <div>
+                        <label className="block text-sm font-medium">이름:</label>
+                        <input
+                          className="border p-1 w-full"
+                          type="text"
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                        />
+                      </div>
+
+                      {/* (조건부) 시작 시간 수정 */}
+                      {hasTime && (
+                        <>
+                          <div>
+                            <label className="block text-sm font-medium">시작 시간:</label>
+                            <div className="flex items-center space-x-1">
+                              <select
+                                className="border p-1"
+                                value={editStartHour}
+                                onChange={(e) => setEditStartHour(e.target.value)}
+                              >
+                                {hours.map((h) => (
+                                  <option key={`edit-start-h-${h}`} value={h}>
+                                    {h.padStart(2, "0")}
+                                  </option>
+                                ))}
+                              </select>
+                              :
+                              <select
+                                className="border p-1"
+                                value={editStartMinute}
+                                onChange={(e) => setEditStartMinute(e.target.value)}
+                              >
+                                {minutes.map((m) => (
+                                  <option key={`edit-start-m-${m}`} value={m}>
+                                    {m}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          {/* 완료 시간 수정 */}
+                          <div>
+                            <label className="block text-sm font-medium">완료 시간:</label>
+                            <div className="flex items-center space-x-1">
+                              <select
+                                className="border p-1"
+                                value={editEndHour}
+                                onChange={(e) => setEditEndHour(e.target.value)}
+                              >
+                                {hours.map((h) => (
+                                  <option key={`edit-end-h-${h}`} value={h}>
+                                    {h.padStart(2, "0")}
+                                  </option>
+                                ))}
+                              </select>
+                              :
+                              <select
+                                className="border p-1"
+                                value={editEndMinute}
+                                onChange={(e) => setEditEndMinute(e.target.value)}
+                              >
+                                {minutes.map((m) => (
+                                  <option key={`edit-end-m-${m}`} value={m}>
+                                    {m}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* 확인 버튼 */}
+                      <button
+                        className="mt-2 bg-green-500 text-white px-3 py-1 rounded"
+                        onClick={() => handleEditSave(todo.id)}
+                      >
+                        확인
+                      </button>
                     </div>
+                  ) : (
+                    // 평시 (수정 X)
+                    <span className="ml-2">
+                      {todo.content}
+                      {displayTime && ` (${displayTime})`}
+                    </span>
+                  )}
 
-                    {/* (조건부) 시작 시간 수정 */}
-                    {hasTime && (
-                      <>
-                        <div>
-                          <label className="block text-sm font-medium">시작 시간:</label>
-                          <div className="flex items-center space-x-1">
-                            <select
-                              className="border p-1"
-                              value={editStartHour}
-                              onChange={(e) => setEditStartHour(e.target.value)}
-                            >
-                              {hours.map((h) => (
-                                <option key={`edit-start-h-${h}`} value={h}>
-                                  {h.padStart(2, "0")}
-                                </option>
-                              ))}
-                            </select>
-                            :
-                            <select
-                              className="border p-1"
-                              value={editStartMinute}
-                              onChange={(e) => setEditStartMinute(e.target.value)}
-                            >
-                              {minutes.map((m) => (
-                                <option key={`edit-start-m-${m}`} value={m}>
-                                  {m}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-
-                        {/* 완료 시간 수정 */}
-                        <div>
-                          <label className="block text-sm font-medium">완료 시간:</label>
-                          <div className="flex items-center space-x-1">
-                            <select
-                              className="border p-1"
-                              value={editEndHour}
-                              onChange={(e) => setEditEndHour(e.target.value)}
-                            >
-                              {hours.map((h) => (
-                                <option key={`edit-end-h-${h}`} value={h}>
-                                  {h.padStart(2, "0")}
-                                </option>
-                              ))}
-                            </select>
-                            :
-                            <select
-                              className="border p-1"
-                              value={editEndMinute}
-                              onChange={(e) => setEditEndMinute(e.target.value)}
-                            >
-                              {minutes.map((m) => (
-                                <option key={`edit-end-m-${m}`} value={m}>
-                                  {m}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        </div>
-                      </>
-                    )}
-
-                    {/* 확인 버튼 */}
-                    <button
-                      className="mt-2 bg-green-500 text-white px-3 py-1 rounded"
-                      onClick={() => handleEditSave(todo.id)}
-                    >
-                      확인
-                    </button>
-                  </div>
-                ) : (
-                  // 평시 (수정 X)
-                  <span className="ml-2">
-                    {todo.content}
-                    {displayTime && ` (${displayTime})`}
-                  </span>
-                )}
-
-                {/* 우측 상단 수정/삭제 버튼 */}
-                {showEditOptions === todo.id && !isEditing && (
-                  <div className="absolute right-0 top-0 rounded-lg bg-white p-1 shadow-md">
-                    <button
-                      className="px-2 py-1 mr-2 border-b-2 border-r-2 border-gray-300 rounded-lg text-sm"
-                      onClick={() => startEditTodo(todo)}
-                    >
-                      수정
-                    </button>
-                    <button
-                      className="px-2 py-1 border-b-2 border-gray-300 rounded-lg text-sm"
-                      onClick={() => handleDelete(todo.id)}
-                    >
-                      삭제
-                    </button>
-                  </div>
-                )}
-              </li>
-            );
-          })
-        ) : (
-          <li className="text-center py-3 text-gray-500">할 일이 없습니다.</li>
-        )}
-      </ul>
+                  {/* 우측 상단 수정/삭제 버튼 */}
+                  {showEditOptions === todo.id && !isEditing && (
+                    <div className="absolute right-0 top-0 rounded-lg bg-white p-1 shadow-md">
+                      <button
+                        className="px-2 py-1 mr-2 border-b-2 border-r-2 border-gray-300 rounded-lg text-sm"
+                        onClick={() => startEditTodo(todo)}
+                      >
+                        수정
+                      </button>
+                      <button
+                        className="px-2 py-1 border-b-2 border-gray-300 rounded-lg text-sm"
+                        onClick={() => handleDelete(todo.id)}
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  )}
+                </li>
+              );
+            })
+          ) : (
+            <li className="text-center py-3 text-gray-500">할 일이 없습니다.</li>
+          )}
+        </ul>
+      </div>
     </div>
   );
 };

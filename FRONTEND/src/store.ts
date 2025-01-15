@@ -383,7 +383,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     });
     try {
       const response = await fetch(
-        `http://siiso.site:8080/api/v1/members/login?${params.toString()}`,
+        `https://siiso.site:8080/api/v1/members/login?${params.toString()}`,
         {
           method: "POST",
           headers: {
@@ -447,7 +447,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     try {
       // GET /api/v1/schedules/{memberId}/{date}
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/schedules/${memberId}/${dateString}`
+        `https://siiso.site:8080/api/v1/schedules/${memberId}/${dateString}`
       );
 
       if (!response.ok) {
@@ -552,7 +552,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   fetchFollowers: async (memberId: number) => {
     try {
-      const response = await fetch(`http://siiso.site:8080/api/v1/follows/${memberId}/followers`);
+      const response = await fetch(`https://siiso.site:8080/api/v1/follows/${memberId}/followers`);
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
@@ -640,7 +640,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">) => {
     try {
       const response = await fetch(
-        `http://43.203.254.169:8080/api/v1/schedules/${memberId}`,
+        `https://43.203.254.169:8080/api/v1/schedules/${memberId}`,
         {
           method: "POST",
           headers: {
@@ -670,7 +670,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     const { memberId } = get();
     if (memberId !== null) {
       try {
-        const response = await fetch(`http://siiso.site:8080/api/v1/goals/${memberId}`, {
+        const response = await fetch(`https://siiso.site:8080/api/v1/goals/${memberId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -716,7 +716,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   updateNickname: async (memberId: number, nickname: string) => {
     try {
-      const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}/nickname`, {
+      const response = await fetch(`https://siiso.site:8080/api/v1/members/${memberId}/nickname`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -748,7 +748,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     if (memberId !== null) {
       try {
         const response = await fetch(
-          `http://43.203.254.169:8080/api/v1/goals/${goalId}`,
+          `https://siiso.site:8080/api/v1/goals/${goalId}`,
           {
             method: "PUT",
             headers: {
@@ -779,7 +779,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   updateIntroduce: async (memberId: number, introduce: string) => {
     try {
-      const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}/introduce`, {
+      const response = await fetch(`https://siiso.site:8080/api/v1/members/${memberId}/introduce`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -811,7 +811,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}/profile`, {
+      const response = await fetch(`https://siiso.site:8080/api/v1/members/${memberId}/profile`, {
         method: "POST",
         body: formData,
       });
