@@ -1,12 +1,10 @@
-// FixGridPage.tsx
-import React, { useEffect, useRef, useState } from 'react';
-import WeekGrid from './WeekGrid';
-import './WeekGrid.css';
-import ConfirmButton from '../ConfirmButton';
-import { useStore, Routine } from '../../store'; // Routine 임포트
-import { parseISO } from 'date-fns';
+import React, { useEffect, useRef, useState } from "react";
+import WeekGrid from "./WeekGrid";
+import "./WeekGrid.css";
+import ConfirmButton from "../ConfirmButton";
+import { useStore } from "../../store";
+import { parseISO } from "date-fns";
 
-// 루틴 추가 모달에서 입력할 폼 데이터 형태
 interface RoutineFormData {
   name: string;
   day: string; // "Sun" | "Mon" | ... | "Sat"
@@ -14,7 +12,6 @@ interface RoutineFormData {
   endTime: string;   // "HH:mm"
 }
 
-// RoutineInfo 인터페이스 재사용
 interface RoutineInfo {
   content: string;
   startTime: string;
@@ -25,23 +22,16 @@ interface RoutineInfo {
 const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void }) => {
   console.log("[FixGridPage] *** RENDER ***");
 
-  // -----------------------------
-  // 컴포넌트 상태
-  // -----------------------------
   const [showGrid, setShowGrid] = useState(true);
-
-  // 루틴 추가 모달 열림/닫힘 상태
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 모달 폼
   const [routineForm, setRoutineForm] = useState<RoutineFormData>({
-    name: '',
-    day: 'Sun',
-    startTime: '09:00',
-    endTime: '10:00',
+    name: "",
+    day: "Sun",
+    startTime: "09:00",
+    endTime: "10:00",
   });
 
-  // 그리드에서 이미 색칠되어야 할 셀들
   const [highlightedCells, setHighlightedCells] = useState<{ [key: string]: RoutineInfo }>({});
 
   // -----------------------------
@@ -52,110 +42,83 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
   const fetchRoutines = useStore((s) => s.fetchRoutines);
   const addRoutine = useStore((s) => s.addRoutine);
 
-  // -----------------------------
-  // daysOfWeek 정의 (컴포넌트 전체에서 사용)
-  // -----------------------------
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   // -----------------------------
-  // 처음 마운트 시 루틴 목록 불러오기 (무한루프 방지용 ref)
+  // 초기 fetch (1회)
   // -----------------------------
   const didFetchRef = useRef(false);
   useEffect(() => {
-    console.log("[FixGridPage] useEffect => check fetchRoutines");
-    console.log("   memberId:", memberId, " / didFetchRef.current:", didFetchRef.current);
-
-    if (!memberId) {
-      console.log("[FixGridPage] memberId is null => cannot fetch routines");
-      return;
-    }
-    if (didFetchRef.current) {
-      console.log("[FixGridPage] Already fetched => skip");
-      return;
-    }
+    if (!memberId) return;
+    if (didFetchRef.current) return;
     didFetchRef.current = true;
 
-    console.log("[FixGridPage] => calling fetchRoutines...");
-    fetchRoutines(memberId)
-      .then(() => {
-        console.log("[FixGridPage] fetchRoutines completed");
-      })
-      .catch((err) => {
-        console.error("[FixGridPage] fetchRoutines error:", err);
-      });
+    fetchRoutines(memberId).catch((err) => {
+      console.error("[FixGridPage] fetchRoutines error:", err);
+    });
   }, [memberId, fetchRoutines]);
 
   // -----------------------------
-  // routines가 바뀔 때마다 => highlightedCells 재계산
+  // routines 바뀔 때 -> 그리드 업데이트
   // -----------------------------
   useEffect(() => {
     console.log("[FixGridPage] useEffect => routines changed:", routines);
 
     if (!routines || routines.length === 0) {
-      console.log("[FixGridPage] no routines => clearing highlightedCells");
       setHighlightedCells({});
       return;
     }
 
-    // 새로 계산할 객체
     const newHighlighted: { [key: string]: RoutineInfo } = {};
 
-    // 그리드 인덱스 계산 함수
     function getGridIndexes(dateObj: Date) {
       const hour = dateObj.getHours();
       const min = dateObj.getMinutes();
-      let totalMinutes = (hour - 5) * 60 + min; // 5시 = index 0
+      let totalMinutes = (hour - 5) * 60 + min;
 
       if (totalMinutes < 0) {
-        totalMinutes += 24 * 60; // 음수인 경우 1440을 더해 양수로 변환
+        totalMinutes += 24 * 60;
       }
-
       if (totalMinutes >= 24 * 60) {
-        totalMinutes -= 24 * 60; // 1440 이상인 경우 1440을 빼서 0~1439로 조정
+        totalMinutes -= 24 * 60;
       }
 
-      const timeIndex = Math.floor(totalMinutes / 30); // 0 ~ 47
+      const timeIndex = Math.floor(totalMinutes / 30);
       const remainder = totalMinutes % 30;
-      let partIndex = Math.floor(remainder / 10); // 0,1,2
-
+      let partIndex = Math.floor(remainder / 10);
       if (partIndex > 2) partIndex = 2;
 
       return { timeIndex, partIndex };
     }
 
-    // 루틴 셀 매핑 함수 (여러 셀을 채움)
-    function mapRoutineToCells(startStr: string, endStr: string, dayIndex: number, sch: Routine): { [key: string]: RoutineInfo } {
+    // 수정: 정각이면 다음 칸이 채워지는 문제를 막기 위해
+    function mapRoutineToCells(startStr: string, endStr: string, dayIndex: number, sch: any) {
       const st = parseISO(startStr);
       const et = parseISO(endStr);
       if (isNaN(st.getTime()) || isNaN(et.getTime())) return {};
 
       const stIdx = getGridIndexes(st);
       const etIdx = getGridIndexes(et);
-      console.log(`Routine: ${sch.title}, DayIndex: ${dayIndex}, StartIdx: ${stIdx.timeIndex}-${stIdx.partIndex}, EndIdx: ${etIdx.timeIndex}-${etIdx.partIndex}`);
 
-      if (stIdx.timeIndex < 0 || etIdx.timeIndex < 0) return {};
+      console.log(
+        `Routine: ${sch.title}, DayIndex: ${dayIndex}, StartIdx: ${stIdx.timeIndex}-${stIdx.partIndex}, EndIdx: ${etIdx.timeIndex}-${etIdx.partIndex}`
+      );
 
       const cellsToFill: { [key: string]: RoutineInfo } = {};
 
-      // 시작 시간과 종료 시간 사이의 모든 셀을 채웁니다.
       for (let t = stIdx.timeIndex; t <= etIdx.timeIndex; t++) {
-        let pStart = 0;
-        let pEnd = 2;
-
-        if (t === stIdx.timeIndex) {
-          pStart = stIdx.partIndex;
-        }
-        if (t === etIdx.timeIndex) {
-          pEnd = etIdx.partIndex;
-        }
+        let pStart = t === stIdx.timeIndex ? stIdx.partIndex : 0;
+        // 종료 슬롯에선 partIndex 하나 빼서 처리
+        let pEnd = t === etIdx.timeIndex ? etIdx.partIndex - 1 : 2; 
+        if (pEnd < pStart) continue; // 정각 같은 경우 pEnd < pStart => 그 칸은 그리지 않음
 
         for (let p = pStart; p <= pEnd; p++) {
           const key = `${dayIndex}-${t}-${p}`;
           cellsToFill[key] = {
             content: sch.title,
-            startTime: st.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            endTime: et.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            isCenter: false, // 모든 셀에 표시
+            startTime: st.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            endTime: et.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            isCenter: false,
           };
         }
       }
@@ -163,45 +126,65 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
       return cellsToFill;
     }
 
-    routines.forEach((r) => {
-      console.log("   [FixGridPage] parsing routine =>", r);
-      
-      // 방어 코드 추가: r.day이 undefined인지 확인
-      if (!r.day) {
-        console.error("Routine 'day' is undefined:", r);
-        return;
-      }
-
+    routines.forEach((r: any) => {
+      if (!r.day || !r.startTime || !r.endTime) return;
       const dayIndex = daysOfWeek.indexOf(r.day.trim());
-
-      console.log(`     Parsed day: '${r.day}', dayIndex: ${dayIndex}`);
-
-      if (dayIndex < 0) {
-        console.log("     invalid day => skip");
-        return;
-      }
-
-      if (!r.startTime || !r.endTime) {
-        console.log("     either startTime or endTime is null => skip");
-        return;
-      }
+      if (dayIndex < 0) return;
 
       const routineCells = mapRoutineToCells(r.startTime, r.endTime, dayIndex, r);
-      Object.assign(newHighlighted, routineCells);
+      if (routineCells) {
+        Object.assign(newHighlighted, routineCells);
+      }
     });
 
-    console.log("[FixGridPage] => final newHighlighted:", newHighlighted);
     setHighlightedCells(newHighlighted);
-  }, [routines]); // daysOfWeek 제거 (불필요한 의존성)
+  }, [routines]);
 
   // -----------------------------
-  // 루틴 추가 관련 함수들
+  // 모달 열기/닫기
   // -----------------------------
-  const handleOpenModal = () => setIsModalOpen(true); // handleOpenModal 정의
-  const handleCloseModal = () => setIsModalOpen(false); // handleCloseModal 정의
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
 
   // -----------------------------
-  // 루틴 추가 (POST)
+  // 날짜/시간 변환
+  // -----------------------------
+  function formatLocalDate(date: Date): string {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    const MM = pad(date.getMonth() + 1);
+    const dd = pad(date.getDate());
+    const HH = pad(date.getHours());
+    const mm = pad(date.getMinutes());
+    const ss = pad(date.getSeconds());
+    return `${yyyy}-${MM}-${dd}T${HH}:${mm}:${ss}`;
+  }
+
+  // "HH:mm" -> "YYYY-MM-DDTHH:mm:ss" (당일/이번주 처리)
+  function toIsoWithoutOffset(day: string, hhmm: string): string {
+    const [h, m] = hhmm.split(":").map(Number);
+    const now = new Date();
+    const currentDay = now.getDay();
+    const targetDayIndex = daysOfWeek.indexOf(day);
+
+    // diff 계산
+    let diff = (targetDayIndex - currentDay + 7) % 7;
+
+    // [중요] diff===0이면 "오늘"로 처리 -> 즉시 표시
+    // 새 루틴을 추가하면 오늘 그리드에 바로 보임
+    // (기존 코드처럼 if(diff===0) diff=7; 을 제거)
+    // => 같은 요일이라면 오늘 날짜 그대로
+    //    => 과거 시간일 수 있다는 단점은 있지만, "즉시 표시"를 위해 필요한 로직
+    // 원하는 대로 커스터마이징 가능
+
+    const targetDate = new Date();
+    targetDate.setDate(now.getDate() + diff);
+    targetDate.setHours(h, m, 0, 0);
+    return formatLocalDate(targetDate);
+  }
+
+  // -----------------------------
+  // 루틴 추가
   // -----------------------------
   const handleAddRoutineClick = async () => {
     console.log("[FixGridPage] handleAddRoutineClick triggered!");
@@ -211,38 +194,8 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
       return;
     }
 
-    // Helper function to format Date to 'YYYY-MM-DDTHH:mm:ss'
-    const formatDate = (date: Date): string => {
-      const pad = (n: number) => String(n).padStart(2, '0');
-      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-    }
-
-    // Function to get the next occurrence of the selected day
-    const getNextDateForDay = (day: string): Date => {
-      const daysOfWeekLocal = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      const currentDay = new Date().getDay(); // 0=Sun, 1=Mon, ...,6=Sat
-      const targetDay = daysOfWeekLocal.indexOf(day.trim());
-      if (targetDay < 0) {
-        alert("유효하지 않은 요일입니다.");
-        throw new Error("Invalid day");
-      }
-      const diff = (targetDay - currentDay + 7) % 7;
-      const daysToAdd = diff === 0 ? 7 : diff; // 다음 주 같은 요일
-      const nextDate = new Date();
-      nextDate.setDate(nextDate.getDate() + daysToAdd);
-      return nextDate;
-    }
-
-    // "HH:mm" -> 'YYYY-MM-DDTHH:mm:ss' (local time)
-    function toIso(day: string, hhmm: string): string {
-      const [hh, mm] = hhmm.split(":").map(Number);
-      const targetDate = getNextDateForDay(day);
-      targetDate.setHours(hh, mm, 0, 0);
-      return formatDate(targetDate); // 예: "2025-01-13T09:00:00"
-    }
-
-    const isoStart = toIso(routineForm.day, routineForm.startTime);
-    const isoEnd = toIso(routineForm.day, routineForm.endTime);
+    const isoStart = toIsoWithoutOffset(routineForm.day, routineForm.startTime);
+    const isoEnd = toIsoWithoutOffset(routineForm.day, routineForm.endTime);
 
     console.log("[FixGridPage] => about to call addRoutine with", {
       title: routineForm.name,
@@ -261,7 +214,7 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
       console.log("[FixGridPage] addRoutine succeeded => closing modal");
       alert("루틴이 추가되었습니다.");
       setIsModalOpen(false);
-      // routines가 변경되면 위의 useEffect로 인해 highlightedCells 재계산
+      // 여기서 이미 store.routines가 업데이트 -> useEffect -> 그리드 리렌더
     } catch (err) {
       console.error("[FixGridPage] addRoutine failed:", err);
       alert("루틴 추가 중 오류가 발생했습니다.");
@@ -269,12 +222,12 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
   };
 
   // -----------------------------
-  // 우측 하단: "확인" 버튼 => WeekGrid 숨기고 다른 페이지로 전환
+  // 우측 하단 '확인' 버튼
   // -----------------------------
   const handleConfirmClick = () => {
     console.log("[FixGridPage] Confirm button clicked => go to 'calendar'");
     setShowGrid(false);
-    onPageChange('calendar');
+    onPageChange("calendar");
   };
 
   // -----------------------------
@@ -285,26 +238,17 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
       {/* 요일 헤더 */}
       <div style={{ display: 'flex', justifyContent: 'space-evenly', padding: '20px 0px' }}>
         {daysOfWeek.map(day => (
-          <div
-            key={day}
-            style={{ marginLeft: '40px', fontSize: '18px' }}
-          >
+          <div key={day} style={{ marginLeft: '40px', fontSize: '18px' }}>
             {day}
           </div>
         ))}
       </div>
 
-      {/* WeekGrid를 flex-grow로 설정하여 남은 공간을 채움 */}
-      <div style={{ flexGrow: 1, overflowY: 'auto' }}>
-        <WeekGrid
-          showGrid={showGrid}
-          highlightedCells={highlightedCells}
-        />
+      <div style={{ flexGrow: 1, overflowY: "auto" }}>
+        <WeekGrid showGrid={showGrid} highlightedCells={highlightedCells} />
       </div>
 
-      {/* 하단 버튼 영역 */}
       <div style={{ display: "flex", justifyContent: "space-between", padding: "20px" }}>
-        {/* 왼쪽 하단: 루틴 추가 버튼 */}
         <button
           onClick={handleOpenModal}
           style={{
@@ -318,15 +262,9 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
         >
           루틴 추가
         </button>
-
-        {/* 오른쪽 하단: 확인 버튼 */}
-        <ConfirmButton
-          text="확인"
-          onClick={handleConfirmClick}
-        />
+        <ConfirmButton text="확인" onClick={handleConfirmClick} />
       </div>
 
-      {/* 루틴 추가 모달 */}
       {isModalOpen && (
         <div
           style={{
@@ -366,8 +304,8 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
                   onChange={(e) => setRoutineForm({ ...routineForm, day: e.target.value })}
                   style={{ marginLeft: "10px" }}
                 >
-                  {daysOfWeek.map((day) => (
-                    <option key={day} value={day}>{day}</option>
+                  {daysOfWeek.map((d) => (
+                    <option key={d} value={d}>{d}</option>
                   ))}
                 </select>
               </label>
@@ -375,7 +313,7 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
                 시작 시간:
                 <input
                   type="time"
-                  step="600" // 10분 단위로 제한
+                  step="600"
                   value={routineForm.startTime}
                   onChange={(e) => setRoutineForm({ ...routineForm, startTime: e.target.value })}
                   style={{ marginLeft: "10px" }}
@@ -385,7 +323,7 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
                 끝나는 시간:
                 <input
                   type="time"
-                  step="600" // 10분 단위로 제한
+                  step="600"
                   value={routineForm.endTime}
                   onChange={(e) => setRoutineForm({ ...routineForm, endTime: e.target.value })}
                   style={{ marginLeft: "10px" }}

@@ -840,60 +840,55 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     memberId: number,
     newRoutineData: {
       title: string;
-      day: string; // "Sun" | "Mon" | ... | "Sat"
-      startTime: string; // ISO String
-      endTime: string;   // ISO String
+      day: string;
+      startTime: string; // e.g. "2025-01-22T11:00:00+09:00"
+      endTime: string;
     }
   ) => {
     try {
-      // 실제로 백엔드에 루틴을 추가할 API Endpoint
-      // (예: POST /api/v1/routines/{memberId})
-      // 백엔드에 따라서 endpoint나 body 구조 조정 필요
-      const response = await fetch(
-        `https://siiso.site/api/v1/routines/${memberId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: newRoutineData.title,
-            day: newRoutineData.day, // 'day'로 수정
-            start_time: newRoutineData.startTime, // 서버가 'start_time'을 기대
-            end_time: newRoutineData.endTime,     // 서버가 'end_time'을 기대
-          }),
-        }
-      );
-
+      console.log("[store] addRoutine => sending body:", newRoutineData);
+  
+      const response = await fetch(`https://siiso.site/api/v1/routines/${memberId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          // 여기서 서버가 RoutineRequest( title, day, startTime, endTime ) 를 받음
+          title: newRoutineData.title,
+          day: newRoutineData.day,
+          startTime: newRoutineData.startTime, 
+          endTime: newRoutineData.endTime    
+        }),
+      });
+  
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || 'Failed to add routine');
       }
-
-      // 응답으로 받은 루틴 데이터를 camelCase로 변환
+  
       const addedRoutine: any = await response.json();
-      const mappedRoutine: Routine = {
-        id: addedRoutine.id,
-        title: addedRoutine.title,
-        day: addedRoutine.day,
-        startTime: addedRoutine.start_time,
-        endTime: addedRoutine.end_time,
-        description: addedRoutine.description,
-        frequency: addedRoutine.frequency,
-        nextRun: addedRoutine.next_run,
-      };
-
-      // store의 routines 배열에 추가
+      console.log("[store] addRoutine => success:", addedRoutine);
       set((state) => ({
-        routines: [...state.routines, mappedRoutine],
+        routines: [
+          ...state.routines,
+          {
+            id: addedRoutine.id,
+            title: addedRoutine.title,
+            day: addedRoutine.day,
+            startTime: addedRoutine.startTime, 
+            endTime: addedRoutine.endTime,
+            description: addedRoutine.description,
+            frequency: addedRoutine.frequency,
+            nextRun: addedRoutine.nextRun,
+          },
+        ],
       }));
-
-      console.log('[store] addRoutine => success:', mappedRoutine);
     } catch (error) {
       console.error('Error adding routine:', error);
-      throw error; // 상위에서 처리 가능
+      throw error;
     }
-  },
+  },  
 });
 
 // ---------------------------
