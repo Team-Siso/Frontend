@@ -1,35 +1,34 @@
 .week-grid {
   display: grid;
-  grid-template-columns: 80px repeat(7, 1fr); /* 시간 표시를 위한 하나의 열을 120px로 설정하고 요일별 7개 열 */
-  grid-template-rows: repeat(48, 1fr); /* 30분 간격으로 하루는 48개의 시간대 */
+  grid-template-columns: 80px repeat(7, 1fr); /* time labels + 7 days */
+  grid-template-rows: repeat(48, 1fr); /* 30min intervals => 48 */
   text-align: center;
   position: relative;
-  overflow-y: auto; /* 세로 스크롤 활성화 */
-  max-height: 650px; /* 적당한 최대 높이 설정 */
+  overflow-y: auto;
+  max-height: 650px;
 }
 
 .time-labels {
-  border-right: 2px solid #ccc; /* 시간 라벨과 요일 칼럼 사이의 분리선 */
-  position: sticky; /* 스크롤 시 시간 라벨 고정 */
+  border-right: 2px solid #ccc;
+  position: sticky;
   left: 0;
   background: white;
-  top: 0; /* 상단 고정 */
-  z-index: 2; /* 다른 요소 위에 보이도록 z-index 설정 */
+  top: 0;
+  z-index: 2;
 }
 
 .time-labels .time-cell {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 40px; /* 각 시간 셀의 높이 */
+  height: 40px;
+  border-bottom: 1px dashed #ccc;
+  color: #888;
   box-sizing: border-box;
-  border-bottom: 1px dashed #ccc; /* 가로 점선 추가 */
-  padding: 10px 0;
-  color: #888888; /* 연한 회색으로 변경 */
 }
 
 .day-column {
-  border-right: 1px solid #ccc; /* 요일별 구분선 */
+  border-right: 1px solid #ccc;
   position: relative;
 }
 
@@ -40,53 +39,28 @@
   right: 33%;
   top: 0;
   bottom: 0;
-  border-left: 1px dashed #eee; /* 왼쪽 중간 점선 */
-  border-right: 1px dashed #eee; /* 오른쪽 중간 점선 */
+  border-left: 1px dashed #eee;
+  border-right: 1px dashed #eee;
 }
 
 .day-column .time-cell {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr; /* 요일 칼럼 내 시간 셀을 세 부분으로 나눔 */
+  grid-template-columns: 1fr 1fr 1fr;
   height: 40px;
   padding: 0;
-  border-bottom: 1px dashed #ccc; /* 가로 점선 추가 */
+  border-bottom: 1px dashed #ccc;
 }
 
 .time-cell-part {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%; /* 부모의 전체 높이 */
-  margin: 0;
-  border: none;
+  height: 100%;
 }
 
-.time-cell-part.selected {
-  color: white;
-  border-bottom: none; /* 선택된 부분의 아랫부분 점선 제거 */
-}
-
-/* 격자 선을 숨기는 스타일 */
 .hidden-grid-lines .time-cell {
-  border-bottom: none; /* 가로선 제거 */
+  border-bottom: none;
 }
-
 .hidden-grid-lines .day-column::after {
-  display: none; /* 세로 중간 점선 제거 */
-}
-
-.day {
-  width: '10%';
-  text-align: 'center';
-  margin-left: '8px';
-  color: var(--default-color, black); /* 기본 텍스트 색상 */
-  padding-right: 5px;
-}
-
-.day-Sun {
-  color: #cb280ff0; /* 일요일 색상 */
-}
-
-.day-Sat {
-  color: #1568c0; /* 토요일 색상 */
+  display: none;
 }
