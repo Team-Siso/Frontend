@@ -1,17 +1,14 @@
-// WeekGridPage.tsx
-
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import WeekDates from "../Calendar/WeekDates";
 import WeekGrid from "./WeekGrid";
 import "./WeekGrid.css";
-import ConfirmButton from "../ConfirmButton";
 import { useStore, Schedule } from "../../store";
-import { parseISO, format } from "date-fns";
+import { parseISO, format, addDays } from "date-fns";
 
 interface RoutineInfo {
   content: string;
-  startTime: string; // "HH:mm"
-  endTime: string;   // "HH:mm"
+  startTime: string; 
+  endTime: string;
   isCenter?: boolean;
 }
 
@@ -22,19 +19,24 @@ interface WeekGridPageProps {
 const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
   const [showGrid, setShowGrid] = useState(true);
 
+  // Tooltip state
+  const [tooltip, setTooltip] = useState({
+    visible: false,
+    x: 0,
+    y: 0,
+    content: "",
+  });
+
   // Store
   const memberId = useStore((s) => s.memberId);
   const schedules: Schedule[] = useStore((s) => s.schedules);
   const fetchSchedules = useStore((s) => s.fetchSchedules);
 
+  // 한 번만 fetch
   const didFetchRef = useRef(false);
-
-  // ---------------------------------------
-  // (1) 처음에 전체 스케줄 불러오기
-  // ---------------------------------------
   useEffect(() => {
     if (!memberId) return;
-    if (didFetchRef.current) return; // 이미 호출했다면 재호출 방지
+    if (didFetchRef.current) return;
     didFetchRef.current = true;
 
     fetchSchedules(memberId).catch((err) => {
@@ -42,171 +44,216 @@ const WeekGridPage: React.FC<WeekGridPageProps> = ({ selectedDate }) => {
     });
   }, [memberId, fetchSchedules]);
 
-  // ---------------------------------------
-  // 주(Week) 날짜 계산
-  // ---------------------------------------
+  // [중요] startOfWeek를 구해서 Sunday~Saturday 7일을 배열로
   function getStartOfWeekLocal(date: Date) {
-    const dayOfWeek = date.getDay(); // 0=일요일
+    // 0=Sun
+    const dayOfWeek = date.getDay(); 
     const y = date.getFullYear();
     const m = date.getMonth();
     const d = date.getDate();
+    // ex) date가 목요일이면 dayOfWeek=4 => start = date - 4일 => 일요일
     return new Date(y, m, d - dayOfWeek);
   }
 
-  // ★ weekDates를 memoization 해서 불필요한 재렌더링을 방지
-  const weekDates = useMemo(() => {
-    const start = getStartOfWeekLocal(selectedDate);
-    const dates: Date[] = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(start.getTime());
-      d.setDate(d.getDate() + i);
-      dates.push(d);
-    }
-    return dates;
+  // 주간 날짜(7일)
+  const [weekStartDate, setWeekStartDate] = useState(getStartOfWeekLocal(selectedDate));
+
+  // selectedDate 변경 시 => weekStartDate도 새로 계산
+  useEffect(() => {
+    setWeekStartDate(getStartOfWeekLocal(selectedDate));
   }, [selectedDate]);
 
-  // ---------------------------------------
-  // 05:00~다음날05:00 사이에 매핑하기 위한 헬퍼
-  // ---------------------------------------
-  function getGridIndexes(dateObj: Date) {
-    const hour = dateObj.getHours();
-    const min = dateObj.getMinutes();
-    // 05:00 기준으로 0분이라 가정
-    const totalMinutes = (hour - 5) * 60 + min;
-
-    // 05:00 이전이거나 익일 05:00 이후면 맵핑하지 않음
-    if (totalMinutes < 0 || totalMinutes >= 24 * 60) {
-      return { timeIndex: -1, partIndex: 0 };
+  // weekDates: 일요일 ~ 토요일
+  const weekDates = useMemo(() => {
+    const dates: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      dates.push(addDays(weekStartDate, i));
     }
-    const base30 = Math.floor(totalMinutes / 30); // 30분 단위
+    return dates;
+  }, [weekStartDate]);
+
+  // 05:00 ~ 다음날05:00 계산
+  function getGridIndexes(dateObj: Date) {
+    // hour-5 => if <0 => 전날, if >=24 => 다음날
+    let hour = dateObj.getHours();
+    const min = dateObj.getMinutes();
+
+    // 전날/다음날 처리
+    let dayOffset = 0; // 0: same day, -1: previous day, +1: next day
+    if (hour < 5) {
+      // 05시 이전 => 전날로
+      dayOffset = -1;
+      hour += 24; // ex) 2시 -> 26시
+    }
+
+    let totalMinutes = (hour - 5) * 60 + min;
+    if (totalMinutes >= 24 * 60) {
+      // 29시 이상 -> 다음날
+      dayOffset = +1;
+      totalMinutes -= 24 * 60;
+    }
+
+    const timeIndex = Math.floor(totalMinutes / 30);
     const remainder = totalMinutes % 30;
-    const timeIndex = base30;
-    let partIndex = Math.floor(remainder / 10); // 10분 단위
+    let partIndex = Math.floor(remainder / 10);
     if (partIndex > 2) partIndex = 2;
-    return { timeIndex, partIndex };
+
+    return { dayOffset, timeIndex, partIndex };
   }
 
-  // ---------------------------------------
-  // 스케줄 하나(start~end)를 여러 셀에 매핑
-  // ---------------------------------------
+  // 하나의 스케줄 => 여러 셀
   function mapScheduleToCells(
     startStr: string,
     endStr: string,
     dayIndex: number,
     sch: Schedule
   ): { [key: string]: RoutineInfo } {
-    const st = parseISO(startStr); // 로컬 시각으로 파싱
+    const st = parseISO(startStr);
     const et = parseISO(endStr);
+    if (isNaN(st.getTime()) || isNaN(et.getTime())) return {};
 
-    if (isNaN(st.getTime()) || isNaN(et.getTime()) || et <= st) return {};
+    // 스케줄이 역전되면 무시
+    if (et <= st) return {};
 
-    const cellsToFill: { [key: string]: RoutineInfo } = {};
+    const result: { [key: string]: RoutineInfo } = {};
     let currentTime = new Date(st.getTime());
     const durationMinutes = (et.getTime() - st.getTime()) / 60000;
-    const numberOfParts = Math.floor(durationMinutes / 10); // 변경: Math.floor 사용
-    const remainder = durationMinutes % 10;
-    const centerPart = Math.floor(numberOfParts / 2);
-    let partsFilled = 0;
+    const totalParts = Math.floor(durationMinutes / 10);
+    let count = 0;
 
-    while (partsFilled < numberOfParts || (partsFilled === numberOfParts && remainder > 0)) {
-      const { timeIndex, partIndex } = getGridIndexes(currentTime);
-      if (timeIndex === -1) break; // 05:00~익일05:00 범위 밖이면 중단
-
-      const key = `${dayIndex}-${timeIndex}-${partIndex}`;
-      const isCenter = partsFilled === centerPart;
-
-      cellsToFill[key] = {
-        content: sch.content,
-        startTime: st.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        endTime: et.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        isCenter,
-      };
-
-      // 다음 10분으로 이동
+    while (count < totalParts) {
+      const { dayOffset, timeIndex, partIndex } = getGridIndexes(currentTime);
+      if (timeIndex === -1) {
+        // 05시 이전 => timeIndex=-1로 할 수도 있으나
+        // 위 로직에서 -1 => skip
+      }
+      if (timeIndex >= 0 && timeIndex < 48) {
+        // valid grid range
+        const actualDayIndex = dayIndex + dayOffset; 
+        // dayOffset이 -1이면 전날, +1이면 다음날
+        if (actualDayIndex >= 0 && actualDayIndex < 7) {
+          // 같은 주 안에 있으면 칠함
+          const key = `${actualDayIndex}-${timeIndex}-${partIndex}`;
+          result[key] = {
+            content: sch.content,
+            startTime: st.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            endTime: et.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          };
+        }
+      }
+      // 10분 후
       currentTime.setMinutes(currentTime.getMinutes() + 10);
-      partsFilled++;
+      count++;
     }
-
-    return cellsToFill;
+    return result;
   }
 
-  // ---------------------------------------
-  // highlightCells 계산
-  // ---------------------------------------
   const [highlightedCells, setHighlightedCells] = useState<{ [key: string]: RoutineInfo }>({});
 
+  // 주간 전체 스케줄 => gridCells
   useEffect(() => {
-    const newHighlighted: { [key: string]: RoutineInfo } = {};
+    const newCells: { [key: string]: RoutineInfo } = {};
 
-    // 주간에 해당하는 날짜들(weekDates)을 순회
+    // weekDates[dayIndex], dayIndex=0..6
     weekDates.forEach((wd, dayIndex) => {
-      // 이 날짜를 "yyyy-MM-dd"로
+      // "YYYY-MM-DD"
       const wdString = format(wd, "yyyy-MM-dd");
-
       schedules.forEach((sch) => {
         if (!sch.thisDay) return;
-
-        // sch.thisDay = "YYYY-MM-DDT00:00:00" 형태라면 parseISO로 안전하게 파싱 후 날짜 부분만 추출
-        const scheduleDate = parseISO(sch.thisDay);
-        if (isNaN(scheduleDate.getTime())) return;
-
-        // "yyyy-MM-dd" 형태로
-        const scheduleDay = format(scheduleDate, "yyyy-MM-dd");
-
-        // 날짜가 같은 스케줄만 매핑
-        if (scheduleDay === wdString) {
+        // sch.thisDay => "YYYY-MM-DDT00:00:00.000Z"
+        const dayPart = format(parseISO(sch.thisDay), "yyyy-MM-dd");
+        if (dayPart === wdString) {
+          // map start~end
           if (sch.startTime && sch.endTime) {
             const partial = mapScheduleToCells(sch.startTime, sch.endTime, dayIndex, sch);
-            Object.assign(newHighlighted, partial);
+            Object.assign(newCells, partial);
           }
         }
       });
     });
 
-    setHighlightedCells(newHighlighted);
+    setHighlightedCells(newCells);
   }, [schedules, weekDates]);
 
-  // ---------------------------------------
-  // "확인" 버튼
-  // ---------------------------------------
-  const handleConfirmClick = () => {
-    setShowGrid(false);
-    // 필요하다면 다른 페이지로 이동 혹은 다른 로직
+  // WeekGrid 마우스 호버 툴팁
+  const handleCellHover = (
+    routine: RoutineInfo | null,
+    e: React.MouseEvent<HTMLDivElement>
+  ) => {
+    if (!routine) {
+      setTooltip({ ...tooltip, visible: false });
+      return;
+    }
+    setTooltip({
+      visible: true,
+      x: e.clientX + 10,
+      y: e.clientY + 10,
+      content: `${routine.content}\n${routine.startTime} ~ ${routine.endTime}`,
+    });
   };
 
   return (
     <div style={{ position: "relative", height: "700px" }}>
       {/* 주간 날짜 헤더 */}
-      <WeekDates selectedDate={selectedDate} />
+      <WeekDates 
+        selectedDate={weekStartDate} 
+        onSelectedDateChange={(newDate) => {
+          // 여기서 weekStartDate나 selectedDate를 갱신하면
+          // 일주일 뷰가 바뀜 + 왼쪽 투두리스트도 반영 가능
+          setWeekStartDate(getStartOfWeekLocal(newDate));
+        }}
+      />
 
-      {/* 요일 헤더 (Sun ~ Sat) */}
+      {/* 요일 헤더 */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "80px repeat(7, 1fr)",
-          padding: "0px 35px",
-          width: "100%",
+          display: "flex",
+          justifyContent: "space-around",
+          padding: "5px 0px",
+          marginLeft: "80px",
+          marginRight: "10px",
         }}
       >
-        <div></div>
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-          <div key={day} className="day-header">
+          <div
+            key={day}
+            style={{
+              width: "100px",
+              textAlign: "center",
+              fontSize: "16px",
+            }}
+          >
             {day}
           </div>
         ))}
       </div>
 
-      {/* 실제 WeekGrid 표시 */}
-      <WeekGrid showGrid={showGrid} highlightedCells={highlightedCells} />
+      {/* WeekGrid */}
+      <WeekGrid
+        showGrid={showGrid}
+        highlightedCells={highlightedCells}
+        onCellHover={handleCellHover}
+      />
 
-      {/* 하단 버튼 */}
-      <div style={{ position: "absolute", bottom: "20px", right: "20px" }}>
-        <ConfirmButton
-          onClick={handleConfirmClick}
-          text="확인"
-          style={{ width: "74px", height: "42px" }}
-        />
-      </div>
+      {/* 툴팁 */}
+      {tooltip.visible && (
+        <div
+          style={{
+            position: "fixed",
+            top: tooltip.y,
+            left: tooltip.x,
+            backgroundColor: "rgba(0,0,0,0.75)",
+            color: "#fff",
+            padding: "5px 8px",
+            borderRadius: "4px",
+            pointerEvents: "none",
+            whiteSpace: "pre-line",
+            zIndex: 99999,
+          }}
+        >
+          {tooltip.content}
+        </div>
+      )}
     </div>
   );
 };

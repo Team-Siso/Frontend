@@ -1,255 +1,224 @@
-// FixGridPage.tsx
-import React, { useEffect, useRef, useState } from 'react';
-import WeekGrid from './WeekGrid';
-import './WeekGrid.css';
-import ConfirmButton from '../ConfirmButton';
-import { useStore, Routine } from '../../store'; // Routine 임포트
-import { parseISO } from 'date-fns';
+import React, { useEffect, useRef, useState } from "react";
+import WeekGrid from "./WeekGrid";
+import "./WeekGrid.css";
+import ConfirmButton from "../ConfirmButton";
+import { useStore } from "../../store";
+import { parseISO } from "date-fns";
 
-// 루틴 추가 모달에서 입력할 폼 데이터 형태
 interface RoutineFormData {
   name: string;
-  day: string; // "Sun" | "Mon" | ... | "Sat"
+  day: string;      // "Sun" | "Mon" | ... | "Sat"
   startTime: string; // "HH:mm"
   endTime: string;   // "HH:mm"
 }
 
-// RoutineInfo 인터페이스 재사용
+// 루틴을 그리드에 칠할 때 저장하는 정보
 interface RoutineInfo {
-  content: string;
-  startTime: string;
-  endTime: string;
-  isCenter?: boolean;
+  content: string;     // 루틴 이름
+  startTime: string;   // 표시용 (ex: "09:00")
+  endTime: string;     // 표시용 (ex: "10:00")
+  isCenter?: boolean;  // (지금은 사용 안 함, 그리드 상 텍스트는 제거)
 }
 
 const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void }) => {
   console.log("[FixGridPage] *** RENDER ***");
 
-  // -----------------------------
-  // 컴포넌트 상태
-  // -----------------------------
   const [showGrid, setShowGrid] = useState(true);
 
-  // 루틴 추가 모달 열림/닫힘 상태
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // ---------------------------
+  // 모달들 (추가/수정)
+  // ---------------------------
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // 모달 폼
+  // 폼
   const [routineForm, setRoutineForm] = useState<RoutineFormData>({
-    name: '',
-    day: 'Sun',
-    startTime: '09:00',
-    endTime: '10:00',
+    name: "",
+    day: "Sun",
+    startTime: "09:00",
+    endTime: "10:00",
+  });
+  // 수정 폼
+  const [editRoutineId, setEditRoutineId] = useState<number | null>(null);
+  const [editRoutineForm, setEditRoutineForm] = useState<RoutineFormData>({
+    name: "",
+    day: "Sun",
+    startTime: "09:00",
+    endTime: "10:00",
   });
 
-  // 그리드에서 이미 색칠되어야 할 셀들
+  // ---------------------------
+  // 그리드에 색칠할 정보
+  // ---------------------------
   const [highlightedCells, setHighlightedCells] = useState<{ [key: string]: RoutineInfo }>({});
 
-  // -----------------------------
+  // ---------------------------
+  // Tooltip 상태 (호버 시 표시)
+  // ---------------------------
+  const [tooltip, setTooltip] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    content: string;
+  }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    content: "",
+  });
+
+  // ---------------------------
   // store
-  // -----------------------------
+  // ---------------------------
   const memberId = useStore((s) => s.memberId);
   const routines = useStore((s) => s.routines);
   const fetchRoutines = useStore((s) => s.fetchRoutines);
   const addRoutine = useStore((s) => s.addRoutine);
+  const updateRoutine = useStore((s) => s.updateRoutine);
+  const deleteRoutine = useStore((s) => s.deleteRoutine);
 
-  // -----------------------------
-  // daysOfWeek 정의 (컴포넌트 전체에서 사용)
-  // -----------------------------
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  // -----------------------------
-  // 처음 마운트 시 루틴 목록 불러오기 (무한루프 방지용 ref)
-  // -----------------------------
+  // ---------------------------
+  // 첫 마운트 시 루틴 리스트 불러오기
+  // ---------------------------
   const didFetchRef = useRef(false);
   useEffect(() => {
-    console.log("[FixGridPage] useEffect => check fetchRoutines");
-    console.log("   memberId:", memberId, " / didFetchRef.current:", didFetchRef.current);
-
-    if (!memberId) {
-      console.log("[FixGridPage] memberId is null => cannot fetch routines");
-      return;
-    }
-    if (didFetchRef.current) {
-      console.log("[FixGridPage] Already fetched => skip");
-      return;
-    }
+    if (!memberId) return;
+    if (didFetchRef.current) return;
     didFetchRef.current = true;
 
-    console.log("[FixGridPage] => calling fetchRoutines...");
-    fetchRoutines(memberId)
-      .then(() => {
-        console.log("[FixGridPage] fetchRoutines completed");
-      })
-      .catch((err) => {
-        console.error("[FixGridPage] fetchRoutines error:", err);
-      });
+    fetchRoutines(memberId).catch((err) => {
+      console.error("[FixGridPage] fetchRoutines error:", err);
+    });
   }, [memberId, fetchRoutines]);
 
-  // -----------------------------
-  // routines가 바뀔 때마다 => highlightedCells 재계산
-  // -----------------------------
+  // ---------------------------
+  // routines가 바뀔 때 -> 그리드에 매핑
+  // ---------------------------
   useEffect(() => {
     console.log("[FixGridPage] useEffect => routines changed:", routines);
 
     if (!routines || routines.length === 0) {
-      console.log("[FixGridPage] no routines => clearing highlightedCells");
       setHighlightedCells({});
       return;
     }
 
-    // 새로 계산할 객체
+    // 새로 계산
     const newHighlighted: { [key: string]: RoutineInfo } = {};
 
-    // 그리드 인덱스 계산 함수
+    // 05:00 기준으로 인덱스 계산
     function getGridIndexes(dateObj: Date) {
       const hour = dateObj.getHours();
       const min = dateObj.getMinutes();
-      let totalMinutes = (hour - 5) * 60 + min; // 5시 = index 0
+      let totalMinutes = (hour - 5) * 60 + min;
 
       if (totalMinutes < 0) {
-        totalMinutes += 24 * 60; // 음수인 경우 1440을 더해 양수로 변환
+        totalMinutes += 24 * 60;
       }
-
       if (totalMinutes >= 24 * 60) {
-        totalMinutes -= 24 * 60; // 1440 이상인 경우 1440을 빼서 0~1439로 조정
+        totalMinutes -= 24 * 60;
       }
 
-      const timeIndex = Math.floor(totalMinutes / 30); // 0 ~ 47
+      const timeIndex = Math.floor(totalMinutes / 30); // 0..47
       const remainder = totalMinutes % 30;
-      let partIndex = Math.floor(remainder / 10); // 0,1,2
-
+      let partIndex = Math.floor(remainder / 10);      // 0..2
       if (partIndex > 2) partIndex = 2;
 
       return { timeIndex, partIndex };
     }
 
-    // 루틴 셀 매핑 함수 (여러 셀을 채움)
-    function mapRoutineToCells(startStr: string, endStr: string, dayIndex: number, sch: Routine): { [key: string]: RoutineInfo } {
+    // 루틴 매핑
+    function mapRoutineToCells(startStr: string, endStr: string, dayIndex: number, routine: any) {
       const st = parseISO(startStr);
       const et = parseISO(endStr);
       if (isNaN(st.getTime()) || isNaN(et.getTime())) return {};
 
       const stIdx = getGridIndexes(st);
       const etIdx = getGridIndexes(et);
-      console.log(`Routine: ${sch.title}, DayIndex: ${dayIndex}, StartIdx: ${stIdx.timeIndex}-${stIdx.partIndex}, EndIdx: ${etIdx.timeIndex}-${etIdx.partIndex}`);
 
-      if (stIdx.timeIndex < 0 || etIdx.timeIndex < 0) return {};
+      console.log(
+        `Routine: ${routine.title}, dayIndex: ${dayIndex}, StartIdx: ${stIdx.timeIndex}-${stIdx.partIndex}, EndIdx: ${etIdx.timeIndex}-${etIdx.partIndex}`
+      );
 
       const cellsToFill: { [key: string]: RoutineInfo } = {};
 
-      // 시작 시간과 종료 시간 사이의 모든 셀을 채웁니다.
       for (let t = stIdx.timeIndex; t <= etIdx.timeIndex; t++) {
-        let pStart = 0;
-        let pEnd = 2;
-
-        if (t === stIdx.timeIndex) {
-          pStart = stIdx.partIndex;
-        }
-        if (t === etIdx.timeIndex) {
-          pEnd = etIdx.partIndex;
-        }
+        let pStart = t === stIdx.timeIndex ? stIdx.partIndex : 0;
+        let pEnd   = t === etIdx.timeIndex ? etIdx.partIndex - 1 : 2;
+        if (pEnd < pStart) continue; // 정각 등으로 skip
 
         for (let p = pStart; p <= pEnd; p++) {
           const key = `${dayIndex}-${t}-${p}`;
           cellsToFill[key] = {
-            content: sch.title,
-            startTime: st.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            endTime: et.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            isCenter: false, // 모든 셀에 표시
+            content: routine.title, // 마우스 호버 시 보여줄 텍스트
+            startTime: st.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            endTime: et.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            isCenter: false,
           };
         }
       }
-
       return cellsToFill;
     }
 
-    routines.forEach((r) => {
-      console.log("   [FixGridPage] parsing routine =>", r);
-      
-      // 방어 코드 추가: r.day이 undefined인지 확인
-      if (!r.day) {
-        console.error("Routine 'day' is undefined:", r);
-        return;
-      }
-
+    routines.forEach((r: any) => {
+      if (!r.day || !r.startTime || !r.endTime) return;
       const dayIndex = daysOfWeek.indexOf(r.day.trim());
-
-      console.log(`     Parsed day: '${r.day}', dayIndex: ${dayIndex}`);
-
-      if (dayIndex < 0) {
-        console.log("     invalid day => skip");
-        return;
-      }
-
-      if (!r.startTime || !r.endTime) {
-        console.log("     either startTime or endTime is null => skip");
-        return;
-      }
+      if (dayIndex < 0) return;
 
       const routineCells = mapRoutineToCells(r.startTime, r.endTime, dayIndex, r);
-      Object.assign(newHighlighted, routineCells);
+      if (routineCells) {
+        Object.assign(newHighlighted, routineCells);
+      }
     });
 
-    console.log("[FixGridPage] => final newHighlighted:", newHighlighted);
     setHighlightedCells(newHighlighted);
-  }, [routines]); // daysOfWeek 제거 (불필요한 의존성)
+  }, [routines]);
 
-  // -----------------------------
-  // 루틴 추가 관련 함수들
-  // -----------------------------
-  const handleOpenModal = () => setIsModalOpen(true); // handleOpenModal 정의
-  const handleCloseModal = () => setIsModalOpen(false); // handleCloseModal 정의
+  // ---------------------------
+  // 날짜/시간 변환 유틸
+  // ---------------------------
+  function formatLocalDate(date: Date): string {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    const MM = pad(date.getMonth() + 1);
+    const dd = pad(date.getDate());
+    const HH = pad(date.getHours());
+    const mm = pad(date.getMinutes());
+    const ss = pad(date.getSeconds());
+    return `${yyyy}-${MM}-${dd}T${HH}:${mm}:${ss}`;
+  }
 
-  // -----------------------------
-  // 루틴 추가 (POST)
-  // -----------------------------
+  // "HH:mm" -> "YYYY-MM-DDTHH:mm:ss"
+  function toIsoWithoutOffset(day: string, hhmm: string): string {
+    const [h, m] = hhmm.split(":").map(Number);
+    const now = new Date();
+    const currentDay = now.getDay();
+    const targetDayIndex = daysOfWeek.indexOf(day);
+    let diff = (targetDayIndex - currentDay + 7) % 7;
+    // diff===0이면 오늘 날짜
+
+    const targetDate = new Date(now);
+    targetDate.setDate(now.getDate() + diff);
+    targetDate.setHours(h, m, 0, 0);
+    return formatLocalDate(targetDate);
+  }
+
+  // ---------------------------
+  // 모달: 루틴 추가
+  // ---------------------------
+  const handleOpenAddModal = () => setIsAddModalOpen(true);
+  const handleCloseAddModal = () => setIsAddModalOpen(false);
+
   const handleAddRoutineClick = async () => {
-    console.log("[FixGridPage] handleAddRoutineClick triggered!");
-
     if (!memberId) {
       alert("로그인이 필요합니다.");
       return;
     }
 
-    // Helper function to format Date to 'YYYY-MM-DDTHH:mm:ss'
-    const formatDate = (date: Date): string => {
-      const pad = (n: number) => String(n).padStart(2, '0');
-      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-    }
-
-    // Function to get the next occurrence of the selected day
-    const getNextDateForDay = (day: string): Date => {
-      const daysOfWeekLocal = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      const currentDay = new Date().getDay(); // 0=Sun, 1=Mon, ...,6=Sat
-      const targetDay = daysOfWeekLocal.indexOf(day.trim());
-      if (targetDay < 0) {
-        alert("유효하지 않은 요일입니다.");
-        throw new Error("Invalid day");
-      }
-      const diff = (targetDay - currentDay + 7) % 7;
-      const daysToAdd = diff === 0 ? 7 : diff; // 다음 주 같은 요일
-      const nextDate = new Date();
-      nextDate.setDate(nextDate.getDate() + daysToAdd);
-      return nextDate;
-    }
-
-    // "HH:mm" -> 'YYYY-MM-DDTHH:mm:ss' (local time)
-    function toIso(day: string, hhmm: string): string {
-      const [hh, mm] = hhmm.split(":").map(Number);
-      const targetDate = getNextDateForDay(day);
-      targetDate.setHours(hh, mm, 0, 0);
-      return formatDate(targetDate); // 예: "2025-01-13T09:00:00"
-    }
-
-    const isoStart = toIso(routineForm.day, routineForm.startTime);
-    const isoEnd = toIso(routineForm.day, routineForm.endTime);
-
-    console.log("[FixGridPage] => about to call addRoutine with", {
-      title: routineForm.name,
-      day: routineForm.day,
-      startTime: isoStart,
-      endTime: isoEnd,
-    });
+    const isoStart = toIsoWithoutOffset(routineForm.day, routineForm.startTime);
+    const isoEnd   = toIsoWithoutOffset(routineForm.day, routineForm.endTime);
 
     try {
       await addRoutine(memberId, {
@@ -258,84 +227,201 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
         startTime: isoStart,
         endTime: isoEnd,
       });
-      console.log("[FixGridPage] addRoutine succeeded => closing modal");
       alert("루틴이 추가되었습니다.");
-      setIsModalOpen(false);
-      // routines가 변경되면 위의 useEffect로 인해 highlightedCells 재계산
+      setIsAddModalOpen(false);
     } catch (err) {
-      console.error("[FixGridPage] addRoutine failed:", err);
-      alert("루틴 추가 중 오류가 발생했습니다.");
+      console.error("addRoutine failed:", err);
+      alert("루틴 추가 중 오류");
     }
   };
 
-  // -----------------------------
-  // 우측 하단: "확인" 버튼 => WeekGrid 숨기고 다른 페이지로 전환
-  // -----------------------------
-  const handleConfirmClick = () => {
-    console.log("[FixGridPage] Confirm button clicked => go to 'calendar'");
-    setShowGrid(false);
-    onPageChange('calendar');
+  // ---------------------------
+  // 모달: 루틴 관리(수정/삭제)
+  // ---------------------------
+  const handleOpenManageModal = () => setIsManageModalOpen(true);
+  const handleCloseManageModal = () => setIsManageModalOpen(false);
+
+  // 편집 모달 열기
+  const handleOpenEditModal = (routine: any) => {
+    setEditRoutineId(routine.id);
+    setEditRoutineForm({
+      name: routine.title || "",
+      day: routine.day || "Sun",
+      startTime: extractHHmm(routine.startTime),
+      endTime: extractHHmm(routine.endTime),
+    });
+    setIsEditModalOpen(true);
+  };
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setEditRoutineId(null);
   };
 
-  // -----------------------------
-  // render
-  // -----------------------------
+  // "HH:mm" 추출
+  function extractHHmm(isoString: string) {
+    if (!isoString) return "09:00";
+    const date = parseISO(isoString);
+    const hh = String(date.getHours()).padStart(2, "0");
+    const mm = String(date.getMinutes()).padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
+
+  // 편집 "저장"
+  const handleSaveEdit = async () => {
+    if (!editRoutineId || !memberId) return;
+
+    const isoStart = toIsoWithoutOffset(editRoutineForm.day, editRoutineForm.startTime);
+    const isoEnd   = toIsoWithoutOffset(editRoutineForm.day, editRoutineForm.endTime);
+
+    try {
+      await updateRoutine(editRoutineId, {
+        title: editRoutineForm.name,
+        day: editRoutineForm.day,
+        startTime: isoStart,
+        endTime: isoEnd,
+      });
+      alert("루틴 수정 완료");
+      setIsEditModalOpen(false);
+      setEditRoutineId(null);
+    } catch (err) {
+      console.error("updateRoutine failed:", err);
+      alert("루틴 수정 중 오류");
+    }
+  };
+
+  // 루틴 삭제
+  const handleDeleteRoutine = async (routineId: number) => {
+    const confirmDel = window.confirm("정말 삭제?");
+    if (!confirmDel) return;
+    try {
+      await deleteRoutine(routineId);
+      alert("루틴이 삭제되었습니다.");
+    } catch (err) {
+      console.error("deleteRoutine failed:", err);
+      alert("삭제 중 오류");
+    }
+  };
+
+  // ---------------------------
+  // "확인" 버튼 => 캘린더 이동
+  // ---------------------------
+  const handleConfirmClick = () => {
+    setShowGrid(false);
+    onPageChange("calendar");
+  };
+
+  // ---------------------------
+  // 요일별 루틴 그룹핑
+  // ---------------------------
+  function getRoutinesByDay() {
+    const grouped: { [day: string]: any[] } = {};
+    daysOfWeek.forEach((d) => (grouped[d] = []));
+    routines.forEach((r: any) => {
+      if (r.day && daysOfWeek.includes(r.day)) {
+        grouped[r.day].push(r);
+      }
+    });
+    return grouped;
+  }
+  const routinesByDay = getRoutinesByDay();
+
+  // ---------------------------
+  // WeekGrid에 넘길 "onCellHover"
+  // ---------------------------
+  const handleCellHover = (
+    routine: RoutineInfo | null,
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    if (!routine) {
+      setTooltip((prev) => ({ ...prev, visible: false }));
+      return;
+    }
+    // 루틴이 있는 셀 => 툴팁 표시
+    setTooltip({
+      visible: true,
+      x: e.clientX + 10, // 살짝 우하단
+      y: e.clientY + 10,
+      content: `${routine.content}\n${routine.startTime} ~ ${routine.endTime}`,
+    });
+  };
+
   return (
     <div style={{ position: "relative", height: "100vh", display: "flex", flexDirection: "column" }}>
       {/* 요일 헤더 */}
-      <div style={{ display: 'flex', justifyContent: 'space-evenly', padding: '20px 0px' }}>
-        {daysOfWeek.map(day => (
-          <div
-            key={day}
-            style={{ marginLeft: '40px', fontSize: '18px' }}
-          >
+      <div style={{ display: "flex", justifyContent: "space-evenly", padding: "20px" }}>
+        {daysOfWeek.map((day) => (
+          <div key={day} style={{ marginLeft: "40px", fontSize: "18px" }}>
             {day}
           </div>
         ))}
       </div>
 
-      {/* WeekGrid를 flex-grow로 설정하여 남은 공간을 채움 */}
-      <div style={{ flexGrow: 1, overflowY: 'auto' }}>
+      {/* WeekGrid */}
+      <div style={{ flexGrow: 1, overflowY: "auto", position: "relative" }}>
         <WeekGrid
           showGrid={showGrid}
           highlightedCells={highlightedCells}
+          onCellHover={handleCellHover} // ★ 마우스 호버 콜백
         />
       </div>
 
       {/* 하단 버튼 영역 */}
       <div style={{ display: "flex", justifyContent: "space-between", padding: "20px" }}>
-        {/* 왼쪽 하단: 루틴 추가 버튼 */}
-        <button
-          onClick={handleOpenModal}
-          style={{
-            width: "100px",
-            height: "40px",
-            backgroundColor: "#4CAF50",
-            color: "white",
-            border: "none",
-            borderRadius: "4px"
-          }}
-        >
-          루틴 추가
-        </button>
-
-        {/* 오른쪽 하단: 확인 버튼 */}
-        <ConfirmButton
-          text="확인"
-          onClick={handleConfirmClick}
-        />
+        {/* 왼쪽 버튼들 */}
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            style={{ width: "100px", height: "40px", backgroundColor: "#A8C8F6", color: "#fff",
+                     border: "none", borderRadius: "4px"}}
+            onClick={handleOpenAddModal}
+          >
+            루틴 추가
+          </button>
+          <button
+            style={{ width: "100px", height: "40px", backgroundColor: "#C8A8E6", color: "#fff",
+                     border: "none", borderRadius: "4px"}}
+            onClick={handleOpenManageModal}
+          >
+            루틴 수정
+          </button>
+        </div>
+        <ConfirmButton text="확인" onClick={handleConfirmClick} />
       </div>
 
-      {/* 루틴 추가 모달 */}
-      {isModalOpen && (
+      {/* Hover Tooltip */}
+      {tooltip.visible && (
+        <div
+          style={{
+            position: "fixed",
+            top: tooltip.y,
+            left: tooltip.x,
+            backgroundColor: "rgba(0,0,0,0.7)",
+            color: "#fff",
+            padding: "5px 8px",
+            borderRadius: "4px",
+            whiteSpace: "pre-line", // \n 지원
+            pointerEvents: "none",
+            zIndex: 99999,
+          }}
+        >
+          {tooltip.content}
+        </div>
+      )}
+
+      {/*
+        ============================
+        루틴 추가 모달
+        ============================
+      */}
+      {isAddModalOpen && (
         <div
           style={{
             position: "absolute",
             top: 0, left: 0,
             width: "100%", height: "100%",
-            backgroundColor: "rgba(0,0,0,0.3)"
+            backgroundColor: "rgba(0,0,0,0.3)",
+            zIndex: 9999
           }}
-          onClick={handleCloseModal}
+          onClick={handleCloseAddModal}
         >
           <div
             style={{
@@ -366,8 +452,8 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
                   onChange={(e) => setRoutineForm({ ...routineForm, day: e.target.value })}
                   style={{ marginLeft: "10px" }}
                 >
-                  {daysOfWeek.map((day) => (
-                    <option key={day} value={day}>{day}</option>
+                  {daysOfWeek.map((d) => (
+                    <option key={d} value={d}>{d}</option>
                   ))}
                 </select>
               </label>
@@ -375,7 +461,7 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
                 시작 시간:
                 <input
                   type="time"
-                  step="600" // 10분 단위로 제한
+                  step="600"
                   value={routineForm.startTime}
                   onChange={(e) => setRoutineForm({ ...routineForm, startTime: e.target.value })}
                   style={{ marginLeft: "10px" }}
@@ -385,7 +471,7 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
                 끝나는 시간:
                 <input
                   type="time"
-                  step="600" // 10분 단위로 제한
+                  step="600"
                   value={routineForm.endTime}
                   onChange={(e) => setRoutineForm({ ...routineForm, endTime: e.target.value })}
                   style={{ marginLeft: "10px" }}
@@ -394,12 +480,176 @@ const FixGridPage = ({ onPageChange }: { onPageChange: (page: string) => void })
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px", gap: "10px" }}>
-              <button onClick={handleCloseModal}>취소</button>
+              <button onClick={handleCloseAddModal}>취소</button>
               <button onClick={handleAddRoutineClick}>확인</button>
             </div>
           </div>
         </div>
       )}
+
+      {/*
+        ============================
+        루틴 수정/삭제 모달
+        ============================
+      */}
+      {isManageModalOpen && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0, left: 0,
+            width: "100%", height: "100%",
+            backgroundColor: "rgba(0,0,0,0.3)",
+            zIndex: 9999
+          }}
+          onClick={handleCloseManageModal}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: "50%", left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "80%",
+              backgroundColor: "#fff",
+              padding: "20px",
+              borderRadius: "8px"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>루틴 수정/삭제</h3>
+            {/* 요일별 루틴 */}
+            <div style={{ maxHeight: "70vh", overflowY: "auto", marginTop: "10px" }}>
+              {daysOfWeek.map((day) => {
+                const dayRoutines = routinesByDay[day];
+                if (!dayRoutines || dayRoutines.length === 0) return null;
+                return (
+                  <div key={day} style={{ marginBottom: "16px" }}>
+                    <h4>{day}</h4>
+                    <ul style={{ border: "1px solid #ccc", padding: "8px" }}>
+                      {dayRoutines.map((r) => (
+                        <li
+                          key={r.id}
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            margin: "4px 0",
+                          }}
+                        >
+                          <div>
+                            <strong>{r.title}</strong>{" "}
+                            (<small>
+                              {extractHHmm(r.startTime)} ~ {extractHHmm(r.endTime)}
+                            </small>)
+                          </div>
+                          <div>
+                            <button
+                              style={{ marginRight: "8px" }}
+                              onClick={() => handleOpenEditModal(r)}
+                            >
+                              수정
+                            </button>
+                            <button onClick={() => handleDeleteRoutine(r.id)}>삭제</button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ textAlign: "right", marginTop: "20px" }}>
+              <button onClick={handleCloseManageModal}>닫기</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/*
+        ============================
+        루틴 편집 서브모달
+        ============================
+      */}
+      {isEditModalOpen && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0, left: 0,
+            width: "100%", height: "100%",
+            backgroundColor: "rgba(0,0,0,0.3)",
+            zIndex: 9999
+          }}
+          onClick={handleCloseEditModal}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: "50%", left: "50%",
+              transform: "translate(-50%, -50%)",
+              backgroundColor: "#fff",
+              padding: "20px",
+              borderRadius: "8px"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>루틴 수정</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "10px" }}>
+              <label>
+                루틴 이름:
+                <input
+                  type="text"
+                  value={editRoutineForm.name}
+                  onChange={(e) => setEditRoutineForm({ ...editRoutineForm, name: e.target.value })}
+                  style={{ marginLeft: "10px" }}
+                />
+              </label>
+              <label>
+                요일:
+                <select
+                  value={editRoutineForm.day}
+                  onChange={(e) => setEditRoutineForm({ ...editRoutineForm, day: e.target.value })}
+                  style={{ marginLeft: "10px" }}
+                >
+                  {daysOfWeek.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                시작 시간:
+                <input
+                  type="time"
+                  step="600"
+                  value={editRoutineForm.startTime}
+                  onChange={(e) => setEditRoutineForm({ ...editRoutineForm, startTime: e.target.value })}
+                  style={{ marginLeft: "10px" }}
+                />
+              </label>
+              <label>
+                끝나는 시간:
+                <input
+                  type="time"
+                  step="600"
+                  value={editRoutineForm.endTime}
+                  onChange={(e) => setEditRoutineForm({ ...editRoutineForm, endTime: e.target.value })}
+                  style={{ marginLeft: "10px" }}
+                />
+              </label>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px", gap: "10px" }}>
+              <button onClick={handleCloseEditModal}>취소</button>
+              <button onClick={handleSaveEdit}>저장</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 확인 버튼 */}
+      <div style={{ position: "absolute", bottom: "20px", right: "20px" }}>
+        {/* showGrid 여부와 상관없이 필요하면... 
+            <ConfirmButton text="확인" onClick={handleConfirmClick} /> 
+            (위에서 이미 렌더되었다면 중복 제거)
+        */}
+      </div>
     </div>
   );
 };

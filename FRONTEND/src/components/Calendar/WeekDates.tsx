@@ -23,46 +23,93 @@
 */
 
 import React from "react";
-import { startOfWeek, eachDayOfInterval, endOfWeek, format, isSameDay } from "date-fns";
+import {
+  startOfWeek,
+  eachDayOfInterval,
+  endOfWeek,
+  format,
+  isSameDay,
+  addWeeks,
+  subWeeks,
+} from "date-fns";
+
+// 사용자 주어진 아이콘 경로 (절대/상대 경로 맞춰 import):
+import MonthVectorLeft from "@/assets/MonthVectorLeft.svg";
+import MonthVectorRight from "@/assets/MonthVectorRight.svg";
 
 interface WeekDatesProps {
   selectedDate: Date;
+  onSelectedDateChange?: (date: Date) => void;
 }
 
-const WeekDates: React.FC<WeekDatesProps> = ({ selectedDate }) => {
+const WeekDates: React.FC<WeekDatesProps> = ({ selectedDate, onSelectedDateChange }) => {
   const startDate = startOfWeek(selectedDate, { weekStartsOn: 0 });
   const endDate = endOfWeek(selectedDate, { weekStartsOn: 0 });
   const weekDays = eachDayOfInterval({ start: startDate, end: endDate });
   const today = new Date();
 
+  // 이전 주 / 다음 주 화살표
+  const handlePrevWeek = () => {
+    const newDate = subWeeks(selectedDate, 1);
+    if (onSelectedDateChange) {
+      onSelectedDateChange(newDate);
+    }
+  };
+  const handleNextWeek = () => {
+    const newDate = addWeeks(selectedDate, 1);
+    if (onSelectedDateChange) {
+      onSelectedDateChange(newDate);
+    }
+  };
+
   return (
     <div
       style={{
         display: "flex",
-        justifyContent: "flex-end", // 전체 요소를 오른쪽으로 정렬
+        justifyContent: "flex-end",
+        alignItems: "center",
         margin: "10px 0",
         marginRight: "3px",
       }}
     >
+      {/* 왼쪽 아이콘 (MonthVectorLeft) */}
+      <img
+        src={MonthVectorLeft}
+        alt="Previous Week"
+        style={{ width: "24px", height: "24px", cursor: "pointer", marginRight: "20px" }}
+        onClick={handlePrevWeek}
+      />
+
+      {/* 요일 날짜 */}
       {weekDays.map((day, index) => (
         <div
           key={index}
           style={{
             display: "inline-block",
-            width: "50px", // 조정 가능
-            height: "50px", // 조정 가능
-            lineHeight: "50px", // 중앙 정렬을 위해
-            backgroundColor: isSameDay(day, today) ? "#5b5b5b" : "#ccc", // 오늘 날짜는 다른 색상
+            width: "50px",
+            height: "50px",
+            lineHeight: "50px",
+            backgroundColor: isSameDay(day, today) ? "#5b5b5b" : "#ccc",
             color: "#fff",
-            borderRadius: "20%", // 원형 디자인
-            margin: "0 50px", // 날짜 간 간격 조정
-            textAlign: "center", // 텍스트 중앙 정렬
+            borderRadius: "20%",
+            margin: "0 50px",
+            textAlign: "center",
+            // 날짜 클릭 시 투두 갱신로직 제거 => 그냥 버튼X
+            cursor: "default",
           }}
         >
-          {/* day의 일(day)만 추출하여 표시 */}
+          {/* '일'만 표시 */}
           {format(day, "d")}
         </div>
       ))}
+
+      {/* 오른쪽 아이콘 (MonthVectorRight) */}
+      <img
+        src={MonthVectorRight}
+        alt="Next Week"
+        style={{ width: "24px", height: "24px", cursor: "pointer", marginLeft: "20px" }}
+        onClick={handleNextWeek}
+      />
     </div>
   );
 };

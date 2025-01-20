@@ -1,9 +1,10 @@
-// store.ts
 import { create, StateCreator } from "zustand";
 import { persist, PersistStorage } from "zustand/middleware";
 import DefaultImage from "@/assets/profile.png";
 
+// ---------------------------
 // 인터페이스 정의
+// ---------------------------
 interface Follow {
   followingId: number;
   name: string;
@@ -115,10 +116,10 @@ interface AppState {
   setFollowings: (followings: Follow[]) => void;
   setFollowers: (followers: Follower[]) => void;
   setMembers: (members: Member[]) => void;
-  // 기존: 전체 스케줄 조회
+  // 전체 스케줄 조회
   fetchSchedules: (memberId: number) => Promise<void>;
 
-  // ★ 추가: 특정 날짜 스케줄 조회
+  // ★ 특정 날짜 스케줄 조회
   fetchSchedulesByDate: (memberId: number, dateString: string) => Promise<void>;
   fetchGoals: (memberId: number) => Promise<void>;
   fetchRoutines: (memberId: number) => Promise<void>;
@@ -131,7 +132,7 @@ interface AppState {
   updateProfilePicture: (memberId: number, file: File) => Promise<void>;
   addTodo: (memberId: number, newTodo: Omit<Schedule, "id">) => Promise<Schedule | void>;
 
-  // ★ 추가: 투두 입력창 열기 플래그
+  // 투두 입력창 열기 플래그
   openAddTodo: boolean;
   setOpenAddTodo: (value: boolean) => void;
 }
@@ -155,6 +156,8 @@ interface ModalState {
 // ---------------------------
 interface StoreState extends SignUpState, AppState, ModalState {
   resetState: () => void;
+
+  // ★ 루틴 추가/수정/삭제
   addRoutine: (
     memberId: number,
     newRoutineData: {
@@ -164,6 +167,16 @@ interface StoreState extends SignUpState, AppState, ModalState {
       endTime: string;   // ISO String
     }
   ) => Promise<void>;
+  updateRoutine: (
+    routineId: number,
+    updatedData: {
+      title: string;
+      day: string;
+      startTime: string;
+      endTime: string;
+    }
+  ) => Promise<void>;
+  deleteRoutine: (routineId: number) => Promise<void>;
 }
 
 // ---------------------------
@@ -219,9 +232,8 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   followers: [],
   members: [],
   memberProfile: null,
-  // ★ 추가
   selectedDate: getToday(), // 오늘 날짜로 초기화
-  openAddTodo: false, // ★ 추가
+  openAddTodo: false,       // 투두 입력창 열기 플래그
 
   // ---------------------------
   // ModalState 초기값
@@ -250,7 +262,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   setFriendSearchOpen: (isOpen) => set({ isFriendSearchOpen: isOpen }),
   setSettingsOpen: (isOpen) => set({ isSettingsOpen: isOpen }),
   setEditModalOpen: (isOpen) => set({ isEditModalOpen: isOpen }),
-  setMemberIdModal: (memberId) => set({ memberId }), // 이름 변경: setMemberIdModal
+  setMemberIdModal: (memberId) => set({ memberId }),
 
   setSchedules: (schedules) => set({ schedules }),
   setGoals: (goals) => set({ goals }),
@@ -259,10 +271,8 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   setFollowers: (followers) => set({ followers }),
   setMembers: (members) => set({ members }),
   setMemberProfile: (memberProfile) => set({ memberProfile }),
-
   setSelectedDate: (date) => set({ selectedDate: date }),
-
-  setOpenAddTodo: (value) => set({ openAddTodo: value }), // ★ 추가
+  setOpenAddTodo: (value) => set({ openAddTodo: value }),
 
   // ---------------------------
   // resetState
@@ -286,8 +296,8 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       members: [],
       memberProfile: null,
 
-      selectedDate: getToday(), // 오늘 날짜로 초기화
-      openAddTodo: false, // ★ 추가
+      selectedDate: getToday(),
+      openAddTodo: false,
 
       isFriendSearchOpen: false,
       isSettingsOpen: false,
@@ -326,14 +336,8 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       console.log("회원가입 성공:", data);
       resetState();
       set({
-        // email: "",
-        // password: "",
-        // confirmPassword: "",
-        // nickname: "",
-        // bio: "",
-        // profilePic: "",
         memberId: data.id,
-        selectedDate: getToday(), // 회원가입 후 오늘 날짜로 설정
+        selectedDate: getToday(),
       });
       localStorage.setItem("memberId", data.id.toString());
       return data.id;
@@ -383,7 +387,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     });
     try {
       const response = await fetch(
-        `https://siiso.site:8080/api/v1/members/login?${params.toString()}`,
+        `https://siiso.site/api/v1/members/login?${params.toString()}`,
         {
           method: "POST",
           headers: {
@@ -405,12 +409,12 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       resetState();
       set({
         memberId: data.id,
-        selectedDate: getToday(), // 로그인 후 오늘 날짜로 설정
+        selectedDate: getToday(),
       });
       localStorage.setItem("memberId", data.id.toString());
     } catch (error) {
       console.error("Error:", error);
-      throw error; // 예외를 상위에서 처리
+      throw error;
     }
   },
 
@@ -441,13 +445,13 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   },
 
   // ---------------------------
-  // ★ 특정 날짜 스케줄 조회
+  // 특정 날짜 스케줄 조회
   // ---------------------------
   fetchSchedulesByDate: async (memberId: number, dateString: string): Promise<void> => {
     try {
       // GET /api/v1/schedules/{memberId}/{date}
       const response = await fetch(
-        `https://siiso.site:8080/api/v1/schedules/${memberId}/${dateString}`
+        `https://siiso.site/api/v1/schedules/${memberId}/${dateString}`
       );
 
       if (!response.ok) {
@@ -496,7 +500,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       }
       const data: any[] = await response.json();
 
-      // snake_case에서 camelCase로 변환
+      // snake_case -> camelCase
       const mappedData: Routine[] = data.map((item) => ({
         id: item.id,
         title: item.title,
@@ -552,7 +556,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   fetchFollowers: async (memberId: number) => {
     try {
-      const response = await fetch(`https://siiso.site:8080/api/v1/follows/${memberId}/followers`);
+      const response = await fetch(`https://siiso.site/api/v1/follows/${memberId}/followers`);
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
@@ -565,10 +569,10 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
           followerId: friend.followerId,
           name: friend.name,
           profilePicture: friend.memberPhoto || DefaultImage,
-          isActive: friend.isActive, // 추가
+          isActive: friend.isActive,
         }));
         set({ followers });
-        console.log("Fetched followers:", followers); // 로그 추가
+        console.log("Fetched followers:", followers);
       } else {
         const text = await response.text();
         console.error("Expected JSON, got:", text);
@@ -640,7 +644,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">) => {
     try {
       const response = await fetch(
-        `https://43.203.254.169:8080/api/v1/schedules/${memberId}`,
+        `https:/siiso.site/api/v1/schedules/${memberId}`,
         {
           method: "POST",
           headers: {
@@ -656,10 +660,10 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       }
 
       const data: Schedule = await response.json();
-      return data; // 항상 Schedule 반환
+      return data;
     } catch (error) {
       console.error("Error adding todo:", error);
-      throw error; // 에러를 호출한 쪽에서 처리하도록 전달
+      throw error;
     }
   },
 
@@ -670,7 +674,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     const { memberId } = get();
     if (memberId !== null) {
       try {
-        const response = await fetch(`https://siiso.site:8080/api/v1/goals/${memberId}`, {
+        const response = await fetch(`https://siiso.site/api/v1/goals/${memberId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -712,35 +716,6 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   },
 
   // ---------------------------
-  // 닉네임 수정
-  // ---------------------------
-  updateNickname: async (memberId: number, nickname: string) => {
-    try {
-      const response = await fetch(`https://siiso.site:8080/api/v1/members/${memberId}/nickname`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ nickname }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update nickname");
-      }
-
-      const data = await response.json();
-      set((state) => ({
-        memberProfile: {
-          ...state.memberProfile!,
-          nickName: data.nickname,
-        },
-      }));
-    } catch (error) {
-      console.error("Failed to update nickname:", error);
-    }
-  },
-
-  // --------------------------
   // goal 진행도 업데이트
   // ---------------------------
   updateProgress: async (goalId: number, progress: number) => {
@@ -748,7 +723,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     if (memberId !== null) {
       try {
         const response = await fetch(
-          `https://siiso.site:8080/api/v1/goals/${goalId}`,
+          `https://siiso.site/api/v1/goals/${goalId}`,
           {
             method: "PUT",
             headers: {
@@ -775,11 +750,40 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   },
 
   // ---------------------------
+  // 닉네임 수정
+  // ---------------------------
+  updateNickname: async (memberId: number, nickname: string) => {
+    try {
+      const response = await fetch(`https://siiso.site/api/v1/members/${memberId}/nickname`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ nickname }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update nickname");
+      }
+
+      const data = await response.json();
+      set((state) => ({
+        memberProfile: {
+          ...state.memberProfile!,
+          nickName: data.nickname,
+        },
+      }));
+    } catch (error) {
+      console.error("Failed to update nickname:", error);
+    }
+  },
+
+  // ---------------------------
   // 자기소개 수정
   // ---------------------------
   updateIntroduce: async (memberId: number, introduce: string) => {
     try {
-      const response = await fetch(`https://siiso.site:8080/api/v1/members/${memberId}/introduce`, {
+      const response = await fetch(`https://siiso.site/api/v1/members/${memberId}/introduce`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -811,7 +815,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`https://siiso.site:8080/api/v1/members/${memberId}/profile`, {
+      const response = await fetch(`https://siiso.site/api/v1/members/${memberId}/profile`, {
         method: "POST",
         body: formData,
       });
@@ -840,58 +844,140 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     memberId: number,
     newRoutineData: {
       title: string;
-      day: string; // "Sun" | "Mon" | ... | "Sat"
-      startTime: string; // ISO String
-      endTime: string;   // ISO String
+      day: string;
+      startTime: string;
+      endTime: string;
     }
   ) => {
     try {
-      // 실제로 백엔드에 루틴을 추가할 API Endpoint
-      // (예: POST /api/v1/routines/{memberId})
-      // 백엔드에 따라서 endpoint나 body 구조 조정 필요
-      const response = await fetch(
-        `https://siiso.site/api/v1/routines/${memberId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: newRoutineData.title,
-            day: newRoutineData.day, // 'day'로 수정
-            start_time: newRoutineData.startTime, // 서버가 'start_time'을 기대
-            end_time: newRoutineData.endTime,     // 서버가 'end_time'을 기대
-          }),
-        }
-      );
+      console.log("[store] addRoutine => sending body:", newRoutineData);
+
+      const response = await fetch(`https://siiso.site/api/v1/routines/${memberId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: newRoutineData.title,
+          day: newRoutineData.day,
+          startTime: newRoutineData.startTime,
+          endTime: newRoutineData.endTime,
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || 'Failed to add routine');
+        throw new Error(errorText || "Failed to add routine");
       }
 
-      // 응답으로 받은 루틴 데이터를 camelCase로 변환
       const addedRoutine: any = await response.json();
-      const mappedRoutine: Routine = {
-        id: addedRoutine.id,
-        title: addedRoutine.title,
-        day: addedRoutine.day,
-        startTime: addedRoutine.start_time,
-        endTime: addedRoutine.end_time,
-        description: addedRoutine.description,
-        frequency: addedRoutine.frequency,
-        nextRun: addedRoutine.next_run,
-      };
+      console.log("[store] addRoutine => success:", addedRoutine);
 
-      // store의 routines 배열에 추가
       set((state) => ({
-        routines: [...state.routines, mappedRoutine],
+        routines: [
+          ...state.routines,
+          {
+            id: addedRoutine.id,
+            title: addedRoutine.title,
+            day: addedRoutine.day,
+            startTime: addedRoutine.startTime,
+            endTime: addedRoutine.endTime,
+            description: addedRoutine.description,
+            frequency: addedRoutine.frequency,
+            nextRun: addedRoutine.nextRun,
+          },
+        ],
       }));
-
-      console.log('[store] addRoutine => success:', mappedRoutine);
     } catch (error) {
-      console.error('Error adding routine:', error);
-      throw error; // 상위에서 처리 가능
+      console.error("Error adding routine:", error);
+      throw error;
+    }
+  },
+
+  // ---------------------------
+  // 루틴 수정 (PUT /api/v1/routines/{routineId})
+  // ---------------------------
+  updateRoutine: async (
+    routineId: number,
+    updatedData: {
+      title: string;
+      day: string;
+      startTime: string;
+      endTime: string;
+    }
+  ) => {
+    try {
+      console.log("[store] updateRoutine => sending body:", updatedData);
+
+      const response = await fetch(`https://siiso.site/api/v1/routines/${routineId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: updatedData.title,
+          day: updatedData.day,
+          startTime: updatedData.startTime,
+          endTime: updatedData.endTime,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to update routine");
+      }
+
+      const result = await response.json();
+      console.log("[store] updateRoutine => success:", result);
+
+      // state.routines에서 해당 routineId 찾아서 업데이트
+      set((state) => {
+        const newList = state.routines.map((r) => {
+          if (r.id === routineId) {
+            return {
+              ...r,
+              title: result.title,
+              day: result.day,
+              startTime: result.startTime,
+              endTime: result.endTime,
+              description: result.description,
+              frequency: result.frequency,
+              nextRun: result.nextRun,
+            };
+          }
+          return r;
+        });
+        return { routines: newList };
+      });
+    } catch (error) {
+      console.error("Error updating routine:", error);
+      throw error;
+    }
+  },
+
+  // ---------------------------
+  // 루틴 삭제 (DELETE /api/v1/routines/{routineId})
+  // ---------------------------
+  deleteRoutine: async (routineId: number) => {
+    try {
+      console.log("[store] deleteRoutine => routineId:", routineId);
+      const response = await fetch(`https://siiso.site/api/v1/routines/${routineId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to delete routine");
+      }
+
+      // 성공하면 로컬 state에서 제거
+      set((state) => ({
+        routines: state.routines.filter((r) => r.id !== routineId),
+      }));
+      console.log("[store] deleteRoutine => success");
+    } catch (error) {
+      console.error("Error deleting routine:", error);
+      throw error;
     }
   },
 });

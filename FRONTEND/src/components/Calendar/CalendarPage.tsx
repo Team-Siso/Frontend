@@ -63,13 +63,14 @@ const CalendarPage = ({ onPageChange }) => {
 
     // store에 날짜 저장
     setSelectedDate(dateString);
+
     // 해당 날짜의 일정만 불러오기
     if (memberId) {
       fetchSchedulesByDate(memberId, dateString);
     }
 
-    // 투두 입력창 열기 트리거 설정
-    setOpenAddTodo(true);
+    // 투두 입력창 열기 트리거
+    //setOpenAddTodo(true);
   };
 
   return (
@@ -85,11 +86,13 @@ const CalendarPage = ({ onPageChange }) => {
           bText=""
         />
       </div>
+
       {view === "weekGrid" ? (
         <WeekGridPage selectedDate={selectedDateLocal} />
       ) : (
         <CustomCalendar onDateChange={handleDateChange} />
       )}
+
       {view === "calendar" && (
         <ConfirmButton onClick={handleConfirmClick} text="고정 루틴 관리하기" />
       )}
