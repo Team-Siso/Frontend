@@ -320,7 +320,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     };
 
     try {
-      const response = await fetch('${import.meta.env.VITE_API_URL}/members/signup', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/members/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
