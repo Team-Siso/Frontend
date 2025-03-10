@@ -30,7 +30,7 @@ const MyGoalComponent_Friend: React.FC<MyGoalComponentProps> = ({ className, fri
     const fetchProfile = async () => {
       if (friendId) {
         try {
-          const response = await fetch(`/api/v1/members/${friendId}`, {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/members/${friendId}`, {
             method: "GET",
             headers: {
               accept: "*/*",
