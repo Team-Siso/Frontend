@@ -320,7 +320,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     };
 
     try {
-      const response = await fetch("https://siiso.site/api/v1/members/signup", {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/members/signup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -356,7 +356,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     formData.append("file", file);
 
     try {
-      const response = await fetch(`https://siiso.site/api/v1/members/${memberId}/profile`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/members/${memberId}/profile`, {
         method: "POST",
         body: formData,
       });
@@ -387,7 +387,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     });
     try {
       const response = await fetch(
-        `https://siiso.site/api/v1/members/login?${params.toString()}`,
+        `${import.meta.env.VITE_API_URL}/members/login?${params.toString()}`,
         {
           method: "POST",
           headers: {
@@ -424,7 +424,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   fetchSchedules: async (memberId: number): Promise<void> => {
     console.log("[fetchSchedules] Start => memberId:", memberId);
     try {
-      const response = await fetch(`https://siiso.site/api/v1/schedules/${memberId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/schedules/${memberId}`);
       if (!response.ok) {
         throw new Error(
           `Failed to fetch schedules(사용자의 모든 일정 조회): ${response.statusText}`
@@ -451,7 +451,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     try {
       // GET /api/v1/schedules/{memberId}/{date}
       const response = await fetch(
-        `https://siiso.site/api/v1/schedules/${memberId}/${dateString}`
+        `${import.meta.env.VITE_API_URL}/schedules/${memberId}/${dateString}`
       );
 
       if (!response.ok) {
@@ -478,7 +478,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   fetchGoals: async (memberId: number) => {
     try {
-      const response = await fetch(`https://siiso.site/api/v1/goals/${memberId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/goals/${memberId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch goals(사용자의 모든 goal 조회)");
       }
@@ -494,7 +494,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   fetchRoutines: async (memberId: number) => {
     try {
-      const response = await fetch(`https://siiso.site/api/v1/routines/${memberId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/routines/${memberId}`);
       if (!response.ok) {
         throw new Error("Failed to fetch routines");
       }
@@ -524,7 +524,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   fetchFollowings: async (memberId: number) => {
     console.log(`Fetching followings for memberId: ${memberId}`);
     try {
-      const response = await fetch(`https://siiso.site/api/v1/follows/${memberId}/following`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/follows/${memberId}/following`);
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
@@ -556,7 +556,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   fetchFollowers: async (memberId: number) => {
     try {
-      const response = await fetch(`https://siiso.site/api/v1/follows/${memberId}/followers`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/follows/${memberId}/followers`);
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
@@ -589,7 +589,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   fetchMembers: async (query: string) => {
     try {
       const response = await fetch(
-        `https://siiso.site/api/v1/members/search?nickNameOrEmail=${query}`
+        `${import.meta.env.VITE_API_URL}/members/search?nickNameOrEmail=${query}`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch members");
@@ -607,7 +607,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   fetchMemberProfile: async (memberId: number) => {
     console.log(`Fetching member profile for memberId: ${memberId}`);
     try {
-      const response = await fetch(`https://siiso.site/api/v1/members/${memberId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/members/${memberId}`);
       const contentType = response.headers.get("content-type");
 
       if (!response.ok) {
@@ -644,7 +644,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   addTodo: async (memberId: number, newTodo: Omit<Schedule, "id">) => {
     try {
       const response = await fetch(
-        `https:/siiso.site/api/v1/schedules/${memberId}`,
+        `${import.meta.env.VITE_API_URL}/schedules/${memberId}`,
         {
           method: "POST",
           headers: {
@@ -674,7 +674,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     const { memberId } = get();
     if (memberId !== null) {
       try {
-        const response = await fetch(`https://siiso.site/api/v1/goals/${memberId}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/goals/${memberId}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -723,7 +723,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     if (memberId !== null) {
       try {
         const response = await fetch(
-          `https://siiso.site/api/v1/goals/${goalId}`,
+          `${import.meta.env.VITE_API_URL}/goals/${goalId}`,
           {
             method: "PUT",
             headers: {
@@ -754,7 +754,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   updateNickname: async (memberId: number, nickname: string) => {
     try {
-      const response = await fetch(`https://siiso.site/api/v1/members/${memberId}/nickname`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/members/${memberId}/nickname`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -783,7 +783,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   // ---------------------------
   updateIntroduce: async (memberId: number, introduce: string) => {
     try {
-      const response = await fetch(`https://siiso.site/api/v1/members/${memberId}/introduce`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/members/${memberId}/introduce`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -815,7 +815,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch(`https://siiso.site/api/v1/members/${memberId}/profile`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/members/${memberId}/profile`, {
         method: "POST",
         body: formData,
       });
@@ -852,7 +852,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     try {
       console.log("[store] addRoutine => sending body:", newRoutineData);
 
-      const response = await fetch(`https://siiso.site/api/v1/routines/${memberId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/routines/${memberId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -909,7 +909,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
     try {
       console.log("[store] updateRoutine => sending body:", updatedData);
 
-      const response = await fetch(`https://siiso.site/api/v1/routines/${routineId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/routines/${routineId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -961,7 +961,7 @@ const stateCreator: StateCreator<StoreState> = (set, get) => ({
   deleteRoutine: async (routineId: number) => {
     try {
       console.log("[store] deleteRoutine => routineId:", routineId);
-      const response = await fetch(`https://siiso.site/api/v1/routines/${routineId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/routines/${routineId}`, {
         method: "DELETE",
       });
 

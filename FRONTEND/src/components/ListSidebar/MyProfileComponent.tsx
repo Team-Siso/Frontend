@@ -16,7 +16,7 @@ const MyProfileComponent = ({ className }) => {
     const fetchProfile = async () => {
       if (memberId) {
         try {
-          const response = await fetch(`http://siiso.site:8080/api/v1/members/${memberId}`, {
+          const response = await fetch(`${import.meta.env.VITE_API_URL}/members/${memberId}`, {
             method: "GET",
             headers: {
               accept: "*/*",

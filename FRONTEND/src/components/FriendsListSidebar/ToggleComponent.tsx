@@ -14,7 +14,7 @@ const ToggleComponent = () => {
     try {
       if (!isOn) {
         const response = await fetch(
-          `http://siiso.site:8080/api/v1/follows/${memberId}/following`,
+          `${import.meta.env.VITE_API_URL}/follows/${memberId}/following`,
           {
             method: "GET",
             headers: { "Content-Type": "application/json" },
@@ -27,7 +27,7 @@ const ToggleComponent = () => {
         console.log("팔로잉 성공");
       } else {
         const response = await fetch(
-          `http://siiso.site:8080/api/v1/follows/${memberId}/followers`,
+          `${import.meta.env.VITE_API_URL}/follows/${memberId}/followers`,
           {
             method: "GET",
             headers: { "Content-Type": "application/json" },

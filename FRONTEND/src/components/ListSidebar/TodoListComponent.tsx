@@ -167,7 +167,7 @@ const TodoListComponent = ({ className }) => {
     };
 
     try {
-      const res = await fetch(`/api/v1/schedules/${memberId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/schedules/${memberId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(newTodo),
@@ -194,7 +194,7 @@ const TodoListComponent = ({ className }) => {
     const updated = { ...t, checkStatus: t.checkStatus === 0 ? 1 : 0 };
 
     try {
-      const res = await fetch(`/api/v1/schedules/${todoId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/schedules/${todoId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updated),
@@ -211,7 +211,7 @@ const TodoListComponent = ({ className }) => {
   // 삭제
   const handleDelete = async (todoId) => {
     try {
-      const res = await fetch(`/api/v1/schedules/${todoId}`, { method: "DELETE" });
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/schedules/${todoId}`, { method: "DELETE" });
       if (res.ok) {
         setSchedules(schedules.filter((td) => td.id !== todoId));
       }
@@ -256,7 +256,7 @@ const TodoListComponent = ({ className }) => {
     }
 
     try {
-      const res = await fetch(`/api/v1/schedules/${todoId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/schedules/${todoId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updated),
