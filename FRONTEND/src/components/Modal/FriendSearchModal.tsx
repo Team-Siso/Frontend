@@ -31,7 +31,7 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
       try {
         // API 호출로 친구 검색
         const response = await fetch(
-          `http://siiso.site:8080/api/v1/members/search?nickNameOrEmail=${encodeURIComponent(query)}`
+          `${import.meta.env.VITE_API_URL}/members/search?nickNameOrEmail=${encodeURIComponent(query)}`
         );
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`); // 오류 처리
@@ -77,7 +77,7 @@ const FriendSearchModal: React.FC<FriendSearchModalProps> = ({ isOpen, onClose }
 
     try {
       const response = await fetch(
-        `http://siiso.site:8080/api/v1/follows/${memberId}/following/${friend.id}`,
+        `${import.meta.env.VITE_API_URL}/follows/${memberId}/following/${friend.id}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

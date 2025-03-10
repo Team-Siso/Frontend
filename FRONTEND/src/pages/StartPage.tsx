@@ -17,7 +17,7 @@ const StartPage = () => {
   const validateEmail = async () => {
     try {
       const response = await fetch(
-        `https://siiso.site/api/v1/members/valid?email=${encodeURIComponent(email)}`
+        `${import.meta.env.VITE_API_URL}/members/valid?email=${encodeURIComponent(email)}`
       );
       const responseBody = await response.text();
 

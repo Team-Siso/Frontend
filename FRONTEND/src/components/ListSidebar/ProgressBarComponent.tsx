@@ -22,7 +22,7 @@ interface ProgressBarComponentProps {
 
 const setEditGoal = async (title: string, goalId: number, progress: number) => {
   try {
-    const response = await fetch(`http://siiso.site:8080/api/v1/goals/${goalId}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/goals/${goalId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
