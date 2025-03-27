@@ -1,12 +1,13 @@
-import { useState } from "react";
-import { useStore } from "../store"; // 명명된 내보내기를 사용합니다
+import React, { useState } from "react";
 import SignUpModal from "../components/Modal/SignUpModal";
 import LoginModal from "../components/Modal/LoginModal";
-import StartPB from "../assets/StartPB.png"; // 상대 경로로 배경 이미지 불러오기
+import StartPB from "../assets/StartPB.png";
+import { useAuthStore } from "../store/auth/useAuthStore";
+import { validateEmailApi } from "../api/auth";
 
-const StartPage = () => {
-  const email = useStore((state) => state.email);
-  const setEmail = useStore((state) => state.setEmail);
+const StartPage: React.FC = () => {
+  const email = useAuthStore((state) => state.email);
+  const setEmail = useAuthStore((state) => state.setEmail);
   const [isSignUpModalOpen, setIsSignUpModalOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
@@ -16,37 +17,22 @@ const StartPage = () => {
 
   const validateEmail = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/members/valid?email=${encodeURIComponent(email)}`
-      );
-      const responseBody = await response.text();
-
-      if (response.status === 400) {
-        alert("이메일이 유효하지 않습니다. 다른 이메일을 입력해주세요.");
-        return;
-      }
-      if (responseBody === "사용 가능한 이메일 입니다.") {
+      const response = await validateEmailApi(email);
+      // response가 "사용 가능한 이메일 입니다." 문자열이라면
+      if (response === "사용 가능한 이메일 입니다.") {
         openSignUpModal();
-        console.log("성공");
-
-        // 여기에서 모달 열기 등의 추가 작업 수행
+        console.log("이메일 유효성 검사 성공");
       } else {
+        alert("이메일이 유효하지 않습니다. 다른 이메일을 입력해주세요.");
       }
     } catch (error) {
       console.error("유효성 검사 에러:", error);
     }
   };
-  const closeSignUpModal = () => {
-    setIsSignUpModalOpen(false);
-  };
 
-  const openLoginModal = () => {
-    setIsLoginModalOpen(true);
-  };
-
-  const closeLoginModal = () => {
-    setIsLoginModalOpen(false);
-  };
+  const closeSignUpModal = () => setIsSignUpModalOpen(false);
+  const openLoginModal = () => setIsLoginModalOpen(true);
+  const closeLoginModal = () => setIsLoginModalOpen(false);
 
   return (
     <div
