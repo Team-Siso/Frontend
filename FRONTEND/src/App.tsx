@@ -5,6 +5,10 @@ import MainPage from "./pages/MainPage";
 import FriendPage from "./pages/FriendPage";
 import FriendSearchModal from "./components/Modal/FriendSearchModal";
 import SettingsModal from "./components/Modal/SettingsModal";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// QueryClient 생성
+const queryClient = new QueryClient();
 
 const App: React.FC = () => {
   const [isFriendSearchModalOpen, setIsFriendSearchModalOpen] = useState(false);
@@ -17,33 +21,35 @@ const App: React.FC = () => {
   const closeSettingsModal = () => setIsSettingsModalOpen(false);
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<StartPage />} />
-        <Route
-          path="/main"
-          element={
-            <MainPage
-              openFriendSearchModal={openFriendSearchModal} // 핸들러 전달
-              openSettingsModal={openSettingsModal} // 핸들러 전달
-            />
-          }
-        />
-        <Route
-          path="/friend"
-          element={
-            <FriendPage
-              openFriendSearchModal={openFriendSearchModal} // 핸들러 전달
-              openSettingsModal={openSettingsModal} // 핸들러 전달
-            />
-          }
-        />
-      </Routes>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Routes>
+          <Route path="/" element={<StartPage />} />
+          <Route
+            path="/main"
+            element={
+              <MainPage
+                openFriendSearchModal={openFriendSearchModal}
+                openSettingsModal={openSettingsModal}
+              />
+            }
+          />
+          <Route
+            path="/friend"
+            element={
+              <FriendPage
+                openFriendSearchModal={openFriendSearchModal}
+                openSettingsModal={openSettingsModal}
+              />
+            }
+          />
+        </Routes>
 
-      {/* 모달 렌더링 */}
-      <FriendSearchModal isOpen={isFriendSearchModalOpen} onClose={closeFriendSearchModal} />
-      <SettingsModal isOpen={isSettingsModalOpen} onClose={closeSettingsModal} />
-    </Router>
+        {/* 모달 렌더링 */}
+        <FriendSearchModal isOpen={isFriendSearchModalOpen} onClose={closeFriendSearchModal} />
+        <SettingsModal isOpen={isSettingsModalOpen} onClose={closeSettingsModal} />
+      </Router>
+    </QueryClientProvider>
   );
 };
 

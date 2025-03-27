@@ -7,14 +7,14 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: "@", replacement: path.resolve(__dirname, "./src") },
-      { find: "react", replacement: "react" },
-      { find: "react-dom", replacement: "react-dom" },
+      { find: "react", replacement: path.resolve(__dirname, "node_modules/react") },
+      { find: "react-dom", replacement: path.resolve(__dirname, "node_modules/react-dom") },
+      { find: "react/jsx-runtime", replacement: path.resolve(__dirname, "node_modules/react/jsx-runtime") },
     ],
   },
   server: {
     proxy: {
       "/api": {
-       // target: "https://siiso.site", // API 서버 주소
         changeOrigin: true,
       },
     },
