@@ -4,6 +4,10 @@ import addTimeTodoIcon from "@/assets/addTimeTodoIcon.svg";
 import UncheckBoxIcon from "@/assets/UncheckBoxIcon.svg";
 import CheckedBoxIcon from "@/assets/CheckedBoxIcon.svg";
 import { useStore } from "@/store";
+import { useSchedulesQuery } from "@/hooks/schedule/useSchedulesQuery";
+import { useAddSchedule } from "@/hooks/schedule/useAddSchedule";
+import { useUpdateSchedule } from "@/hooks/schedule/useUpdateSchedule";
+import { useDeleteSchedule } from "@/hooks/schedule/useDeleteSchedule";
 
 // 시/분 => 서버 UTC 변환
 function localTimeToServerUtc(dateString, hour, minute) {
@@ -21,9 +25,7 @@ function formatTime(utcString) {
   const ampm = hh >= 12 ? "오후" : "오전";
   hh = hh % 12;
   if (hh === 0) hh = 12;
-  return mm === 0
-    ? `${ampm} ${hh}시`
-    : `${ampm} ${hh}시 ${mm}분`;
+  return mm === 0 ? `${ampm} ${hh}시` : `${ampm} ${hh}시 ${mm}분`;
 }
 
 const TodoListComponent = ({ className }) => {
@@ -53,19 +55,17 @@ const TodoListComponent = ({ className }) => {
 
   // store
   const memberId = useStore((s) => s.memberId);
-  const schedules = useStore((s) => s.schedules);
+  // const schedules = useStore((s) => s.schedules);
   const selectedDate = useStore((s) => s.selectedDate);
   const openAddTodo = useStore((s) => s.openAddTodo);
   const setOpenAddTodo = useStore((s) => s.setOpenAddTodo);
-  const fetchSchedulesByDate = useStore((s) => s.fetchSchedulesByDate);
-  const setSchedules = useStore((s) => s.setSchedules);
+  // const fetchSchedulesByDate = useStore((s) => s.fetchSchedulesByDate);
+  // const setSchedules = useStore((s) => s.setSchedules);
 
-  // 날짜 변경 시 => fetch
-  useEffect(() => {
-    if (memberId && selectedDate) {
-      fetchSchedulesByDate(memberId, selectedDate);
-    }
-  }, [memberId, selectedDate, fetchSchedulesByDate]);
+  const { data: schedules, isLoading, isError } = useSchedulesQuery(String(memberId), selectedDate);
+  const { mutate: addSchedule } = useAddSchedule(String(memberId), selectedDate);
+  const { mutate: updateSchedule } = useUpdateSchedule(String(memberId), selectedDate);
+  const { mutate: deleteSchedule } = useDeleteSchedule(String(memberId), selectedDate);
 
   useEffect(() => {
     console.log("[TodoList] schedules updated:", schedules);
@@ -137,7 +137,7 @@ const TodoListComponent = ({ className }) => {
     let newEndTime = null;
     if (isTimeTodo) {
       newStartTime = localTimeToServerUtc(selectedDate, +startHour, +startMinute);
-      newEndTime   = localTimeToServerUtc(selectedDate, +endHour, +endMinute);
+      newEndTime = localTimeToServerUtc(selectedDate, +endHour, +endMinute);
 
       // 시간 겹침 검사
       const newSt = new Date(newStartTime).getTime();
@@ -166,58 +166,47 @@ const TodoListComponent = ({ className }) => {
       endTime: newEndTime,
     };
 
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/schedules/${memberId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newTodo),
-      });
-      if (!res.ok) {
-        const errTxt = await res.text();
-        throw new Error(errTxt || "Failed to add todo");
-      }
-      const data = await res.json();
-      setSchedules([...schedules, data]);
-    } catch (err) {
-      console.error("Failed to add todo:", err);
-    }
-
+    // 일정 추가
+    addSchedule(newTodo, {
+      onError: (err) => {
+        console.error("Failed to add todo:", err);
+      },
+    });
     // 입력창 닫기
     setInputValue("");
     setShowInput(false);
   };
 
   // 체크박스
-  const toggleTodoCompletion = async (todoId) => {
-    const t = schedules.find((td) => td.id === todoId);
+  const toggleTodoCompletion = (todoId: number) => {
+    const t = schedules?.find((td) => td.id === todoId);
     if (!t) return;
-    const updated = { ...t, checkStatus: t.checkStatus === 0 ? 1 : 0 };
 
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/schedules/${todoId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-      });
-      if (res.ok) {
-        setSchedules(schedules.map((td) => (td.id === todoId ? updated : td)));
-        setEditId(null);
+    const updated = {
+      ...t,
+      checkStatus: t.checkStatus === 0 ? 1 : 0,
+    };
+
+    updateSchedule(
+      { todoId, updated },
+      {
+        onError: (err) => {
+          console.error("체크 상태 변경 실패:", err);
+        },
+        onSuccess: () => {
+          setEditId(null); // 편집 중이었다면 닫기
+        },
       }
-    } catch (err) {
-      console.error(err);
-    }
+    );
   };
 
   // 삭제
-  const handleDelete = async (todoId) => {
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/schedules/${todoId}`, { method: "DELETE" });
-      if (res.ok) {
-        setSchedules(schedules.filter((td) => td.id !== todoId));
-      }
-    } catch (err) {
-      console.error("삭제 실패:", err);
-    }
+  const handleDelete = (todoId: number) => {
+    deleteSchedule(todoId, {
+      onError: (err) => {
+        console.error("삭제 실패:", err);
+      },
+    });
   };
 
   // 편집 시작
@@ -243,30 +232,33 @@ const TodoListComponent = ({ className }) => {
   };
 
   // 편집 저장
-  const handleEditSave = async (todoId) => {
-    const t = schedules.find((td) => td.id === todoId);
+  const handleEditSave = (todoId: number) => {
+    const t = schedules?.find((td) => td.id === todoId);
     if (!t) return;
 
-    const updated = { ...t, content: editContent };
+    const updated = {
+      ...t,
+      content: editContent,
+    };
+
     if (t.startTime || t.endTime) {
       const newSt = localTimeToServerUtc(selectedDate, +editStartHour, +editStartMinute);
       const newEt = localTimeToServerUtc(selectedDate, +editEndHour, +editEndMinute);
       updated.startTime = newSt;
-      updated.endTime   = newEt;
+      updated.endTime = newEt;
     }
 
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/schedules/${todoId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updated),
-      });
-      if (!res.ok) throw new Error("투두 수정 실패");
-      setSchedules(schedules.map((td) => (td.id === todoId ? updated : td)));
-      setEditId(null);
-    } catch (err) {
-      console.error(err);
-    }
+    updateSchedule(
+      { todoId, updated },
+      {
+        onSuccess: () => {
+          setEditId(null); // 편집 모드 종료
+        },
+        onError: (err) => {
+          console.error("수정 실패:", err);
+        },
+      }
+    );
   };
 
   // 시/분 select
@@ -274,12 +266,14 @@ const TodoListComponent = ({ className }) => {
   const minutes = ["00", "10", "20", "30", "40", "50"];
 
   // 현재 selectedDate의 일정만 보임
-  const filteredSchedules = schedules.filter((todo) => {
-    if (!todo.thisDay) return false;
-    const dayStr = todo.thisDay.slice(0, 10);
-    return dayStr === selectedDate;
-  });
-
+  const filteredSchedules =
+    schedules?.filter((todo) => {
+      if (!todo.thisDay) return false;
+      const dayStr = todo.thisDay.slice(0, 10);
+      return dayStr === selectedDate;
+    }) || [];
+  if (isLoading) return <div>불러오는 중...</div>;
+  if (isError) return <div>일정 불러오기에 실패했습니다.</div>;
   return (
     <div className={className}>
       {/* 헤더 */}
@@ -312,10 +306,7 @@ const TodoListComponent = ({ className }) => {
             onChange={handleInputChange}
             onKeyDown={(e) => e.key === "Enter" && handleAddTodo()}
           />
-          <button
-            className="bg-green-500 text-white px-3 py-1 rounded"
-            onClick={handleAddTodo}
-          >
+          <button className="bg-green-500 text-white px-3 py-1 rounded" onClick={handleAddTodo}>
             추가
           </button>
         </div>
@@ -364,7 +355,10 @@ const TodoListComponent = ({ className }) => {
       )}
 
       {/* 투두 목록 */}
-      <div className="overflow-y-auto" style={{ maxHeight: "calc(43vh - 60px - 40px)", flexGrow: 1 }}>
+      <div
+        className="overflow-y-auto"
+        style={{ maxHeight: "calc(43vh - 60px - 40px)", flexGrow: 1 }}
+      >
         <ul className="divide-y mx-4">
           {filteredSchedules.length > 0 ? (
             filteredSchedules.map((todo) => {
