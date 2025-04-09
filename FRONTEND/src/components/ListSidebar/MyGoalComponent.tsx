@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useStore } from "@/store";
 import PlusButton from "@/assets/PlusButton.svg";
 import UncheckBoxIcon from "@/assets/UncheckBoxIcon.svg";
 import CheckedBoxIcon from "@/assets/CheckedBoxIcon.svg";
 import ProgressBarComponent from "./ProgressBarComponent";
+import { useGoalsQuery } from "@/hooks/goal/useGoalsQuery";
+import { useAddGoal } from "@/hooks/goal/useAddGoal";
+import { useToggleGoalCompletion } from "@/hooks/goal/useToggleGoalCompletion";
+import { useUpdateGoal } from "@/hooks/goal/useUpdateGoal";
+import { useDeleteGoal } from "@/hooks/goal/useDeleteGoal";
 
 interface MyGoalComponentProps {
   className: string;
@@ -16,21 +21,15 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
   const [editText, setEditText] = useState(""); // 편집 중인 목표의 텍스트를 저장하는 상태
   const [showEditOptions, setShowEditOptions] = useState<number | null>(null); // 호버 중인 항목의 ID를 저장하는 상태
 
-  const { goals, setGoal, toggleGoalCompletion, fetchGoals, memberId } = useStore((state) => ({
-    goals: state.goals,
-    setGoal: state.setGoal,
-    toggleGoalCompletion: state.toggleGoalCompletion,
-    fetchGoals: state.fetchGoals,
+  const { memberId } = useStore((state) => ({
     memberId: state.memberId,
   }));
 
-  useEffect(() => {
-    if (memberId) {
-      fetchGoals(memberId);
-      console.log("fetchGoals 성공, memberId : ", memberId);
-    }
-  }, [memberId, fetchGoals]);
-
+  const { data: goals = [], isLoading, isError } = useGoalsQuery(String(memberId));
+  const { mutate: addGoal } = useAddGoal(String(memberId));
+  const { mutate: toggleCompletion } = useToggleGoalCompletion(String(memberId));
+  const { mutate: updateGoalMutate } = useUpdateGoal(String(memberId));
+  const { mutate: deleteGoalMutate } = useDeleteGoal(String(memberId));
   const handleIconClick = () => {
     // PlusButton 아이콘을 클릭하면 showInput 상태를 true로 설정하여 입력 필드를 표시합니다.
     console.log("PlusButton 클릭! 입력 필드를 표시할게요");
@@ -45,7 +44,7 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
   const handleAddGoal = () => {
     // 입력 필드에서 Enter 키를 누르거나 추가 버튼을 클릭하면 새로운 목표를 추가하고 입력 필드를 초기화합니다.
     if (inputValue.trim()) {
-      setGoal(inputValue);
+      addGoal(inputValue);
       setInputValue("");
       setShowInput(false);
     }
@@ -56,57 +55,12 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
 
   const toggleTodoCompletion = (id: number) => {
     // 목표의 완료 상태를 토글합니다.
-    toggleGoalCompletion(id);
-  };
-
-  const deleteGoal = async (id: number) => {
-    console.log("골 delete 입니다.");
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/goals/${id}`, {
-        method: "DELETE",
-        headers: {
-          accept: "*/*",
-        },
-      });
-
-      if (response.ok) {
-        console.log("삭제 성공");
-        fetchGoals(memberId); // 삭제 후 목표 목록 다시 불러오기
-      } else {
-        console.error("삭제 실패:", response.status);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-    }
+    toggleCompletion(id);
   };
 
   const handleDelete = (id: number) => {
     // 목표를 삭제합니다.
-    console.log("handleDelete 입니다");
-    deleteGoal(id);
-  };
-
-  const editGoal = async (id: number, title: string, progress: number) => {
-    console.log("editGoal 호출, id:", id, "title:", title, "progress:", progress);
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/goals/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          accept: "*/*",
-        },
-        body: JSON.stringify({ title, progress }),
-      });
-
-      if (response.ok) {
-        console.log("수정 성공");
-        fetchGoals(memberId); // 수정 후 목표 목록 다시 불러오기
-      } else {
-        console.error("수정 실패:", response.status);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-    }
+    deleteGoalMutate(id);
   };
 
   const startEdit = (id: number, title: string) => {
@@ -124,17 +78,25 @@ const MyGoalComponent: React.FC<MyGoalComponentProps> = ({ className }) => {
   };
 
   const handleEditSave = async (id: number) => {
-    // 목표의 텍스트 편집을 저장하고 편집 모드를 종료합니다.
-    console.log("handleEditSave 함수 입니다.");
-
     // 현재 편집 중인 목표의 progress 값을 가져오기
     const goal = goals.find((goal) => goal.id === id);
     const progress = goal ? goal.progress : 0;
 
-    await editGoal(id, editText, progress); // progress는 기본값으로 0으로 설정
-    setEditId(null);
-    console.log("목표 수정을 완료했습니다");
+    updateGoalMutate(
+      { id, title: editText, progress },
+      {
+        onSuccess: () => {
+          setEditId(null);
+          console.log("목표 수정 성공");
+        },
+        onError: (err) => {
+          console.error("목표 수정 실패:", err);
+        },
+      }
+    );
   };
+  if (isLoading) return <div>목표를 불러오는 중입니다...</div>;
+  if (isError) return <div>목표를 불러오는 데 실패했습니다.</div>;
 
   return (
     <div className={`${className}`}>
