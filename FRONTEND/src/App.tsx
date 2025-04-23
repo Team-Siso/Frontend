@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import StartPage from "./pages/StartPage";
 import MainPage from "./pages/MainPage";
 import FriendPage from "./pages/FriendPage";
-import FriendSearchModal from "./components/Modal/FriendSearchModal";
-import SettingsModal from "./components/Modal/SettingsModal";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// QueryClient 생성
+// Lazy-load 대상 모달 컴포넌트
+const FriendSearchModal = lazy(() => import("./components/Modal/FriendSearchModal"));
+const SettingsModal = lazy(() => import("./components/Modal/SettingsModal"));
+
 const queryClient = new QueryClient();
 
 const App: React.FC = () => {
@@ -45,9 +46,24 @@ const App: React.FC = () => {
           />
         </Routes>
 
-        {/* 모달 렌더링 */}
-        <FriendSearchModal isOpen={isFriendSearchModalOpen} onClose={closeFriendSearchModal} />
-        <SettingsModal isOpen={isSettingsModalOpen} onClose={closeSettingsModal} />
+        {/* 모달 Lazy-loading */}
+        {isFriendSearchModalOpen && (
+          <Suspense fallback={null}>
+            <FriendSearchModal
+              isOpen={isFriendSearchModalOpen}
+              onClose={closeFriendSearchModal}
+            />
+          </Suspense>
+        )}
+
+        {isSettingsModalOpen && (
+          <Suspense fallback={null}>
+            <SettingsModal
+              isOpen={isSettingsModalOpen}
+              onClose={closeSettingsModal}
+            />
+          </Suspense>
+        )}
       </Router>
     </QueryClientProvider>
   );
