@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import SignUpModal from "../components/Modal/SignUpModal";
 import LoginModal from "../components/Modal/LoginModal";
-import StartPB from "../assets/StartPB.png";
+import StartPB from "../assets/StartPB.webp";
 import { useAuthStore } from "../store/auth/useAuthStore";
 import { validateEmailApi } from "../api/auth";
 
